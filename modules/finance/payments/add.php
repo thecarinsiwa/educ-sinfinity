@@ -120,6 +120,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include '../../../includes/header.php';
 ?>
 
+<style>
+.eleve-result {
+    transition: background-color 0.2s;
+}
+
+.eleve-result:hover,
+.eleve-result.active {
+    background-color: #f8f9fa;
+}
+
+.eleve-result:last-child {
+    border-bottom: none !important;
+}
+
+#eleve_results {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
+}
+
+#eleve_results::-webkit-scrollbar {
+    width: 6px;
+}
+
+#eleve_results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#eleve_results::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#eleve_results::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+?>
+
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-plus me-2"></i>
@@ -158,20 +196,18 @@ include '../../../includes/header.php';
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="eleve_id" class="form-label">Élève <span class="text-danger">*</span></label>
-                            <select class="form-select select2" id="eleve_id" name="eleve_id" required>
-                                <option value="">Sélectionner un élève...</option>
-                                <?php foreach ($eleves as $eleve): ?>
-                                    <option value="<?php echo $eleve['id']; ?>" 
-                                            <?php echo ($_POST['eleve_id'] ?? '') == $eleve['id'] ? 'selected' : ''; ?>
-                                            data-classe="<?php echo htmlspecialchars($eleve['classe_nom']); ?>"
-                                            data-niveau="<?php echo htmlspecialchars($eleve['niveau']); ?>">
-                                        <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?> 
-                                        (<?php echo htmlspecialchars($eleve['numero_matricule']); ?>) - 
-                                        <?php echo htmlspecialchars($eleve['classe_nom']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label for="eleve_search" class="form-label">Rechercher un élève <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="eleve_search" 
+                                       placeholder="Tapez le nom, prénom ou matricule..."
+                                       autocomplete="off"
+                                       required>
+                                <input type="hidden" id="eleve_id" name="eleve_id" value="<?php echo htmlspecialchars($_POST['eleve_id'] ?? ''); ?>">
+                                <div id="eleve_results" class="position-absolute w-100 bg-white border rounded shadow-sm" style="z-index: 1000; max-height: 200px; overflow-y: auto; display: none; top: 100%;"></div>
+                            </div>
+                            <div class="form-text">Commencez à taper pour rechercher un élève</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="type_paiement" class="form-label">Type de paiement <span class="text-danger">*</span></label>
@@ -355,37 +391,143 @@ include '../../../includes/header.php';
 </form>
 
 <script>
-// Affichage des informations de l'élève sélectionné
-document.getElementById('eleve_id').addEventListener('change', function() {
+// Recherche d'élèves avec autocomplétion
+let searchTimeout;
+const eleveSearch = document.getElementById('eleve_search');
+const eleveResults = document.getElementById('eleve_results');
+const eleveIdInput = document.getElementById('eleve_id');
+
+// Fonction de recherche d'élèves
+function searchEleves(query) {
+    if (query.length < 2) {
+        eleveResults.style.display = 'none';
+        return;
+    }
+    
+    fetch('search_eleves.php?q=' + encodeURIComponent(query))
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                displayResults(data);
+            } else {
+                eleveResults.innerHTML = '<div class="p-3 text-muted">Aucun élève trouvé</div>';
+                eleveResults.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur de recherche:', error);
+            eleveResults.innerHTML = '<div class="p-3 text-danger">Erreur lors de la recherche</div>';
+            eleveResults.style.display = 'block';
+        });
+}
+
+// Affichage des résultats
+function displayResults(eleves) {
+    eleveResults.innerHTML = '';
+    
+    eleves.forEach(eleve => {
+        const div = document.createElement('div');
+        div.className = 'p-2 border-bottom eleve-result';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `
+            <div class="fw-bold">${eleve.nom} ${eleve.prenom}</div>
+            <div class="small text-muted">
+                Matricule: ${eleve.numero_matricule} | Classe: ${eleve.classe_nom}
+            </div>
+        `;
+        
+        div.addEventListener('click', () => selectEleve(eleve));
+        eleveResults.appendChild(div);
+    });
+    
+    eleveResults.style.display = 'block';
+}
+
+// Sélection d'un élève
+function selectEleve(eleve) {
+    eleveSearch.value = `${eleve.nom} ${eleve.prenom} (${eleve.numero_matricule})`;
+    eleveIdInput.value = eleve.id;
+    eleveResults.style.display = 'none';
+    
+    // Afficher les informations de l'élève
+    showEleveInfo(eleve);
+}
+
+// Affichage des informations de l'élève
+function showEleveInfo(eleve) {
     const eleveInfo = document.getElementById('eleve-info');
     const eleveDetails = document.getElementById('eleve-details');
     
-    if (this.value) {
-        const option = this.options[this.selectedIndex];
-        const classe = option.dataset.classe;
-        const niveau = option.dataset.niveau;
-        const nom = option.text.split(' (')[0];
-        
-        eleveDetails.innerHTML = `
-            <table class="table table-borderless table-sm">
-                <tr>
-                    <td><strong>Nom :</strong></td>
-                    <td>${nom}</td>
+    eleveDetails.innerHTML = `
+        <table class="table table-borderless table-sm">
+            <tr>
+                <td><strong>Nom :</strong></td>
+                <td>${eleve.nom} ${eleve.prenom}</td>
+            </tr>
+            <tr>
+                <td><strong>Matricule :</strong></td>
+                <td>${eleve.numero_matricule}</td>
+            </tr>
+            <tr>
+                <td><strong>Classe :</strong></td>
+                <td><span class="badge bg-primary">${eleve.classe_nom}</span></td>
                 </tr>
-                <tr>
-                    <td><strong>Classe :</strong></td>
-                    <td><span class="badge bg-primary">${classe}</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Niveau :</strong></td>
-                    <td>${niveau}</td>
-                </tr>
-            </table>
-        `;
-        
-        eleveInfo.style.display = 'block';
+            <tr>
+                <td><strong>Niveau :</strong></td>
+                <td>${eleve.niveau}</td>
+            </tr>
+        </table>
+    `;
+    
+    eleveInfo.style.display = 'block';
+}
+
+// Événements de recherche
+eleveSearch.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length >= 2) {
+        searchTimeout = setTimeout(() => {
+            searchEleves(query);
+        }, 300);
     } else {
-        eleveInfo.style.display = 'none';
+        eleveResults.style.display = 'none';
+        eleveIdInput.value = '';
+        document.getElementById('eleve-info').style.display = 'none';
+    }
+});
+
+// Masquer les résultats quand on clique ailleurs
+document.addEventListener('click', function(e) {
+    if (!eleveSearch.contains(e.target) && !eleveResults.contains(e.target)) {
+        eleveResults.style.display = 'none';
+    }
+});
+
+// Navigation au clavier dans les résultats
+eleveSearch.addEventListener('keydown', function(e) {
+    const results = eleveResults.querySelectorAll('.eleve-result');
+    const currentIndex = Array.from(results).findIndex(el => el.classList.contains('active'));
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentIndex < results.length - 1) {
+            if (currentIndex >= 0) results[currentIndex].classList.remove('active');
+            results[currentIndex + 1].classList.add('active');
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentIndex > 0) {
+            results[currentIndex].classList.remove('active');
+            results[currentIndex - 1].classList.add('active');
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const activeResult = eleveResults.querySelector('.eleve-result.active');
+        if (activeResult) {
+            activeResult.click();
+        }
     }
 });
 

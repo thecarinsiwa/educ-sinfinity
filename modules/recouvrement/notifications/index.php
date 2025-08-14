@@ -95,7 +95,7 @@ $notifications = $database->query(
      LEFT JOIN notifications_destinataires nd ON nr.id = nd.notification_id
      LEFT JOIN campagnes_recouvrement cr ON nr.campagne_id = cr.id
      WHERE nr.annee_scolaire_id = ?
-     GROUP BY nr.id
+     GROUP BY nr.id, cr.nom
      ORDER BY nr.created_at DESC",
     [$current_year['id']]
 )->fetchAll();
@@ -139,7 +139,7 @@ $debitors = $database->query(
          AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
          AND p.annee_scolaire_id = fs.annee_scolaire_id
      WHERE i.annee_scolaire_id = ? AND fs.annee_scolaire_id = ?
-     GROUP BY e.id
+     GROUP BY e.id, e.nom, e.prenom, e.telephone, e.email, c.nom
      HAVING dette_totale > 0
      ORDER BY dette_totale DESC",
     [$current_year['id'], $current_year['id']]

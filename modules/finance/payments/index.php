@@ -90,6 +90,9 @@ $classes = $database->query(
 // Statistiques
 $stats = [
     'total' => count($paiements),
+    'valides' => count(array_filter($paiements, fn($p) => $p['status'] === 'valide')),
+    'en_attente' => count(array_filter($paiements, fn($p) => $p['status'] === 'en_attente')),
+    'annules' => count(array_filter($paiements, fn($p) => $p['status'] === 'annule')),
     'montant_total' => array_sum(array_map(fn($p) => $p['montant'], $paiements))
 ];
 

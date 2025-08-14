@@ -215,13 +215,21 @@ include '../../../includes/header.php';
                 Export
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="export.php?format=csv">
+                <?php
+                // Construire l'URL de base pour les exports avec les filtres actuels
+                $export_base_url = 'export.php?';
+                if ($search) $export_base_url .= 'search=' . urlencode($search) . '&';
+                if ($category_filter) $export_base_url .= 'category=' . $category_filter . '&';
+                if ($status_filter) $export_base_url .= 'status=' . urlencode($status_filter) . '&';
+                if ($etat_filter) $export_base_url .= 'etat=' . urlencode($etat_filter) . '&';
+                ?>
+                <li><a class="dropdown-item" href="<?php echo $export_base_url; ?>format=csv">
                     <i class="fas fa-file-csv me-2"></i>Export CSV
                 </a></li>
-                <li><a class="dropdown-item" href="export.php?format=excel">
+                <li><a class="dropdown-item" href="<?php echo $export_base_url; ?>format=excel">
                     <i class="fas fa-file-excel me-2"></i>Export Excel
                 </a></li>
-                <li><a class="dropdown-item" href="export.php?format=pdf">
+                <li><a class="dropdown-item" href="<?php echo $export_base_url; ?>format=pdf">
                     <i class="fas fa-file-pdf me-2"></i>Export PDF
                 </a></li>
             </ul>

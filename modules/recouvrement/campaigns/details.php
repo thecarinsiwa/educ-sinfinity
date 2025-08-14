@@ -190,7 +190,7 @@ include '../../../includes/header.php';
                     </div>
                     <div class="col-md-6">
                         <p><strong>Période :</strong> <?php echo date('d/m/Y', strtotime($campaign['date_debut'])); ?> - <?php echo date('d/m/Y', strtotime($campaign['date_fin'])); ?></p>
-                        <p><strong>Budget :</strong> <?php echo number_format($campaign['budget']); ?> FC</p>
+                        <p><strong>Budget :</strong> <?php echo number_format($campaign['budget'] ?? 0); ?> FC</p>
                         <p><strong>Statut :</strong> 
                             <?php 
                             $status_labels = [
@@ -239,11 +239,11 @@ include '../../../includes/header.php';
                 <hr>
                 <div class="row text-center">
                     <div class="col-6">
-                        <strong><?php echo number_format($campaign_stats['total_dettes']); ?> FC</strong>
+                        <strong><?php echo number_format($campaign_stats['total_dettes'] ?? 0); ?> FC</strong>
                         <br><small>Total dettes</small>
                     </div>
                     <div class="col-6">
-                        <strong><?php echo number_format($campaign_stats['total_recouvre']); ?> FC</strong>
+                        <strong><?php echo number_format($campaign_stats['total_recouvre'] ?? 0); ?> FC</strong>
                         <br><small>Total recouvré</small>
                     </div>
                 </div>
@@ -294,10 +294,10 @@ include '../../../includes/header.php';
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <strong><?php echo number_format($target['montant_dette']); ?> FC</strong>
+                                <strong><?php echo number_format($target['montant_dette'] ?? 0); ?> FC</strong>
                             </td>
                             <td>
-                                <strong class="text-success"><?php echo number_format($target['montant_recouvre']); ?> FC</strong>
+                                <strong class="text-success"><?php echo number_format($target['montant_recouvre'] ?? 0); ?> FC</strong>
                             </td>
                             <td>
                                 <?php 
