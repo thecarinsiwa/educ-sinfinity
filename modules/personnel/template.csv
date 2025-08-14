@@ -1,0 +1,6 @@
+matricule,nom,prenom,sexe,date_naissance,lieu_naissance,adresse,telephone,email,fonction,specialite,diplome,date_embauche,salaire_base
+P001,Dupont,Jean,M,1985-03-15,Kinshasa,123 Avenue de la Paix,+243 123 456 789,jean.dupont@email.com,enseignant,Mathématiques,Licence en Mathématiques,2020-09-01,150000
+P002,Martin,Marie,F,1990-07-22,Lubumbashi,456 Rue du Commerce,+243 987 654 321,marie.martin@email.com,enseignant,Français,Maîtrise en Littérature,2019-03-15,140000
+P003,Smith,Paul,M,1988-11-10,Goma,789 Boulevard Central,+243 555 123 456,paul.smith@email.com,directeur,,Doctorat en Éducation,2018-01-01,250000
+P004,Johnson,Sarah,F,1992-05-18,Bukavu,321 Rue des Écoles,+243 777 888 999,sarah.johnson@email.com,secretaire,,Baccalauréat en Administration,2021-02-01,80000
+P005,Brown,David,M,1987-12-03,Kisangani,654 Avenue de l'Université,+243 444 555 666,david.brown@email.com,comptable,,Licence en Comptabilité,2020-06-01,120000

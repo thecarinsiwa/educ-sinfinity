@@ -1,0 +1,12 @@
+# Sécurité pour les documents justificatifs
+Options -Indexes
+# Autoriser seulement certains types de fichiers
+<FilesMatch "\.(pdf|jpg|jpeg|png|doc|docx)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+# Bloquer tous les autres types
+<FilesMatch "^(?!.*\.(pdf|jpg|jpeg|png|doc|docx)$).*$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>

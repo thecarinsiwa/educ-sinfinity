@@ -1,0 +1,29 @@
+# Configuration Apache pour Educ-Sinfinity - Version Simplifiée
+# Application de gestion scolaire - République Démocratique du Congo
+
+# Redirection de la racine vers index.php
+DirectoryIndex index.php
+
+# Empêcher l'affichage du contenu des dossiers
+Options -Indexes
+
+# Protection des fichiers sensibles
+<Files "*.sql">
+    Require all denied
+</Files>
+
+<Files "*.log">
+    Require all denied
+</Files>
+
+<Files ".env">
+    Require all denied
+</Files>
+
+<Files "config.php">
+    Require all denied
+</Files>
+
+<Files "database.php">
+    Require all denied
+</Files>
