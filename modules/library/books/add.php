@@ -62,15 +62,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "INSERT INTO livres (
                 isbn, titre, auteur, editeur, annee_publication, categorie_id,
                 nombre_pages, langue, resume, emplacement, cote, prix_achat,
-                date_acquisition, etat, status, nombre_exemplaires, exemplaires_disponibles,
+                date_acquisition, etat, status, nombre_exemplaires, nombre_disponibles, exemplaires_disponibles,
                 notes, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disponible', ?, ?, ?, NOW())",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disponible', ?, ?, ?, ?, NOW())",
             [
                 $isbn ?: null, $titre, $auteur, $editeur, 
                 $annee_publication ?: null, $categorie_id ?: null,
                 $nombre_pages ?: null, $langue, $resume, $emplacement, $cote,
                 $prix_achat ?: null, $date_acquisition, $etat, 
-                $nombre_exemplaires, $nombre_exemplaires, $notes
+                $nombre_exemplaires, $nombre_exemplaires, $nombre_exemplaires, $notes
             ]
         );
         
