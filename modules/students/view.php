@@ -164,7 +164,7 @@ include '../../includes/header.php';
         <div class="card">
             <div class="card-body text-center">
                 <?php if ($eleve['photo']): ?>
-                    <img src="../../<?php echo htmlspecialchars($eleve['photo']); ?>" 
+                    <img src="../../uploads/photos/<?php echo htmlspecialchars($eleve['photo']); ?>" 
                          alt="Photo de l'étudiant" 
                          class="rounded-circle mb-3" 
                          style="width: 150px; height: 150px; object-fit: cover;">

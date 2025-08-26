@@ -101,15 +101,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $database->beginTransaction();
             
+            // Générer automatiquement le numéro d'élève
+            $annee_courante = date('Y');
+            $stmt = $database->query(
+                "SELECT numero_eleve FROM eleves WHERE numero_eleve LIKE ? ORDER BY numero_eleve DESC LIMIT 1",
+                [$annee_courante . '%']
+            );
+            $last_student = $stmt->fetch();
+            
+            if ($last_student) {
+                $last_number = intval(substr($last_student['numero_eleve'], -4));
+                $new_number = $last_number + 1;
+            } else {
+                $new_number = 1;
+            }
+            
+            $numero_eleve = $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
+            
+            // Vérifier l'unicité du numero_eleve
+            $stmt = $database->query("SELECT id FROM eleves WHERE numero_eleve = ?", [$numero_eleve]);
+            if ($stmt->fetch()) {
+                // Si le numéro existe déjà, essayer le suivant
+                $new_number++;
+                $numero_eleve = $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
+            }
+            
             // Insérer l'élève
-            $sql = "INSERT INTO eleves (numero_matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
+            $sql = "INSERT INTO eleves (numero_eleve, numero_matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
                                       adresse, telephone, email, nom_pere, nom_mere, profession_pere,
                                       profession_mere, telephone_parent, personne_contact, telephone_contact,
                                       photo, status, date_inscription)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', NOW())";
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', NOW())";
 
             $database->execute($sql, [
-                $numero_matricule, $nom, $prenom, $sexe, $date_naissance, $lieu_naissance,
+                $numero_eleve, $numero_matricule, $nom, $prenom, $sexe, $date_naissance, $lieu_naissance,
                 $adresse, $telephone, $email, $nom_pere, $nom_mere, $profession_pere,
                 $profession_mere, $telephone_parent, $personne_contact, $telephone_contact,
                 $photo_filename
@@ -126,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $database->commit();
             
-            showMessage('success', 'Élève ajouté avec succès !');
+            showMessage('success', 'Élève ajouté avec succès ! Numéro d\'élève : ' . $numero_eleve);
             redirectTo('view.php?id=' . $eleve_id);
             
         } catch (Exception $e) {

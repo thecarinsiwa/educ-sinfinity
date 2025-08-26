@@ -106,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (move_uploaded_file($_FILES['photo']['tmp_name'], $upload_path)) {
                     // Supprimer l'ancienne photo si elle existe
-                    if ($eleve['photo'] && file_exists('../../../' . $eleve['photo'])) {
-                        unlink('../../../' . $eleve['photo']);
+                                if ($eleve['photo'] && file_exists('../../../uploads/photos/' . $eleve['photo'])) {
+                unlink('../../../uploads/photos/' . $eleve['photo']);
                     }
                     $photo_path = 'uploads/photos/' . $new_filename;
                 } else {
@@ -306,7 +306,7 @@ include '../../../includes/header.php';
                     <div class="d-flex align-items-center">
                         <?php if ($eleve['photo']): ?>
                             <div class="me-3">
-                                <img src="<?php echo '../../../' . htmlspecialchars($eleve['photo']); ?>" 
+                                <img src="../../../uploads/photos/<?php echo htmlspecialchars($eleve['photo']); ?>" 
                                      alt="Photo actuelle" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
                             </div>
                         <?php endif; ?>

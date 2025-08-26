@@ -223,7 +223,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body text-center">
                 <?php if ($eleve['photo']): ?>
-                    <img src="<?php echo '../../../' . htmlspecialchars($eleve['photo']); ?>" 
+                    <img src="../../../uploads/photos/<?php echo htmlspecialchars($eleve['photo']); ?>" 
                          alt="Photo de <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?>"
                          class="img-fluid rounded" style="max-height: 200px;">
                 <?php else: ?>
