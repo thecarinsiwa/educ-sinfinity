@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $libelle = sanitizeInput($_POST['libelle'] ?? '');
     $description = sanitizeInput($_POST['description'] ?? '');
     $montant = (float)($_POST['montant'] ?? 0);
+    $devise_id = (int)($_POST['devise_id'] ?? 0);
     $type_depense = sanitizeInput($_POST['type_depense'] ?? '');
     $date_depense = sanitizeInput($_POST['date_depense'] ?? '');
     $fournisseur = sanitizeInput($_POST['fournisseur'] ?? '');
@@ -39,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validation des champs obligatoires
     if (empty($libelle)) $errors[] = 'Le libellé est obligatoire.';
     if ($montant <= 0) $errors[] = 'Le montant doit être supérieur à 0.';
+    if (!$devise_id) $errors[] = 'La devise est obligatoire.';
     if (empty($type_depense)) $errors[] = 'Le type de dépense est obligatoire.';
     if (empty($date_depense)) $errors[] = 'La date de dépense est obligatoire.';
     if (empty($mode_paiement)) $errors[] = 'Le mode de paiement est obligatoire.';
@@ -60,13 +62,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Insérer la dépense
             $sql = "INSERT INTO depenses (
-                        libelle, description, montant, type_depense, date_depense,
+                        libelle, description, montant, devise_id, montant_devise_par_defaut, type_depense, date_depense,
                         fournisseur, numero_facture, mode_paiement, statut,
                         annee_scolaire_id, user_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            // Calculer le montant dans la devise par défaut
+            $montant_devise_par_defaut = convertToDefaultCurrency($montant, $devise_id);
             
             $database->execute($sql, [
-                $libelle, $description, $montant, $type_depense, $date_depense,
+                $libelle, $description, $montant, $devise_id, $montant_devise_par_defaut, $type_depense, $date_depense,
                 $fournisseur, $numero_facture, $mode_paiement, $statut,
                 $current_year['id'], $_SESSION['user_id']
             ]);
@@ -142,25 +147,58 @@ include '../../../includes/header.php';
                         
                         <div class="col-md-4 mb-3">
                             <label for="montant" class="form-label">
-                                Montant (FC) <span class="text-danger">*</span>
+                                Montant <span class="text-danger">*</span>
                             </label>
-                            <input type="number" 
-                                   class="form-control" 
-                                   id="montant" 
-                                   name="montant" 
-                                   value="<?php echo htmlspecialchars($_POST['montant'] ?? ''); ?>"
-                                   min="1" 
-                                   max="100000000" 
-                                   step="0.01" 
-                                   required>
+                            <div class="input-group">
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="montant" 
+                                       name="montant" 
+                                       value="<?php echo htmlspecialchars($_POST['montant'] ?? ''); ?>"
+                                       min="1" 
+                                       max="100000000" 
+                                       step="0.01" 
+                                       required>
+                                <span class="input-group-text" id="montant-symbole">FC</span>
+                            </div>
                             <div class="invalid-feedback">
                                 Veuillez saisir un montant valide.
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Affichage de la conversion -->
+                    <div class="row" id="conversion-display" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-exchange-alt me-2"></i>Conversion automatique</h6>
+                                <div id="conversion-details">
+                                    <!-- Rempli par JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="devise_id" class="form-label">Devise <span class="text-danger">*</span></label>
+                            <select class="form-select" id="devise_id" name="devise_id" required onchange="updateMontantSymbole()">
+                                <option value="">Sélectionner...</option>
+                                <?php 
+                                $devises = getActiveCurrencies();
+                                foreach ($devises as $devise): 
+                                ?>
+                                    <option value="<?= $devise['id'] ?>" 
+                                            <?= ($_POST['devise_id'] ?? '') == $devise['id'] ? 'selected' : '' ?>
+                                            data-symbole="<?= htmlspecialchars($devise['symbole']) ?>"
+                                            data-taux="<?= $devise['taux_conversion'] ?>">
+                                        <?= htmlspecialchars($devise['code']) ?> - <?= htmlspecialchars($devise['nom']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
                             <label for="type_depense" class="form-label">
                                 Type de dépense <span class="text-danger">*</span>
                             </label>
@@ -406,6 +444,67 @@ document.getElementById('type_depense').addEventListener('change', function() {
         const mois = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
         libelle.value = types[this.value] + ' - ' + mois;
     }
+});
+
+// Mise à jour du symbole de la devise selon la sélection
+function updateMontantSymbole() {
+    const deviseSelect = document.getElementById('devise_id');
+    const symboleSpan = document.getElementById('montant-symbole');
+    const selectedOption = deviseSelect.options[deviseSelect.selectedIndex];
+    
+    if (selectedOption && selectedOption.dataset.symbole) {
+        symboleSpan.textContent = selectedOption.dataset.symbole;
+    } else {
+        symboleSpan.textContent = 'FC';
+    }
+    
+    // Mettre à jour la conversion
+    updateConversion();
+}
+
+// Mise à jour de l'affichage de la conversion
+function updateConversion() {
+    const montant = parseFloat(document.getElementById('montant').value) || 0;
+    const deviseSelect = document.getElementById('devise_id');
+    const selectedOption = deviseSelect.options[deviseSelect.selectedIndex];
+    const conversionDisplay = document.getElementById('conversion-display');
+    const conversionDetails = document.getElementById('conversion-details');
+    
+    if (montant > 0 && selectedOption && selectedOption.dataset.taux) {
+        const taux = parseFloat(selectedOption.dataset.taux);
+        const symbole = selectedOption.dataset.symbole;
+        const code = selectedOption.text.split(' - ')[0];
+        
+        // Calculer le montant en devise par défaut (CDF)
+        const montantCDF = montant / taux;
+        
+        conversionDetails.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Montant saisi :</strong> ${montant.toLocaleString()} ${symbole} (${code})
+                </div>
+                <div class="col-md-6">
+                    <strong>Équivalent en CDF :</strong> ${montantCDF.toLocaleString()} FC
+                </div>
+            </div>
+            <small class="text-muted mt-2 d-block">
+                Taux de conversion : 1 ${code} = ${(1/taux).toLocaleString()} FC
+            </small>
+        `;
+        
+        conversionDisplay.style.display = 'block';
+    } else {
+        conversionDisplay.style.display = 'none';
+    }
+}
+
+// Événements pour la conversion en temps réel
+document.getElementById('montant').addEventListener('input', updateConversion);
+document.getElementById('devise_id').addEventListener('change', updateConversion);
+
+// Initialiser le symbole au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    updateMontantSymbole();
 });
 </script>
 

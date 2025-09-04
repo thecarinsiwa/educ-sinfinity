@@ -38,7 +38,7 @@ if (!$classe) {
 // Récupérer l'emploi du temps
 $schedule = $database->query(
     "SELECT e.*, m.nom as matiere_nom, pe.nom as enseignant_nom, pe.prenom as enseignant_prenom
-     FROM emplois_temps e
+     FROM emploi_temps e
      JOIN matieres m ON e.matiere_id = m.id
      JOIN personnel pe ON e.enseignant_id = pe.id
      WHERE e.classe_id = ? AND e.annee_scolaire_id = ?
@@ -48,9 +48,9 @@ $schedule = $database->query(
 
 include '../../../includes/header.php';
 ?>
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
@@ -128,45 +128,66 @@ include '../../../includes/header.php';
                                 $jours_fr = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
                                 ?>
                                 <div class="table-responsive mt-3" id="schedule-grid">
-                                    <table class="table table-bordered">
-                                        <thead class="table-primary">
+                                    <table class="table table-bordered schedule-table">
+                                        <thead class="table-dark">
                                             <tr>
-                                                <th class="text-center" style="width: 100px;">Heure</th>
+                                                <th class="text-center time-header" style="width: 120px;">
+                                                    <i class="bi bi-clock"></i> Heure
+                                                </th>
                                                 <?php foreach ($jours_fr as $jour_fr): ?>
-                                                    <th class="text-center"><?php echo $jour_fr; ?></th>
+                                                    <th class="text-center day-header">
+                                                        <i class="bi bi-calendar-day"></i> <?php echo $jour_fr; ?>
+                                                    </th>
                                                 <?php endforeach; ?>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php foreach ($all_hours as $heure): ?>
-                                                <tr>
-                                                    <td class="text-center fw-bold bg-light"><?php echo $heure; ?></td>
+                                                <tr class="schedule-row">
+                                                    <td class="text-center fw-bold time-cell">
+                                                        <span class="time-badge"><?php echo $heure; ?></span>
+                                                    </td>
                                                     <?php foreach ($jours as $jour): ?>
-                                                        <td class="p-2" style="min-height: 80px; vertical-align: top;">
+                                                        <td class="schedule-cell" style="min-height: 100px; vertical-align: top; position: relative;">
                                                             <?php if (isset($schedule_grid[$jour][$heure])): ?>
                                                                 <?php $cours = $schedule_grid[$jour][$heure]; ?>
-                                                                <div class="card border-0 bg-primary bg-opacity-10 h-100">
-                                                                    <div class="card-body p-2">
-                                                                        <h6 class="card-title mb-1 text-primary">
-                                                                            <i class="bi bi-book"></i> <?php echo htmlspecialchars($cours['matiere_nom']); ?>
+                                                                <div class="course-card">
+                                                                    <div class="course-header">
+                                                                        <h6 class="course-title">
+                                                                            <i class="bi bi-book-fill"></i> 
+                                                                            <?php echo htmlspecialchars($cours['matiere_nom']); ?>
                                                                         </h6>
-                                                                        <p class="card-text small mb-1">
-                                                                            <i class="bi bi-person"></i> <?php echo htmlspecialchars($cours['enseignant_nom'] . ' ' . $cours['enseignant_prenom']); ?>
-                                                                        </p>
-                                                                        <p class="card-text small mb-1">
-                                                                            <i class="bi bi-clock"></i> <?php echo substr($cours['heure_debut'], 0, 5) . '-' . substr($cours['heure_fin'], 0, 5); ?>
-                                                                        </p>
-                                                                        <?php if ($cours['salle']): ?>
-                                                                            <p class="card-text small mb-1">
-                                                                                <i class="bi bi-door-closed"></i> <?php echo htmlspecialchars($cours['salle']); ?>
-                                                                            </p>
-                                                                        <?php endif; ?>
-                                                                        <div class="mt-2">
-                                                                            <a href="edit-schedule.php?id=<?php echo $cours['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                                                                <i class="bi bi-pencil"></i>
+                                                                    </div>
+                                                                    <div class="course-body">
+                                                                        <div class="course-info">
+                                                                            <div class="info-item">
+                                                                                <i class="bi bi-person-fill"></i>
+                                                                                <span><?php echo htmlspecialchars($cours['enseignant_nom'] . ' ' . $cours['enseignant_prenom']); ?></span>
+                                                                            </div>
+                                                                            <div class="info-item">
+                                                                                <i class="bi bi-clock-fill"></i>
+                                                                                <span><?php echo substr($cours['heure_debut'], 0, 5) . '-' . substr($cours['heure_fin'], 0, 5); ?></span>
+                                                                            </div>
+                                                                            <?php if ($cours['salle']): ?>
+                                                                                <div class="info-item">
+                                                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                                                    <span><?php echo htmlspecialchars($cours['salle']); ?></span>
+                                                                                </div>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <div class="course-actions">
+                                                                            <a href="edit-schedule.php?id=<?php echo $cours['id']; ?>" 
+                                                                               class="btn btn-sm btn-outline-primary edit-btn" 
+                                                                               title="Modifier ce cours">
+                                                                                <i class="bi bi-pencil-square"></i>
                                                                             </a>
                                                                         </div>
                                                                     </div>
+                                                                </div>
+                                                            <?php else: ?>
+                                                                <div class="empty-slot">
+                                                                    <i class="bi bi-plus-circle text-muted"></i>
+                                                                    <small class="text-muted">Libre</small>
                                                                 </div>
                                                             <?php endif; ?>
                                                         </td>
@@ -232,9 +253,14 @@ include '../../../includes/header.php';
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-4">
-                        <a href="../classes/view.php?id=<?php echo $class_id; ?>" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Retour à la classe
-                        </a>
+                        <div class="btn-group">
+                            <a href="index.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Retour aux emplois du temps
+                            </a>
+                            <a href="../classes/view.php?id=<?php echo $class_id; ?>" class="btn btn-outline-info">
+                                <i class="bi bi-people"></i> Voir la classe
+                            </a>
+                        </div>
                         <?php if (!empty($schedule)): ?>
                         <div class="text-muted small">
                             <i class="bi bi-info-circle"></i>
@@ -248,10 +274,219 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Styles d'impression -->
+<!-- Styles personnalisés pour l'emploi du temps -->
 <style>
+/* Styles pour la grille d'emploi du temps */
+.schedule-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.schedule-table thead th {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    font-weight: 600;
+    padding: 15px 10px;
+    border: none;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.time-header {
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+}
+
+.day-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+}
+
+.schedule-row {
+    transition: background-color 0.2s ease;
+}
+
+.schedule-row:hover {
+    background-color: #f8f9fa;
+}
+
+.time-cell {
+    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+    border-right: 2px solid #34495e;
+    padding: 15px 10px;
+}
+
+.time-badge {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.schedule-cell {
+    padding: 8px;
+    border: 1px solid #e9ecef;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.schedule-cell:hover {
+    background: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour les cartes de cours */
+.course-card {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 2px solid #e3f2fd;
+    border-radius: 12px;
+    padding: 12px;
+    height: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.course-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
+.course-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+    border-color: #3498db;
+}
+
+.course-header {
+    margin-bottom: 8px;
+}
+
+.course-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.course-title i {
+    color: #3498db;
+}
+
+.course-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.course-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #5a6c7d;
+}
+
+.info-item i {
+    color: #7f8c8d;
+    width: 14px;
+    text-align: center;
+}
+
+.course-actions {
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.edit-btn {
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+/* Styles pour les créneaux libres */
+.empty-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 80px;
+    color: #95a5a6;
+    border: 2px dashed #bdc3c7;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.empty-slot:hover {
+    background: #e9ecef;
+    border-color: #95a5a6;
+    color: #7f8c8d;
+}
+
+.empty-slot i {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .schedule-table {
+        font-size: 0.8rem;
+    }
+    
+    .course-card {
+        padding: 8px;
+    }
+    
+    .course-title {
+        font-size: 0.8rem;
+    }
+    
+    .info-item {
+        font-size: 0.7rem;
+    }
+    
+    .time-badge {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Styles d'impression */
 @media print {
-    .btn, .nav-tabs, .dropdown, .no-print {
+    .btn, .nav-tabs, .dropdown, .no-print, .course-actions {
         display: none !important;
     }
 
@@ -270,15 +505,39 @@ include '../../../includes/header.php';
         margin-bottom: 20px;
     }
 
-    #schedule-grid .card {
+    .course-card {
         border: 1px solid #ddd !important;
         background: #f8f9fa !important;
+        box-shadow: none !important;
+    }
+
+    .course-card::before {
+        display: none !important;
     }
 
     .badge {
         color: #000 !important;
         background: #f8f9fa !important;
         border: 1px solid #ddd !important;
+    }
+    
+    .schedule-table {
+        box-shadow: none !important;
+    }
+    
+    .schedule-table thead th {
+        background: #f8f9fa !important;
+        color: #000 !important;
+    }
+    
+    .time-cell {
+        background: #f8f9fa !important;
+    }
+    
+    .time-badge {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        box-shadow: none !important;
     }
 }
 </style>

@@ -25,6 +25,9 @@ if (!$eleve_id) {
 // Récupérer l'année scolaire active
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 // Récupérer les informations de l'étudiant
 $eleve = $database->query(
     "SELECT e.*, 
@@ -78,8 +81,10 @@ $absences_recentes = $database->query(
 // Récupérer les paiements récents
 $paiements_recents = $database->query(
     "SELECT p.montant, p.type_paiement, p.date_paiement, p.mode_paiement,
-            p.recu_numero, p.observation
+            p.recu_numero, p.observation, p.devise_id, p.montant_devise_par_defaut,
+            d.code as devise_code, d.symbole as devise_symbole
      FROM paiements p
+     LEFT JOIN devises d ON p.devise_id = d.id
      WHERE p.eleve_id = ? AND p.annee_scolaire_id = ?
      ORDER BY p.date_paiement DESC
      LIMIT 10",
@@ -131,6 +136,15 @@ include '../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <?php if (checkPermission('students')): ?>
             <div class="btn-group me-2">
                 <a href="records/edit.php?id=<?php echo $eleve_id; ?>" class="btn btn-primary">
@@ -501,7 +515,7 @@ include '../../includes/header.php';
                                             </span>
                                         </td>
                                         <td>
-                                            <strong><?php echo formatMoney($paiement['montant']); ?></strong>
+                                            <strong><?php echo formatMoneyWithDefault($paiement['montant'], $paiement['devise_id'], $paiement['montant_devise_par_defaut']); ?></strong>
                                         </td>
                                         <td>
                                             <small><?php echo ucfirst($paiement['mode_paiement']); ?></small>

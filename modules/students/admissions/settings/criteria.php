@@ -82,6 +82,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
             }
             
+            // Sauvegarder les paramètres généraux
+            $delai_traitement = (int)($_POST['delai_traitement'] ?? 7);
+            $auto_refus = (int)($_POST['auto_refus'] ?? 30);
+            $notifications_email = (int)($_POST['notifications_email'] ?? 1);
+            $validation_auto = (int)($_POST['validation_auto'] ?? 0);
+            
+            // Sauvegarder dans la table des paramètres (ou créer une table si elle n'existe pas)
+            $database->query(
+                "INSERT INTO parametres_admission (
+                    annee_scolaire_id, delai_traitement, auto_refus, 
+                    notifications_email, validation_auto, created_at
+                ) VALUES (?, ?, ?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE
+                    delai_traitement = VALUES(delai_traitement),
+                    auto_refus = VALUES(auto_refus),
+                    notifications_email = VALUES(notifications_email),
+                    validation_auto = VALUES(validation_auto),
+                    updated_at = NOW()",
+                [$current_year['id'], $delai_traitement, $auto_refus, $notifications_email, $validation_auto]
+            );
+            
             $database->commit();
             showMessage('success', 'Critères d\'admission sauvegardés avec succès.');
             redirectTo('criteria.php');
@@ -119,6 +140,12 @@ $criteres_par_classe = [];
 foreach ($criteres_classes as $critere) {
     $criteres_par_classe[$critere['classe_id']] = $critere;
 }
+
+// Récupérer les paramètres généraux
+$parametres_generaux = $database->query(
+    "SELECT * FROM parametres_admission WHERE annee_scolaire_id = ?",
+    [$current_year['id']]
+)->fetch();
 
 // Récupérer les classes
 $classes = $database->query(
@@ -356,27 +383,27 @@ include '../../../../includes/header.php';
                 <div class="col-md-6">
                     <label for="delai_traitement" class="form-label">Délai de traitement (jours)</label>
                     <input type="number" class="form-control" id="delai_traitement" name="delai_traitement" 
-                           value="<?php echo getSetting('delai_traitement_admission', 7); ?>" min="1" max="30">
+                           value="<?php echo $parametres_generaux['delai_traitement'] ?? 7; ?>" min="1" max="30">
                     <small class="form-text text-muted">Délai maximum pour traiter une demande d'admission</small>
                 </div>
                 <div class="col-md-6">
                     <label for="auto_refus" class="form-label">Refus automatique après (jours)</label>
                     <input type="number" class="form-control" id="auto_refus" name="auto_refus" 
-                           value="<?php echo getSetting('auto_refus_admission', 30); ?>" min="1" max="90">
+                           value="<?php echo $parametres_generaux['auto_refus'] ?? 30; ?>" min="1" max="90">
                     <small class="form-text text-muted">Refus automatique si pas de réponse dans ce délai</small>
                 </div>
                 <div class="col-md-6">
                     <label for="notifications_email" class="form-label">Notifications par email</label>
                     <select class="form-select" id="notifications_email" name="notifications_email">
-                        <option value="1" <?php echo getSetting('notifications_email_admission', 1) ? 'selected' : ''; ?>>Activées</option>
-                        <option value="0" <?php echo !getSetting('notifications_email_admission', 1) ? 'selected' : ''; ?>>Désactivées</option>
+                        <option value="1" <?php echo ($parametres_generaux['notifications_email'] ?? 1) ? 'selected' : ''; ?>>Activées</option>
+                        <option value="0" <?php echo !($parametres_generaux['notifications_email'] ?? 1) ? 'selected' : ''; ?>>Désactivées</option>
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label for="validation_auto" class="form-label">Validation automatique</label>
                     <select class="form-select" id="validation_auto" name="validation_auto">
-                        <option value="0" <?php echo !getSetting('validation_auto_admission', 0) ? 'selected' : ''; ?>>Manuelle</option>
-                        <option value="1" <?php echo getSetting('validation_auto_admission', 0) ? 'selected' : ''; ?>>Automatique</option>
+                        <option value="0" <?php echo !($parametres_generaux['validation_auto'] ?? 0) ? 'selected' : ''; ?>>Manuelle</option>
+                        <option value="1" <?php echo ($parametres_generaux['validation_auto'] ?? 0) ? 'selected' : ''; ?>>Automatique</option>
                     </select>
                     <small class="form-text text-muted">Validation automatique si tous les critères sont remplis</small>
                 </div>

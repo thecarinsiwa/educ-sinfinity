@@ -42,7 +42,7 @@ if ($matiere_id) {
                 COUNT(DISTINCT et.enseignant_id) as nb_enseignants,
                 COUNT(et.id) as nb_cours
          FROM matieres m 
-         LEFT JOIN emplois_temps et ON m.id = et.matiere_id
+         LEFT JOIN emploi_temps et ON m.id = et.matiere_id
          GROUP BY m.id 
          ORDER BY m.niveau, m.nom"
     )->fetchAll();

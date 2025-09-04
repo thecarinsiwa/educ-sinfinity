@@ -42,7 +42,7 @@ $stats_enseignant = null;
 if ($membre['fonction'] === 'enseignant') {
     // Nombre de classes enseignées
     $stmt = $database->query(
-        "SELECT COUNT(DISTINCT classe_id) as nb_classes FROM emplois_temps WHERE enseignant_id = ?", 
+        "SELECT COUNT(DISTINCT classe_id) as nb_classes FROM emploi_temps WHERE enseignant_id = ?", 
         [$id]
     );
     $nb_classes = $stmt->fetch()['nb_classes'] ?? 0;
@@ -50,7 +50,7 @@ if ($membre['fonction'] === 'enseignant') {
     // Nombre d'élèves
     $stmt = $database->query(
         "SELECT COUNT(DISTINCT i.eleve_id) as nb_eleves 
-         FROM emplois_temps et 
+         FROM emploi_temps et 
          JOIN inscriptions i ON et.classe_id = i.classe_id 
          WHERE et.enseignant_id = ? AND i.status = 'inscrit'", 
         [$id]
@@ -60,7 +60,7 @@ if ($membre['fonction'] === 'enseignant') {
     // Matières enseignées
     $stmt = $database->query(
         "SELECT DISTINCT m.nom 
-         FROM emplois_temps et 
+         FROM emploi_temps et 
          JOIN matieres m ON et.matiere_id = m.id 
          WHERE et.enseignant_id = ?", 
         [$id]

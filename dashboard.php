@@ -19,6 +19,9 @@ $stats = getGeneralStats();
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 // Statistiques détaillées
 $detailed_stats = [];
 
@@ -28,7 +31,7 @@ $stats_niveaux = $database->query(
      FROM eleves e
      JOIN inscriptions i ON e.id = i.eleve_id
      JOIN classes c ON i.classe_id = c.id
-     WHERE i.annee_scolaire_id = ?
+     WHERE i.annee_scolaire_id = ? AND i.status IN ('inscrit', 'en_attente')
      GROUP BY c.niveau",
     [$current_year['id'] ?? 0]
 )->fetchAll();
@@ -38,7 +41,7 @@ $stats_sexe = $database->query(
     "SELECT e.sexe, COUNT(*) as total
      FROM eleves e
      JOIN inscriptions i ON e.id = i.eleve_id
-     WHERE i.annee_scolaire_id = ?
+     WHERE i.annee_scolaire_id = ? AND i.status IN ('inscrit', 'en_attente')
      GROUP BY e.sexe",
     [$current_year['id'] ?? 0]
 )->fetchAll();
@@ -67,12 +70,12 @@ $nouvelles_inscriptions = $database->query(
 
 // Obtenir les dernières inscriptions
 $recent_inscriptions = $database->query(
-    "SELECT e.nom, e.prenom, e.sexe, c.nom as classe, c.niveau, i.date_inscription 
+    "SELECT e.nom, e.prenom, e.sexe, c.nom as classe, c.niveau, i.created_at as date_inscription 
      FROM inscriptions i 
      JOIN eleves e ON i.eleve_id = e.id 
      JOIN classes c ON i.classe_id = c.id 
-     WHERE i.annee_scolaire_id = ? 
-     ORDER BY i.date_inscription DESC 
+     WHERE i.annee_scolaire_id = ? AND i.status IN ('inscrit', 'en_attente')
+     ORDER BY i.created_at DESC 
      LIMIT 8",
     [$current_year['id'] ?? 0]
 )->fetchAll();
@@ -125,6 +128,15 @@ include 'includes/header.php';
                 <?php echo $current_year['annee'] ?? 'Aucune année active'; ?>
             </button>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-tools me-1"></i>
@@ -201,8 +213,11 @@ include 'includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?php echo formatMoney($paiements_mois['total_mois'] ?? 0); ?></h4>
+                        <h4><?php echo formatMoneyDefault($paiements_mois['total_mois'] ?? 0); ?></h4>
                         <p class="mb-0">Recettes ce mois</p>
+                        <?php if ($devise_par_defaut): ?>
+                            <small class="opacity-75">en <?php echo htmlspecialchars($devise_par_defaut['code']); ?></small>
+                        <?php endif; ?>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-money-bill-wave fa-2x"></i>
@@ -359,7 +374,7 @@ include 'includes/header.php';
                             $activites[] = [
                                 'type' => 'paiement',
                                 'nom' => $paiement['nom'] . ' ' . $paiement['prenom'],
-                                'detail' => formatMoney($paiement['montant']),
+                                'detail' => formatMoneyDefault($paiement['montant']),
                                 'date' => $paiement['date_paiement']
                             ];
                         }

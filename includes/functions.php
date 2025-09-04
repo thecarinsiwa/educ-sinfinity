@@ -86,6 +86,13 @@ function hashPassword($password) {
 }
 
 /**
+ * Enregistrer une action utilisateur (alias pour logUserAction)
+ */
+function logAction($module, $details = null, $target_id = null) {
+    return logUserAction('action', $module, $details, $target_id);
+}
+
+/**
  * Enregistrer une action utilisateur pour l'historique
  */
 function logUserAction($action, $module, $details = null, $target_id = null) {
@@ -207,8 +214,8 @@ function getGeneralStats() {
     
     $stats = [];
     
-    // Nombre total d'élèves actifs
-    $stmt = $database->query("SELECT COUNT(*) as total FROM eleves WHERE status = 'actif'");
+    // Nombre total d'élèves inscrits (actifs + inscrits)
+    $stmt = $database->query("SELECT COUNT(*) as total FROM eleves WHERE status IN ('actif', 'inscrit')");
     $stats['total_eleves'] = $stmt->fetch()['total'];
     
     // Nombre total d'enseignants
@@ -510,6 +517,204 @@ function deactivateUser($user_id, $deactivated_by = null) {
     } catch (Exception $e) {
         error_log("Erreur lors de la désactivation de l'utilisateur: " . $e->getMessage());
         return false;
+    }
+}
+
+/**
+ * Fonctions de gestion des devises
+ */
+
+/**
+ * Obtenir la devise par défaut
+ */
+function getDefaultCurrency() {
+    global $database;
+    
+    try {
+        $stmt = $database->query("SELECT * FROM devises WHERE devise_par_defaut = TRUE AND active = TRUE LIMIT 1");
+        return $stmt->fetch();
+    } catch (Exception $e) {
+        error_log("Erreur lors de la récupération de la devise par défaut: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Obtenir toutes les devises actives
+ */
+function getActiveCurrencies() {
+    global $database;
+    
+    try {
+        $stmt = $database->query("SELECT * FROM devises WHERE active = TRUE ORDER BY devise_par_defaut DESC, code");
+        return $stmt->fetchAll();
+    } catch (Exception $e) {
+        error_log("Erreur lors de la récupération des devises actives: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Obtenir une devise par son ID
+ */
+function getCurrencyById($id) {
+    global $database;
+    
+    try {
+        $stmt = $database->query("SELECT * FROM devises WHERE id = ?", [$id]);
+        return $stmt->fetch();
+    } catch (Exception $e) {
+        error_log("Erreur lors de la récupération de la devise: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Convertir un montant d'une devise vers la devise par défaut
+ */
+function convertToDefaultCurrency($montant, $devise_id) {
+    global $database;
+    
+    try {
+        if (!$devise_id) {
+            return $montant; // Pas de conversion si pas de devise spécifiée
+        }
+        
+        $devise = getCurrencyById($devise_id);
+        if (!$devise) {
+            return $montant;
+        }
+        
+        return $montant * $devise['taux_conversion'];
+    } catch (Exception $e) {
+        error_log("Erreur lors de la conversion de devise: " . $e->getMessage());
+        return $montant;
+    }
+}
+
+/**
+ * Convertir un montant de la devise par défaut vers une autre devise
+ */
+function convertFromDefaultCurrency($montant, $devise_id) {
+    global $database;
+    
+    try {
+        if (!$devise_id) {
+            return $montant;
+        }
+        
+        $devise = getCurrencyById($devise_id);
+        if (!$devise || $devise['taux_conversion'] == 0) {
+            return $montant;
+        }
+        
+        return $montant / $devise['taux_conversion'];
+    } catch (Exception $e) {
+        error_log("Erreur lors de la conversion de devise: " . $e->getMessage());
+        return $montant;
+    }
+}
+
+/**
+ * Formater un montant avec sa devise
+ */
+function formatCurrency($montant, $devise_id = null, $show_symbol = true) {
+    global $database;
+    
+    try {
+        if (!$devise_id) {
+            $devise = getDefaultCurrency();
+        } else {
+            $devise = getCurrencyById($devise_id);
+        }
+        
+        if (!$devise) {
+            return number_format($montant, 2);
+        }
+        
+        $formatted = number_format($montant, 2);
+        
+        if ($show_symbol) {
+            if ($devise['symbole'] === '$' || $devise['symbole'] === '€' || $devise['symbole'] === '£') {
+                return $devise['symbole'] . $formatted;
+            } else {
+                return $formatted . ' ' . $devise['symbole'];
+            }
+        }
+        
+        return $formatted . ' ' . $devise['code'];
+    } catch (Exception $e) {
+        error_log("Erreur lors du formatage de la devise: " . $e->getMessage());
+        return number_format($montant, 2);
+    }
+}
+
+/**
+ * Obtenir le taux de conversion entre deux devises
+ */
+function getExchangeRate($from_currency_id, $to_currency_id) {
+    global $database;
+    
+    try {
+        if ($from_currency_id == $to_currency_id) {
+            return 1.0;
+        }
+        
+        $from_currency = getCurrencyById($from_currency_id);
+        $to_currency = getCurrencyById($to_currency_id);
+        
+        if (!$from_currency || !$to_currency) {
+            return 1.0;
+        }
+        
+        // Conversion via la devise par défaut
+        if ($from_currency['devise_par_defaut']) {
+            return $to_currency['taux_conversion'];
+        } elseif ($to_currency['devise_par_defaut']) {
+            return 1 / $from_currency['taux_conversion'];
+        } else {
+            return $to_currency['taux_conversion'] / $from_currency['taux_conversion'];
+        }
+    } catch (Exception $e) {
+        error_log("Erreur lors du calcul du taux de change: " . $e->getMessage());
+        return 1.0;
+    }
+}
+
+/**
+ * Formater un montant avec la devise par défaut
+ * Cette fonction est un alias de formatCurrency avec la devise par défaut
+ */
+function formatMoneyDefault($montant) {
+    return formatCurrency($montant, null, true);
+}
+
+/**
+ * Formater un montant avec sa devise et afficher l'équivalent en devise par défaut
+ */
+function formatMoneyWithDefault($montant, $devise_id, $montant_devise_par_defaut = null) {
+    global $database;
+    
+    try {
+        $devise = getCurrencyById($devise_id);
+        $devise_par_defaut = getDefaultCurrency();
+        
+        if (!$devise || !$devise_par_defaut) {
+            return formatCurrency($montant, null, true);
+        }
+        
+        $formatted = formatCurrency($montant, $devise_id, true);
+        
+        // Si c'est une devise différente de la devise par défaut, afficher l'équivalent
+        if ($devise['code'] !== $devise_par_defaut['code']) {
+            $equivalent = $montant_devise_par_defaut ?: convertToDefaultCurrency($montant, $devise_id);
+            $formatted .= ' <small class="text-muted">(' . formatCurrency($equivalent, null, true) . ')</small>';
+        }
+        
+        return $formatted;
+    } catch (Exception $e) {
+        error_log("Erreur lors du formatage avec devise par défaut: " . $e->getMessage());
+        return formatCurrency($montant, null, true);
     }
 }
 ?>

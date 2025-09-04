@@ -15,7 +15,7 @@ if (!checkPermission('students')) {
     redirectTo('index.php');
 }
 
-$page_title = 'Ajouter un élève';
+$page_title = 'Ajouter un élève - Demande d\'Admission';
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
@@ -126,33 +126,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $numero_eleve = $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
             }
             
-            // Insérer l'élève
+            // Générer le numéro de demande unique
+            $annee_courante = date('Y');
+            $last_demande = $database->query(
+                "SELECT numero_demande FROM demandes_admission WHERE numero_demande LIKE ? ORDER BY numero_demande DESC LIMIT 1",
+                ['ADM' . $annee_courante . '%']
+            )->fetch();
+            
+            if ($last_demande) {
+                $last_number = intval(substr($last_demande['numero_demande'], -4));
+                $new_number = $last_number + 1;
+            } else {
+                $new_number = 1;
+            }
+            
+            $numero_demande = 'ADM' . $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
+            
+            // Créer la demande d'admission avec status "en_cours_traitement"
+            $database->execute(
+                "INSERT INTO demandes_admission (
+                    numero_demande, annee_scolaire_id, classe_demandee_id, nom_eleve, prenom_eleve,
+                    date_naissance, lieu_naissance, sexe, adresse, telephone, email, nom_pere, nom_mere,
+                    profession_pere, profession_mere, telephone_parent, personne_contact, telephone_contact,
+                    relation_contact, ecole_precedente, classe_precedente, annee_precedente, moyenne_precedente,
+                    certificat_naissance, bulletin_precedent, certificat_medical, photo_identite, autres_documents,
+                    motif_demande, besoins_speciaux, allergies_medicales, status, priorite, frais_inscription,
+                    frais_scolarite, reduction_accordee, observations, date_entretien, notes_entretien,
+                    decision_motif, traite_par, date_traitement, updated_at, note_evaluation,
+                    commentaire_evaluation, recommandation, evalue_par, date_evaluation, verifie_par,
+                    date_verification, commentaire_documents, eleve_cree_id, date_inscription, commentaire_traitement
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $numero_demande, $current_year['id'], $classe_id, $nom, $prenom,
+                    $date_naissance, $lieu_naissance, $sexe, $adresse, $telephone, $email,
+                    $nom_pere, $nom_mere, $profession_pere, $profession_mere, $telephone_parent,
+                    $personne_contact, $telephone_contact, '', '', '', '', null,
+                    'non_fourni', 'non_fourni', 'non_fourni', 'non_fourni', '',
+                    'Ajout direct - Élève non évalué', '', '', 'en_cours_traitement', 'normale', 0.00, 0.00, 0.00,
+                    'Ajout direct sans évaluation préalable', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
+                ]
+            );
+            
+            $demande_id = $database->lastInsertId();
+            
+            // Insérer l'élève avec status "non-evalué"
             $sql = "INSERT INTO eleves (numero_eleve, numero_matricule, nom, prenom, sexe, date_naissance, lieu_naissance,
                                       adresse, telephone, email, nom_pere, nom_mere, profession_pere,
                                       profession_mere, telephone_parent, personne_contact, telephone_contact,
-                                      photo, status, date_inscription)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', NOW())";
+                                      photo, status, date_inscription, classe_id, annee_scolaire_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)";
 
             $database->execute($sql, [
                 $numero_eleve, $numero_matricule, $nom, $prenom, $sexe, $date_naissance, $lieu_naissance,
                 $adresse, $telephone, $email, $nom_pere, $nom_mere, $profession_pere,
                 $profession_mere, $telephone_parent, $personne_contact, $telephone_contact,
-                $photo_filename
+                $photo_filename, 'non-evalué', $classe_id, $current_year['id']
             ]);
             
             $eleve_id = $database->lastInsertId();
             
-            // Inscrire l'élève dans la classe
-            if (!empty($classe_id) && !empty($current_year['id'])) {
-                $sql_inscription = "INSERT INTO inscriptions (eleve_id, classe_id, annee_scolaire_id, date_inscription, status) 
-                                   VALUES (?, ?, ?, CURRENT_DATE, 'inscrit')";
-                $database->execute($sql_inscription, [$eleve_id, $classe_id, $current_year['id']]);
-            }
+            // Mettre à jour la demande avec l'ID de l'élève créé
+            $database->execute(
+                "UPDATE demandes_admission SET eleve_cree_id = ? WHERE id = ?",
+                [$eleve_id, $demande_id]
+            );
             
             $database->commit();
             
-            showMessage('success', 'Élève ajouté avec succès ! Numéro d\'élève : ' . $numero_eleve);
-            redirectTo('view.php?id=' . $eleve_id);
+            showMessage('success', 'Demande d\'admission créée avec succès ! Numéro de demande : ' . $numero_demande . '. L\'élève a le status \'non-évalué\' et devra passer par le processus d\'évaluation.');
+            redirectTo('../admissions/applications/view.php?id=' . $demande_id);
             
         } catch (Exception $e) {
             $database->rollback();
@@ -167,7 +209,7 @@ include '../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-user-plus me-2"></i>
-        Ajouter un élève
+        Ajouter un élève - Demande d'Admission
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="index.php" class="btn btn-outline-secondary">
@@ -175,6 +217,13 @@ include '../../includes/header.php';
             Retour à la liste
         </a>
     </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Ajout d'élève :</strong> Cette fonction crée une demande d'admission avec le status "en cours de traitement" 
+    et ajoute l'élève avec le status "non-évalué". L'élève devra passer par le processus d'évaluation 
+    avant d'être définitivement accepté.
 </div>
 
 <?php if (!empty($errors)): ?>
@@ -455,8 +504,8 @@ include '../../includes/header.php';
                                 Réinitialiser
                             </button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>
-                                Enregistrer l'élève
+                                <i class="fas fa-user-plus me-1"></i>
+                                Créer la demande d'admission
                             </button>
                         </div>
                     </div>

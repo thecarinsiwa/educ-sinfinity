@@ -20,6 +20,9 @@ $page_title = 'Gestion des Paiements';
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 // Paramètres de recherche et filtrage
 $search = sanitizeInput($_GET['search'] ?? '');
 $classe_filter = (int)($_GET['classe'] ?? 0);
@@ -32,12 +35,14 @@ $date_fin = sanitizeInput($_GET['date_fin'] ?? '');
 $sql = "SELECT p.*, 
                e.nom, e.prenom, e.numero_matricule,
                c.nom as classe_nom, c.niveau,
-               u.username as enregistre_par
+               u.username as enregistre_par,
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN devises d ON p.devise_id = d.id
         WHERE p.annee_scolaire_id = ?";
 
 $params = [$current_year['id'] ?? 0];
@@ -93,7 +98,7 @@ $stats = [
     'valides' => count(array_filter($paiements, fn($p) => $p['status'] === 'valide')),
     'en_attente' => count(array_filter($paiements, fn($p) => $p['status'] === 'en_attente')),
     'annules' => count(array_filter($paiements, fn($p) => $p['status'] === 'annule')),
-    'montant_total' => array_sum(array_map(fn($p) => $p['montant'], $paiements))
+    'montant_total' => array_sum(array_map(fn($p) => $p['montant_devise_par_defaut'] ?? $p['montant'], $paiements))
 ];
 
 include '../../../includes/header.php';
@@ -111,6 +116,15 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <?php if (checkPermission('finance')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
@@ -192,7 +206,7 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5><?php echo formatMoney($stats['montant_total']); ?></h5>
+                        <h5><?php echo formatCurrency($stats['montant_total'], $devise_par_defaut['id'] ?? null); ?></h5>
                         <p class="mb-0">Montant total</p>
                     </div>
                     <div class="align-self-center">
@@ -345,9 +359,16 @@ include '../../../includes/header.php';
                                     </span>
                                 </td>
                                 <td>
-                                    <strong class="text-success">
-                                        <?php echo formatMoney($paiement['montant']); ?>
-                                    </strong>
+                                    <div>
+                                        <strong class="text-success">
+                                            <?php echo formatCurrency($paiement['montant'], $paiement['devise_id']); ?>
+                                        </strong>
+                                        <?php if ($paiement['devise_id'] && $paiement['montant_devise_par_defaut']): ?>
+                                            <br><small class="text-muted">
+                                                <?= formatCurrency($paiement['montant_devise_par_defaut']) ?> (équivalent)
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <small>

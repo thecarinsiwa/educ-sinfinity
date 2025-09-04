@@ -36,7 +36,7 @@ $stmt = $database->query("SELECT COUNT(*) as total FROM personnel WHERE fonction
 $stats['total_enseignants'] = $stmt->fetch()['total'];
 
 // Nombre d'emplois du temps configurés
-$stmt = $database->query("SELECT COUNT(DISTINCT classe_id) as total FROM emplois_temps WHERE annee_scolaire_id = ?", [$current_year['id'] ?? 0]);
+$stmt = $database->query("SELECT COUNT(DISTINCT classe_id) as total FROM emploi_temps WHERE annee_scolaire_id = ?", [$current_year['id'] ?? 0]);
 $stats['classes_avec_emploi'] = $stmt->fetch()['total'];
 
 // Répartition par niveau

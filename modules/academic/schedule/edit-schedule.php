@@ -21,7 +21,7 @@ if ($schedule_id <= 0) {
 
 // Récupérer l'horaire
 $schedule = $database->query(
-    "SELECT * FROM emplois_temps WHERE id = ?",
+    "SELECT * FROM emploi_temps WHERE id = ?",
     [$schedule_id]
 )->fetch();
 if (!$schedule) {
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($jour && $heure_debut && $heure_fin && $matiere_id && $enseignant_id) {
         $database->query(
-            "UPDATE emplois_temps SET matiere_id=?, enseignant_id=?, jour_semaine=?, heure_debut=?, heure_fin=?, salle=? WHERE id=?",
+            "UPDATE emploi_temps SET matiere_id=?, enseignant_id=?, jour_semaine=?, heure_debut=?, heure_fin=?, salle=? WHERE id=?",
             [$matiere_id, $enseignant_id, $jour, $heure_debut, $heure_fin, $salle, $schedule_id]
         );
         showMessage('success', 'Horaire modifié avec succès.');

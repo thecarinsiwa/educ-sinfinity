@@ -306,6 +306,31 @@ include '../../includes/header.php';
                         </div>
                     </a>
                     </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="confirm-inscriptions.php" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-check-circle fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">Confirmer l'inscription</h5>
+                                    <p class="card-text text-muted">
+                                        Valider les inscriptions en attente
+                                    </p>
+                                    <div class="mt-3">
+                                        <?php
+                                        // Compter les inscriptions en attente
+                                        $inscriptions_en_attente = $database->query(
+                                            "SELECT COUNT(*) as total FROM inscriptions 
+                                             WHERE status = 'en_attente' AND annee_scolaire_id = ?",
+                                            [$current_year['id'] ?? 0]
+                                        )->fetch()['total'];
+                                        ?>
+                                        <span class="badge bg-warning"><?php echo $inscriptions_en_attente; ?> en attente</span>
+                        </div>
+                        </div>
+                        </div>
+                    </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -441,6 +466,14 @@ include '../../includes/header.php';
                                 <i class="fas fa-calendar-check me-2"></i>
                                 Gérer les présences
                     </a>
+                        </div>
+                        </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="d-grid">
+                            <a href="confirm-inscriptions.php" class="btn btn-outline-warning">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Confirmer inscriptions
+                            </a>
                         </div>
                         </div>
                     <div class="col-md-3 mb-2">

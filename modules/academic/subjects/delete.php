@@ -40,7 +40,7 @@ $dependencies = [];
 
 // Vérifier les emplois du temps
 $emplois_temps = $database->query(
-    "SELECT COUNT(*) as count FROM emplois_temps WHERE matiere_id = ?",
+    "SELECT COUNT(*) as count FROM emploi_temps WHERE matiere_id = ?",
     [$matiere_id]
 )->fetch();
 if ($emplois_temps['count'] > 0) {
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
         
         // Supprimer les emplois du temps
         $database->execute(
-            "DELETE FROM emplois_temps WHERE matiere_id = ?",
+            "DELETE FROM emploi_temps WHERE matiere_id = ?",
             [$matiere_id]
         );
         

@@ -20,6 +20,9 @@ $page_title = 'Gestion Financière';
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 // Statistiques financières
 $stats = [];
 
@@ -110,6 +113,15 @@ include '../../includes/header.php';
                 <?php echo $current_year['annee'] ?? 'Aucune année active'; ?>
             </button>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <?php if (checkPermission('finance')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
@@ -143,7 +155,7 @@ include '../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?php echo formatMoney($stats['total_recettes']); ?></h4>
+                        <h4><?php echo formatCurrency($stats['total_recettes'], $devise_par_defaut['id'] ?? null); ?></h4>
                         <p class="mb-0">Recettes totales</p>
                     </div>
                     <div class="align-self-center">
@@ -158,7 +170,7 @@ include '../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?php echo formatMoney($stats['total_attendu']); ?></h4>
+                        <h4><?php echo formatCurrency($stats['total_attendu'], $devise_par_defaut['id'] ?? null); ?></h4>
                         <p class="mb-0">Montant attendu</p>
                     </div>
                     <div class="align-self-center">
@@ -173,7 +185,7 @@ include '../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?php echo formatMoney($stats['reste_a_percevoir']); ?></h4>
+                        <h4><?php echo formatCurrency($stats['reste_a_percevoir'], $devise_par_defaut['id'] ?? null); ?></h4>
                         <p class="mb-0">Reste à percevoir</p>
                     </div>
                     <div class="align-self-center">
@@ -199,6 +211,26 @@ include '../../includes/header.php';
         </div>
     </div>
 </div>
+
+<?php if ($devise_par_defaut): ?>
+<!-- Note sur la devise par défaut -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Note :</strong> Tous les montants affichés sur cette page sont convertis et exprimés en 
+            <strong><?php echo htmlspecialchars($devise_par_defaut['nom']); ?> (<?php echo htmlspecialchars($devise_par_defaut['code']); ?>)</strong> 
+            qui est la devise par défaut de l'établissement.
+            <?php if ($devise_par_defaut['code'] !== 'CDF'): ?>
+                <br><small class="text-muted">
+                    Les opérations peuvent être saisies dans différentes devises mais sont automatiquement converties 
+                    selon le taux de change configuré.
+                </small>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Indicateurs supplémentaires -->
 <div class="row mb-4">
@@ -228,7 +260,7 @@ include '../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="card-title text-warning"><?php echo formatMoney($stats['paiements_attente']); ?></h5>
+                        <h5 class="card-title text-warning"><?php echo formatCurrency($stats['paiements_attente'], $devise_par_defaut['id'] ?? null); ?></h5>
                         <p class="card-text">Paiements en attente</p>
                     </div>
                     <i class="fas fa-clock fa-2x text-warning"></i>
@@ -267,7 +299,7 @@ include '../../includes/header.php';
                                         Enregistrement et suivi des paiements élèves
                                     </p>
                                     <div class="mt-3">
-                                        <span class="badge bg-success"><?php echo formatMoney($stats['total_recettes']); ?></span>
+                                        <span class="badge bg-success"><?php echo formatCurrency($stats['total_recettes'], $devise_par_defaut['id'] ?? null); ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -319,6 +351,23 @@ include '../../includes/header.php';
                                     </p>
                                     <div class="mt-3">
                                         <span class="badge bg-info">Analyses</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="devises/" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exchange-alt fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">Devises</h5>
+                                    <p class="card-text text-muted">
+                                        Gestion des devises et taux de change
+                                    </p>
+                                    <div class="mt-3">
+                                        <span class="badge bg-warning">Devises</span>
                                     </div>
                                 </div>
                             </div>

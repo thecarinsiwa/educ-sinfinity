@@ -22,10 +22,12 @@ if (!$id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations du frais source
-$sql = "SELECT f.*, c.nom as classe_nom, c.niveau
+// Récupérer les informations du frais source avec devise
+$sql = "SELECT f.*, c.nom as classe_nom, c.niveau,
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
         FROM frais_scolaires f
         JOIN classes c ON f.classe_id = c.id
+        LEFT JOIN devises d ON f.devise_id = d.id
         WHERE f.id = ?";
 
 $frais_source = $database->query($sql, [$id])->fetch();
@@ -39,6 +41,9 @@ $page_title = 'Dupliquer le frais - ' . $frais_source['libelle'];
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
+
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
 
 $errors = [];
 $success = false;
@@ -151,6 +156,14 @@ include '../../../includes/header.php';
         Dupliquer le frais scolaire
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info" disabled>
+                    <i class="fas fa-coins me-1"></i>
+                    Devise par défaut: <?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="view.php?id=<?php echo $id; ?>" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -159,6 +172,20 @@ include '../../../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Note sur la devise par défaut -->
+<?php if ($devise_par_defaut): ?>
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>
+            <strong>Note :</strong> Les montants sont affichés dans leur devise d'origine. 
+            La devise par défaut du système est : 
+            <span class="badge bg-info"><?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)</span>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
@@ -203,7 +230,18 @@ include '../../../includes/header.php';
                             </tr>
                             <tr>
                                 <td class="fw-bold">Montant :</td>
-                                <td><?php echo formatMoney($frais_source['montant']); ?></td>
+                                <td>
+                                    <div>
+                                        <span class="fw-bold">
+                                            <?php echo formatCurrency($frais_source['montant'], $frais_source['devise_id']); ?>
+                                        </span>
+                                        <?php if ($frais_source['devise_id'] && isset($frais_source['montant_devise_par_defaut']) && $frais_source['montant_devise_par_defaut']): ?>
+                                            <br><small class="text-muted">
+                                                Équivalent : <?php echo formatCurrency($frais_source['montant_devise_par_defaut']); ?>
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
                             </tr>
                         </table>
                     </div>

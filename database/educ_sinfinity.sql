@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le : ven. 29 août 2025 à 21:33
+-- Généré le : mar. 02 sep. 2025 à 21:05
 -- Version du serveur : 8.0.30
 -- Version de PHP : 8.1.10
 
@@ -77,8 +77,9 @@ CREATE TABLE `annees_scolaires` (
 --
 
 INSERT INTO `annees_scolaires` (`id`, `annee`, `date_debut`, `date_fin`, `status`, `created_at`, `updated_at`) VALUES
-(1, '2023-2024', '2023-09-01', '2024-07-31', 'active', '2025-08-08 13:07:50', '2025-08-14 11:53:17'),
-(2, '2025-2026', '2025-09-01', '2026-07-31', 'fermee', '2025-08-08 23:34:15', '2025-08-14 11:53:13');
+(1, '2023-2024', '2023-09-01', '2024-07-31', 'fermee', '2025-08-08 13:07:50', '2025-09-02 17:15:40'),
+(2, '2025-2026', '2025-09-01', '2026-07-31', 'active', '2025-08-08 23:34:15', '2025-09-02 18:40:18'),
+(3, '2026-2027', '2026-09-01', '2027-07-31', 'fermee', '2025-09-02 16:59:15', '2025-09-02 18:40:18');
 
 -- --------------------------------------------------------
 
@@ -266,7 +267,15 @@ INSERT INTO `classes` (`id`, `nom`, `niveau`, `section`, `salle`, `description`,
 (4, '3ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 32, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
 (5, '4ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 25, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
 (6, '5ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 27, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(7, '6ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 24, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL);
+(7, '6ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 24, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
+(8, '2ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 30, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(9, '2ème Primaire B', 'primaire', NULL, NULL, NULL, NULL, 30, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(10, '3ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 28, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(11, '4ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 32, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(12, '5ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 25, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(13, '6ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 27, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(14, '1ère Secondaire Secondaire A', 'primaire', NULL, NULL, NULL, NULL, 24, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
+(15, '1ère Primaire', 'primaire', NULL, 'Salle 201', 'Classe debutante', 1, 30, 0.00, 0.00, 3, '2025-09-02 17:18:37', NULL);
 
 -- --------------------------------------------------------
 
@@ -352,6 +361,28 @@ INSERT INTO `criteres_admission_classes` (`id`, `annee_scolaire_id`, `classe_id`
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `decisions_admission`
+--
+
+CREATE TABLE `decisions_admission` (
+  `id` int NOT NULL,
+  `demande_admission_id` int NOT NULL,
+  `decision` enum('acceptee','refusee','acceptee_conditionnelle','mise_en_liste_attente') NOT NULL,
+  `date_decision` date NOT NULL,
+  `decideur_id` int NOT NULL,
+  `motif_decision` text NOT NULL,
+  `conditions_speciales` text,
+  `date_limite_reponse` date DEFAULT NULL,
+  `frais_inscription_final` decimal(10,2) DEFAULT NULL,
+  `frais_scolarite_final` decimal(10,2) DEFAULT NULL,
+  `reduction_finale` decimal(5,2) DEFAULT NULL,
+  `commentaire` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `demandes_admission`
 --
 
@@ -378,7 +409,7 @@ CREATE TABLE `demandes_admission` (
   `relation_contact` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ecole_precedente` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `classe_precedente` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `annee_precedente` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `annee_precedente` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `moyenne_precedente` decimal(4,2) DEFAULT NULL,
   `certificat_naissance` enum('non_fourni','fourni','verifie','rejete') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'non_fourni',
   `bulletin_precedent` enum('non_fourni','fourni','verifie','rejete') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'non_fourni',
@@ -419,9 +450,13 @@ CREATE TABLE `demandes_admission` (
 --
 
 INSERT INTO `demandes_admission` (`id`, `numero_demande`, `annee_scolaire_id`, `classe_demandee_id`, `nom_eleve`, `prenom_eleve`, `date_naissance`, `lieu_naissance`, `sexe`, `adresse`, `telephone`, `email`, `nom_pere`, `nom_mere`, `profession_pere`, `profession_mere`, `telephone_parent`, `personne_contact`, `telephone_contact`, `relation_contact`, `ecole_precedente`, `classe_precedente`, `annee_precedente`, `moyenne_precedente`, `certificat_naissance`, `bulletin_precedent`, `certificat_medical`, `photo_identite`, `autres_documents`, `motif_demande`, `besoins_speciaux`, `allergies_medicales`, `status`, `priorite`, `date_entretien`, `notes_entretien`, `decision_motif`, `traite_par`, `date_traitement`, `frais_inscription`, `frais_scolarite`, `reduction_accordee`, `observations`, `created_at`, `updated_at`, `note_evaluation`, `commentaire_evaluation`, `recommandation`, `evalue_par`, `date_evaluation`, `verifie_par`, `date_verification`, `commentaire_documents`, `eleve_cree_id`, `date_inscription`, `commentaire_traitement`) VALUES
-(1, 'ADM2025001', 1, 1, 'DEMANDE ghghghg', 'Test1', '2017-06-17', 'Kinshasa', 'M', '', '', '', 'DEMANDE Père', 'DEMANDE Mère', '', '', '+243 123 456 789', '', '', '', 'École Maternelle Saint-Pierre', '', '', NULL, 'fourni', '', '', '', '', 'Demande d&amp;#039;admission standard', '', '', 'acceptee', 'normale', NULL, NULL, NULL, 1, '2025-08-09 22:12:55', 0.00, 0.00, 0.00, '', '2025-08-08 16:11:20', '2025-08-09 22:12:55', NULL, NULL, NULL, NULL, NULL, 1, '2025-08-09 17:28:46', 'sdsdsd', NULL, NULL, NULL),
-(2, 'ADM2025002', 1, 2, 'CANDIDAT', 'Marie', '2010-07-22', 'Lubumbashi', 'F', NULL, NULL, NULL, 'CANDIDAT Papa', 'CANDIDAT Maman', NULL, NULL, '+243 987 654 321', NULL, NULL, NULL, 'École Primaire Notre-Dame', NULL, NULL, NULL, '', '', '', '', NULL, 'Demande d\'admission standard', NULL, NULL, 'acceptee', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-08-08 16:11:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(3, 'ADM2025003', 1, 3, 'URGENT', 'Paul', '2011-01-10', 'Goma', 'M', NULL, NULL, NULL, 'URGENT Père', 'URGENT Mère', NULL, NULL, '+243 555 666 777', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', '', '', '', NULL, 'Déménagement urgent de la famille', NULL, NULL, 'acceptee', 'urgente', NULL, NULL, NULL, 1, '2025-08-08 16:39:17', 0.00, 0.00, 0.00, NULL, '2025-08-08 16:11:20', '2025-08-08 16:39:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(1, 'ADM2025001', 1, 1, 'DEMANDE ghghghg', 'Test1', '2017-06-17', 'Kinshasa', 'M', '', '', '', 'DEMANDE Père', 'DEMANDE Mère', '', '', '+243 123 456 789', '', '', '', 'École Maternelle Saint-Pierre', '', '', NULL, 'fourni', '', '', '', '', 'Demande d&amp;#039;admission standard', '', '', 'inscrit', 'normale', NULL, NULL, NULL, 1, '2025-08-09 22:12:55', 0.00, 0.00, 0.00, '', '2025-08-08 16:11:20', '2025-09-02 20:44:52', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', 1, '2025-08-09 17:28:46', 'sdsdsd', 16, '2025-09-02', NULL),
+(2, 'ADM2025002', 1, 2, 'CANDIDAT', 'Marie', '2010-07-22', 'Lubumbashi', 'F', NULL, NULL, NULL, 'CANDIDAT Papa', 'CANDIDAT Maman', NULL, NULL, '+243 987 654 321', NULL, NULL, NULL, 'École Primaire Notre-Dame', NULL, NULL, NULL, '', '', '', '', NULL, 'Demande d\'admission standard', NULL, NULL, 'inscrit', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-08-08 16:11:20', '2025-09-02 20:44:52', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 15, '2025-09-02', NULL),
+(3, 'ADM2025003', 1, 3, 'URGENT', 'Paul', '2011-01-10', 'Goma', 'M', NULL, NULL, NULL, 'URGENT Père', 'URGENT Mère', NULL, NULL, '+243 555 666 777', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', '', '', '', NULL, 'Déménagement urgent de la famille', NULL, NULL, 'inscrit', 'urgente', NULL, NULL, NULL, 1, '2025-08-08 16:39:17', 0.00, 0.00, 0.00, NULL, '2025-08-08 16:11:20', '2025-09-02 20:30:04', 12.00, 'scdsdsd', 'accepter', 2, '2025-09-02 20:30:04', NULL, NULL, NULL, 17, '2025-09-02', NULL),
+(7, 'ADM2025004', 2, 14, 'SDSDSD', 'DSDSDS', '2014-06-02', 'Goma', 'M', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 'Carin Mumbere Siwa', 'DSDSD', 'SDSDSDSDSD', 12.00, 'non_fourni', '', '', 'non_fourni', '', '', 'SDSDSDSD', 'DSDSDSD', 'inscrit', 'normale', NULL, NULL, NULL, 2, '2025-09-02 16:36:47', 5000.00, 5000.00, 0.00, 'DSDSDSD', '2025-09-02 16:31:03', '2025-09-02 20:44:52', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 14, '2025-09-02', NULL),
+(8, 'TEST001', 1, 1, 'CANDIDAT', 'Test Accepté', '2010-01-01', NULL, 'M', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'non_fourni', 'non_fourni', 'non_fourni', 'non_fourni', NULL, NULL, NULL, NULL, 'inscrit', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-09-02 19:21:13', '2025-09-02 21:02:39', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 20, '2025-09-02', NULL),
+(9, 'TEST002', 1, 2, 'CANDIDATE', 'Test Acceptée', '2011-02-02', NULL, 'F', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'non_fourni', 'non_fourni', 'non_fourni', 'non_fourni', NULL, NULL, NULL, NULL, 'inscrit', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-09-02 19:21:19', '2025-09-02 21:02:34', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 19, '2025-09-02', NULL),
+(10, 'ADM2025007', 2, 8, 'fdvcvcv', 'vcvcvcv', '2019-06-03', 'vvcvcv', 'M', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 'Carin Mumbere Siwa', 'DSDSDdddcx', 'SDSDSDSDSDcccdgttt', 17.00, '', 'non_fourni', '', '', 'dfdfdf', 'fdfdf', 'dfdf', 'fdfdf', 'inscrit', 'urgente', '2025-10-28 12:30:00', NULL, NULL, 2, '2025-09-02 20:43:04', 0.00, 0.00, 0.00, 'fdfdf', '2025-09-02 20:37:03', '2025-09-02 21:02:31', 15.00, 'DSDSD', 'accepter', 2, '2025-09-02 20:44:17', NULL, NULL, NULL, 18, '2025-09-02', '');
 
 -- --------------------------------------------------------
 
@@ -452,6 +487,28 @@ CREATE TABLE `depenses` (
 
 INSERT INTO `depenses` (`id`, `libelle`, `description`, `montant`, `type_depense`, `date_depense`, `fournisseur`, `numero_facture`, `mode_paiement`, `statut`, `annee_scolaire_id`, `user_id`, `created_at`, `updated_at`) VALUES
 (1, 'Achat de matériel de bureau', 'dfdfdfdfdfdfd', 120000.00, 'autre', '2025-08-09', 'Yhug Hung Chine', '00SDEEEE', 'especes', 'en_attente', 1, 1, '2025-08-09 17:33:09', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `documents_eleve`
+--
+
+CREATE TABLE `documents_eleve` (
+  `id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `type_document` enum('certificat_naissance','bulletin_precedent','certificat_medical','photo_identite','carte_etudiant','certificat_scolarite','autre') NOT NULL,
+  `nom_fichier` varchar(255) NOT NULL,
+  `chemin_fichier` varchar(500) NOT NULL,
+  `taille_fichier` int DEFAULT NULL,
+  `type_mime` varchar(100) DEFAULT NULL,
+  `status` enum('en_attente','valide','rejete','expire') DEFAULT 'en_attente',
+  `date_upload` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `date_validation` timestamp NULL DEFAULT NULL,
+  `valide_par` int DEFAULT NULL,
+  `commentaire` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -530,31 +587,41 @@ CREATE TABLE `eleves` (
   `telephone_parent` varchar(20) DEFAULT NULL,
   `personne_contact` varchar(100) DEFAULT NULL,
   `telephone_contact` varchar(20) DEFAULT NULL,
+  `relation_contact` varchar(100) DEFAULT NULL,
+  `classe_id` int DEFAULT NULL,
+  `annee_scolaire_id` int DEFAULT NULL,
   `photo` varchar(255) DEFAULT NULL,
   `status` enum('actif','transfere','abandonne','diplome') DEFAULT 'actif',
   `date_inscription` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `email_parent` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Informations des ├®l├¿ves avec relations aux classes et ann├®es scolaires';
 
 --
 -- Déchargement des données de la table `eleves`
 --
 
-INSERT INTO `eleves` (`id`, `numero_eleve`, `numero_matricule`, `parent_id`, `nom`, `prenom`, `sexe`, `date_naissance`, `lieu_naissance`, `adresse`, `telephone`, `email`, `nom_pere`, `nom_mere`, `profession_pere`, `profession_mere`, `telephone_parent`, `personne_contact`, `telephone_contact`, `photo`, `status`, `date_inscription`, `created_at`, `updated_at`, `email_parent`) VALUES
-(1, '', 'MAT2024001', 1, 'MUKENDI', 'Jean', 'M', '2010-05-15', 'Kinshasa', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
-(2, '', 'MAT2024002', 2, 'KABILA', 'Marie', 'F', '2011-03-22', 'Lubumbashi', '', '', '', 'DSD', 'DSD', 'DSD', 'DSD', '45555555', NULL, NULL, 'uploads/photos/eleve_2_1755540852.jpg', 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-18 18:14:12', NULL),
-(3, '', 'MAT2024003', 3, 'TSHISEKEDI', 'Paul', 'M', '2010-08-10', 'Mbuji-Mayi', '', '', '', '', '', '', '', '', NULL, NULL, 'uploads/photos/eleve_3_1755163116.png', 'diplome', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-14 09:18:36', NULL),
-(4, '', 'MAT2024004', 4, 'MBUYI', 'Grace', 'F', '2011-01-18', 'Kananga', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
-(5, '', 'MAT2024005', 5, 'KASONGO', 'David', 'M', '2010-12-05', 'Kisangani', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
-(6, '', 'MAT2024006', NULL, 'NGOZI', 'Sarah', 'F', '2011-07-30', 'Goma', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(7, '', 'MAT2024007', NULL, 'LUMUMBA', 'Patrick', 'M', '2010-09-12', 'Kinshasa', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(8, '', 'MAT2024008', NULL, 'KALONJI', 'Esther', 'F', '2011-02-28', 'Mbuji-Mayi', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(9, '', 'MAT2024009', NULL, 'MOBUTU', 'Joseph', 'M', '2010-11-03', 'Gbadolite', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(10, '', 'MAT2024010', NULL, 'KIMBANGU', 'Ruth', 'F', '2011-06-14', 'Nkamba', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(12, '', 'AUTO20250808170719', NULL, 'BARAKA BIGEGA', 'ESPOIR', 'M', '2011-06-15', 'Goma', '123 Avenue de la Paix, Kinshasa', '+243 123 456 789', 'bigega@gmail.com', 'BIGEGA', 'BARAKA', 'Ingénieur', 'Enseignante', '+243 987 654 321', 'AUTOTEST Contact', '+243 111 222 333', 'uploads/photos/eleve_12_1756191509.jpg', 'actif', '2025-08-08 16:07:19', '2025-08-08 18:07:19', '2025-08-26 06:58:29', NULL),
-(13, '20250001', 'STU20253643', NULL, 'KAMBALE MBOKANI', 'ISAAC', 'M', '1998-02-26', 'Goma', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '+243975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '+243975579097', '+243975579097', '+243975579097', '68ad5330239c5.jpg', 'actif', '2025-08-26 06:24:48', '2025-08-26 08:24:48', '2025-08-26 06:28:56', NULL);
+INSERT INTO `eleves` (`id`, `numero_eleve`, `numero_matricule`, `parent_id`, `nom`, `prenom`, `sexe`, `date_naissance`, `lieu_naissance`, `adresse`, `telephone`, `email`, `nom_pere`, `nom_mere`, `profession_pere`, `profession_mere`, `telephone_parent`, `personne_contact`, `telephone_contact`, `relation_contact`, `classe_id`, `annee_scolaire_id`, `photo`, `status`, `date_inscription`, `created_at`, `updated_at`, `email_parent`) VALUES
+(1, '', 'MAT2024001', 1, 'MUKENDI', 'Jean', 'M', '2010-05-15', 'Kinshasa', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
+(2, '', 'MAT2024002', 2, 'KABILA', 'Marie', 'F', '2011-03-22', 'Lubumbashi', '', '', '', 'DSD', 'DSD', 'DSD', 'DSD', '45555555', NULL, NULL, NULL, NULL, NULL, 'uploads/photos/eleve_2_1755540852.jpg', 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-18 18:14:12', NULL),
+(3, '', 'MAT2024003', 3, 'TSHISEKEDI', 'Paul', 'M', '2010-08-10', 'Mbuji-Mayi', '', '', '', '', '', '', '', '', NULL, NULL, NULL, NULL, NULL, 'uploads/photos/eleve_3_1755163116.png', 'diplome', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-14 09:18:36', NULL),
+(4, '', 'MAT2024004', 4, 'MBUYI', 'Grace', 'F', '2011-01-18', 'Kananga', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-09-02 13:48:00', NULL),
+(5, '', 'MAT2024005', 5, 'KASONGO', 'David', 'M', '2010-12-05', 'Kisangani', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
+(6, '', 'MAT2024006', NULL, 'NGOZI', 'Sarah', 'F', '2011-07-30', 'Goma', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
+(7, '', 'MAT2024007', NULL, 'LUMUMBA', 'Patrick', 'M', '2010-09-12', 'Kinshasa', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
+(8, '', 'MAT2024008', NULL, 'KALONJI', 'Esther', 'F', '2011-02-28', 'Mbuji-Mayi', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
+(9, '', 'MAT2024009', NULL, 'MOBUTU', 'Joseph', 'M', '2010-11-03', 'Gbadolite', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
+(10, '', 'MAT2024010', NULL, 'KIMBANGU', 'Ruth', 'F', '2011-06-14', 'Nkamba', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
+(12, '', 'AUTO20250808170719', NULL, 'BARAKA BIGEGA', 'ESPOIR', 'M', '2011-06-15', 'Goma', '123 Avenue de la Paix, Kinshasa', '+243 123 456 789', 'bigega@gmail.com', 'BIGEGA', 'BARAKA', 'Ingénieur', 'Enseignante', '+243 987 654 321', 'AUTOTEST Contact', '+243 111 222 333', NULL, NULL, NULL, 'uploads/photos/eleve_12_1756191509.jpg', 'actif', '2025-08-08 16:07:19', '2025-08-08 18:07:19', '2025-08-26 06:58:29', NULL),
+(13, '20250001', 'STU20253643', NULL, 'KAMBALE MBOKANI', 'ISAAC', 'M', '1998-02-26', 'Goma', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '+243975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '+243975579097', '+243975579097', '+243975579097', NULL, NULL, NULL, '68ad5330239c5.jpg', 'actif', '2025-08-26 06:24:48', '2025-08-26 08:24:48', '2025-08-26 06:28:56', NULL),
+(14, '20250002', 'MAT2025001', NULL, 'SDSDSD', 'DSDSDS', 'M', '2014-06-02', 'Goma', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 14, 2, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:46:13', NULL, NULL),
+(15, '20250003', 'MAT2025002', NULL, 'CANDIDAT', 'Marie', 'F', '2010-07-22', 'Lubumbashi', NULL, NULL, NULL, 'CANDIDAT Papa', 'CANDIDAT Maman', NULL, NULL, '+243 987 654 321', NULL, NULL, NULL, 3, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:49:11', NULL, NULL),
+(16, '20250004', 'MAT2025003', NULL, 'DEMANDE ghghghg', 'Test1', 'M', '2017-06-17', 'Kinshasa', '', '', '', 'DEMANDE Père', 'DEMANDE Mère', '', '', '+243 123 456 789', '', '', '', 1, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:50:05', NULL, NULL),
+(17, '20250005', 'MAT2025004', NULL, 'URGENT', 'Paul', 'M', '2011-01-10', 'Goma', NULL, NULL, NULL, 'URGENT Père', 'URGENT Mère', NULL, NULL, '+243 555 666 777', NULL, NULL, NULL, 3, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:50:09', NULL, NULL),
+(18, '20250006', 'MAT2025005', NULL, 'fdvcvcv', 'vcvcvcv', 'M', '2019-06-03', 'vvcvcv', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 8, 2, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 23:02:31', NULL, NULL),
+(19, '20250007', 'MAT2025006', NULL, 'CANDIDATE', 'Test Acceptée', 'F', '2011-02-02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 23:02:34', NULL, NULL),
+(20, '20250008', 'MAT2025007', NULL, 'CANDIDAT', 'Test Accepté', 'M', '2010-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 23:02:39', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -738,6 +805,57 @@ INSERT INTO `etablissements` (`id`, `nom`, `adresse`, `telephone`, `email`, `dir
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `etapes_admission`
+--
+
+CREATE TABLE `etapes_admission` (
+  `id` int NOT NULL,
+  `nom` varchar(100) NOT NULL,
+  `description` text,
+  `ordre` int NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `etapes_admission`
+--
+
+INSERT INTO `etapes_admission` (`id`, `nom`, `description`, `ordre`, `status`, `created_at`) VALUES
+(1, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:06:00'),
+(2, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:06:00'),
+(3, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:06:00'),
+(4, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:06:00'),
+(5, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:06:00'),
+(6, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:06:00'),
+(7, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:08:53'),
+(8, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:08:53'),
+(9, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:08:53'),
+(10, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:08:53'),
+(11, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:08:53'),
+(12, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:08:53'),
+(13, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:10:15'),
+(14, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:10:15'),
+(15, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:10:15'),
+(16, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:10:15'),
+(17, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:10:15'),
+(18, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:10:15'),
+(19, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:24:19'),
+(20, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:24:19'),
+(21, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:24:19'),
+(22, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:24:19'),
+(23, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:24:19'),
+(24, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:24:19'),
+(25, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:25:47'),
+(26, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:25:47'),
+(27, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:25:47'),
+(28, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:25:47'),
+(29, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:25:47'),
+(30, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:25:47');
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `evaluations`
 --
 
@@ -774,6 +892,32 @@ INSERT INTO `evaluations` (`id`, `nom`, `description`, `type`, `classe_id`, `mat
 (2, 'Interrogation - Tables de multiplication', 'Évaluation des tables de multiplication de 1 à 10', 'interrogation', 1, 1, 'interrogation', 1, '2024-10-15', '08:00:00', '09:00:00', 60, 20.00, '20 questions à 1 point chacune', 'Calculer les multiplications sans calculatrice. Écrire lisiblement.gfgfgfgfgf', 'terminee', 1.00, '1er_trimestre', 1, 1, '2025-08-09 00:25:04', '2025-08-09 00:42:37'),
 (3, 'Devoir - Conjugaison', 'Évaluation sur la conjugaison des verbes du 1er groupe', 'devoir', 2, 1, 'interrogation', 1, '2024-10-20', '10:00:00', '11:30:00', 90, 20.00, 'Exercice 1: 8 pts, Exercice 2: 7 pts, Exercice 3: 5 pts', 'Conjuguer les verbes aux temps demandés. Attention à l\'orthographe.', 'terminee', 2.00, '1er_trimestre', 1, 1, '2025-08-09 00:25:04', NULL),
 (4, 'Examen - Sciences naturelles', 'Examen sur le corps humain et la digestion', 'examen', 3, 1, 'interrogation', 1, '2024-11-05', '14:00:00', '16:00:00', 120, 20.00, 'QCM: 10 pts, Questions ouvertes: 10 pts', 'Répondre à toutes les questions. Justifier les réponses ouvertes.', 'programmee', 3.00, '1er_trimestre', 1, 1, '2025-08-09 00:25:04', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `evaluations_admission`
+--
+
+CREATE TABLE `evaluations_admission` (
+  `id` int NOT NULL,
+  `demande_admission_id` int NOT NULL,
+  `type_evaluation` enum('test_ecrit','entretien','examen_medical','evaluation_psychologique','test_niveau') NOT NULL,
+  `date_evaluation` date NOT NULL,
+  `heure_debut` time DEFAULT NULL,
+  `heure_fin` time DEFAULT NULL,
+  `lieu` varchar(255) DEFAULT NULL,
+  `evaluateur_id` int DEFAULT NULL,
+  `note_sur_20` decimal(4,2) DEFAULT NULL,
+  `note_sur_100` decimal(5,2) DEFAULT NULL,
+  `coefficient` decimal(3,2) DEFAULT '1.00',
+  `resultat` enum('excellent','tres_bien','bien','moyen','insuffisant','nul') DEFAULT 'moyen',
+  `commentaire` text,
+  `decision_provisoire` enum('accepter','refuser','attendre','conditionnel') DEFAULT 'attendre',
+  `conditions_acceptation` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -822,6 +966,19 @@ CREATE TABLE `frais_eleves` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `frais_eleves`
+--
+
+INSERT INTO `frais_eleves` (`id`, `eleve_id`, `annee_scolaire_id`, `frais_inscription`, `frais_scolarite`, `reduction_accordee`, `montant_total`, `montant_paye`, `solde`, `status`, `created_at`, `updated_at`) VALUES
+(1, 14, 2, 5000.00, 5000.00, 0.00, 10000.00, 0.00, 0.00, 'impaye', '2025-09-02 18:46:13', NULL),
+(2, 15, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 18:49:11', NULL),
+(3, 16, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 18:50:05', NULL),
+(4, 17, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 18:50:09', NULL),
+(5, 18, 2, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 21:02:31', NULL),
+(6, 19, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 21:02:34', NULL),
+(7, 20, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 21:02:39', NULL);
 
 -- --------------------------------------------------------
 
@@ -918,7 +1075,35 @@ INSERT INTO `inscriptions` (`id`, `eleve_id`, `classe_id`, `annee_scolaire_id`, 
 (9, 9, 2, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
 (10, 10, 3, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
 (11, 12, 1, 1, '2025-08-08 16:07:19', 50000.00, 'inscrit', '2025-08-08 16:07:19', NULL),
-(12, 13, 7, 1, '2025-08-25 22:00:00', 0.00, 'inscrit', '2025-08-26 06:24:48', NULL);
+(12, 13, 7, 1, '2025-08-25 22:00:00', 0.00, 'inscrit', '2025-08-26 06:24:48', NULL),
+(13, 4, 11, 2, '2025-09-02 13:48:00', 0.00, 'inscrit', '2025-09-02 13:48:00', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `inscriptions_detaillees`
+--
+
+CREATE TABLE `inscriptions_detaillees` (
+  `id` int NOT NULL,
+  `demande_admission_id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `annee_scolaire_id` int NOT NULL,
+  `classe_id` int NOT NULL,
+  `section_id` int DEFAULT NULL,
+  `date_inscription` date NOT NULL,
+  `frais_inscription_paye` decimal(10,2) DEFAULT '0.00',
+  `frais_scolarite_paye` decimal(10,2) DEFAULT '0.00',
+  `reduction_appliquee` decimal(5,2) DEFAULT '0.00',
+  `mode_paiement` enum('especes','cheque','virement','mobile_money','carte') DEFAULT 'especes',
+  `numero_recu` varchar(100) DEFAULT NULL,
+  `status` enum('inscrit','en_attente_paiement','suspendu','transfere','abandonne','diplome') DEFAULT 'inscrit',
+  `date_debut_scolarite` date DEFAULT NULL,
+  `date_fin_scolarite` date DEFAULT NULL,
+  `observations` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -1137,6 +1322,27 @@ INSERT INTO `notifications_recouvrement` (`id`, `type_notification`, `sujet`, `m
 (1, 'sms', 'Rappel paiement', 'Bonjour {nom_parent}, votre enfant {nom_eleve} a une dette de {montant} FC. Merci de r├®gulariser.', 1, 1, 'sent', 1, '2025-08-14 13:36:55', NULL),
 (2, 'email', 'Lettre de rappel', 'Madame, Monsieur, nous vous rappelons que votre enfant {nom_eleve} a une dette de {montant} FC.', 1, 1, 'sent', 1, '2025-08-14 13:36:55', NULL),
 (3, 'lettre', 'Mise en demeure', 'Suite ├á nos relances, nous vous mettons en demeure de r├®gulariser la dette de {montant} FC.', 2, 1, 'pending', 1, '2025-08-14 13:36:55', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `notifications_suivi`
+--
+
+CREATE TABLE `notifications_suivi` (
+  `id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `type_notification` enum('evaluation_pending','decision_pending','inscription_pending','paiement_pending','document_missing','reminder') NOT NULL,
+  `titre` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `priorite` enum('basse','normale','haute','urgente') DEFAULT 'normale',
+  `status` enum('non_lue','lue','traitee') DEFAULT 'non_lue',
+  `destinataire_id` int DEFAULT NULL,
+  `date_envoi` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `date_lecture` timestamp NULL DEFAULT NULL,
+  `date_traitement` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -1422,6 +1628,51 @@ CREATE TABLE `sanctions` (
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `sections`
+--
+
+CREATE TABLE `sections` (
+  `id` int NOT NULL,
+  `nom` varchar(100) NOT NULL,
+  `niveau` enum('primaire','secondaire') NOT NULL,
+  `description` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `sections`
+--
+
+INSERT INTO `sections` (`id`, `nom`, `niveau`, `description`, `created_at`) VALUES
+(1, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:06:00'),
+(2, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
+(3, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
+(4, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
+(5, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
+(6, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:08:53'),
+(7, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
+(8, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
+(9, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
+(10, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
+(11, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:10:15'),
+(12, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
+(13, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
+(14, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
+(15, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
+(16, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:24:19'),
+(17, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
+(18, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
+(19, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
+(20, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
+(21, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:25:47'),
+(22, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:25:47'),
+(23, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:25:47'),
+(24, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:25:47'),
+(25, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:25:47');
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `sms_logs`
 --
 
@@ -1464,6 +1715,52 @@ CREATE TABLE `solvabilite_eleves` (
   `pourcentage_paye` decimal(5,2) DEFAULT '0.00',
   `status_solvabilite` enum('solvable','partiellement_solvable','non_solvable') DEFAULT 'non_solvable',
   `derniere_maj` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `suivi_etapes_admission`
+--
+
+CREATE TABLE `suivi_etapes_admission` (
+  `id` int NOT NULL,
+  `demande_admission_id` int NOT NULL,
+  `etape_id` int NOT NULL,
+  `status` enum('en_attente','en_cours','terminee','annulee') DEFAULT 'en_attente',
+  `date_debut` timestamp NULL DEFAULT NULL,
+  `date_fin` timestamp NULL DEFAULT NULL,
+  `user_id` int DEFAULT NULL,
+  `commentaire` text,
+  `documents_requis` text,
+  `documents_fournis` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `suivi_scolaire`
+--
+
+CREATE TABLE `suivi_scolaire` (
+  `id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `annee_scolaire_id` int NOT NULL,
+  `classe_id` int NOT NULL,
+  `trimestre` enum('1er_trimestre','2eme_trimestre','3eme_trimestre','annuel') NOT NULL,
+  `moyenne_generale` decimal(4,2) DEFAULT NULL,
+  `rang_classe` int DEFAULT NULL,
+  `effectif_classe` int DEFAULT NULL,
+  `appreciation` text,
+  `decision_conseil` enum('admis','admis_avec_reserves','redouble','exclu') DEFAULT 'admis',
+  `commentaire_conseil` text,
+  `date_conseil` date DEFAULT NULL,
+  `signature_prof_principal` varchar(100) DEFAULT NULL,
+  `signature_directeur` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -1848,7 +2145,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `nom`, `prenom`, `email`, `telephone`, `role`, `status`, `photo`, `adresse`, `date_naissance`, `genre`, `derniere_connexion`, `tentatives_connexion`, `compte_verrouille`, `date_verrouillage`, `created_at`, `updated_at`) VALUES
-(1, 'admin', '7c4a8d09ca3762af61e59520943dc26494f8941b', 'Siwa', 'Carin', 'thecarinsiwa@gmail.com', '0975579097', 'secretaire', 'actif', NULL, NULL, NULL, NULL, '2025-08-26 06:14:56', 0, 0, NULL, '2025-08-08 13:26:12', '2025-08-26 06:14:56');
+(1, 'admin', '7c4a8d09ca3762af61e59520943dc26494f8941b', 'Siwa', 'Carin', 'thecarinsiwa@gmail.com', '0975579097', 'comptable', 'actif', NULL, NULL, NULL, NULL, '2025-09-02 17:05:53', 0, 0, NULL, '2025-08-08 13:26:12', '2025-09-02 17:05:53'),
+(2, 'csiwa', '7c222fb2927d828af22f592134e8932480637c0d', 'Siwa', 'Carin', 'carin@gmail.com', '0975579097', 'admin', 'actif', NULL, NULL, NULL, 'M', '2025-09-02 19:17:38', 0, 0, NULL, '2025-08-31 08:29:36', '2025-09-02 19:17:38');
 
 -- --------------------------------------------------------
 
@@ -1977,7 +2275,17 @@ INSERT INTO `user_actions_log` (`id`, `user_id`, `action`, `module`, `details`, 
 (102, 1, 'export_schedule', 'academic', 'Export emploi du temps - Format: pdf, Type: classe', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 14:12:45'),
 (103, 1, 'export_schedule', 'academic', 'Export emploi du temps - Format: pdf, Type: classe', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 14:13:19'),
 (104, 1, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 17:52:55'),
-(105, 1, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 17:53:28');
+(105, 1, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 17:53:28'),
+(106, 2, 'close_academic_year', 'academic', 'Année scolaire fermée: 2023-2024', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-31 08:34:46'),
+(107, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-31 08:35:27'),
+(108, 2, 'reinscription', 'students', 'Réinscription de l\'élève ID: 4 pour l\'année 2025-2026', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 13:48:00'),
+(109, 2, 'update_password', 'admin', 'Mot de passe modifié pour: admin (Siwa Carin)', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 13:54:10'),
+(110, 2, 'create_academic_year', 'academic', 'Nouvelle année scolaire créée: 2026-2027 (active)', 3, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 16:59:15'),
+(111, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2023-2024', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:00:29'),
+(112, 2, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:03:55'),
+(113, 2, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:05:35'),
+(114, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2026-2027', 3, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:15:40'),
+(115, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 18:40:18');
 
 --
 -- Index pour les tables déchargées
@@ -2083,6 +2391,14 @@ ALTER TABLE `criteres_admission_classes`
   ADD KEY `classe_id` (`classe_id`);
 
 --
+-- Index pour la table `decisions_admission`
+--
+ALTER TABLE `decisions_admission`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `decideur_id` (`decideur_id`),
+  ADD KEY `idx_decisions_demande` (`demande_admission_id`);
+
+--
 -- Index pour la table `demandes_admission`
 --
 ALTER TABLE `demandes_admission`
@@ -2110,6 +2426,14 @@ ALTER TABLE `depenses`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Index pour la table `documents_eleve`
+--
+ALTER TABLE `documents_eleve`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `valide_par` (`valide_par`),
+  ADD KEY `idx_documents_eleve` (`eleve_id`);
+
+--
 -- Index pour la table `documents_eleves`
 --
 ALTER TABLE `documents_eleves`
@@ -2125,7 +2449,9 @@ ALTER TABLE `documents_eleves`
 ALTER TABLE `eleves`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `numero_matricule` (`numero_matricule`),
-  ADD KEY `idx_parent_id` (`parent_id`);
+  ADD KEY `idx_parent_id` (`parent_id`),
+  ADD KEY `idx_classe_id` (`classe_id`),
+  ADD KEY `idx_annee_scolaire_id` (`annee_scolaire_id`);
 
 --
 -- Index pour la table `emplois_temps`
@@ -2179,6 +2505,12 @@ ALTER TABLE `etablissements`
   ADD UNIQUE KEY `code_etablissement` (`code_etablissement`);
 
 --
+-- Index pour la table `etapes_admission`
+--
+ALTER TABLE `etapes_admission`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Index pour la table `evaluations`
 --
 ALTER TABLE `evaluations`
@@ -2187,6 +2519,14 @@ ALTER TABLE `evaluations`
   ADD KEY `matiere_id` (`matiere_id`),
   ADD KEY `enseignant_id` (`enseignant_id`),
   ADD KEY `annee_scolaire_id` (`annee_scolaire_id`);
+
+--
+-- Index pour la table `evaluations_admission`
+--
+ALTER TABLE `evaluations_admission`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `evaluateur_id` (`evaluateur_id`),
+  ADD KEY `idx_evaluations_demande` (`demande_admission_id`);
 
 --
 -- Index pour la table `factures`
@@ -2238,6 +2578,16 @@ ALTER TABLE `inscriptions`
   ADD UNIQUE KEY `unique_inscription` (`eleve_id`,`annee_scolaire_id`),
   ADD KEY `classe_id` (`classe_id`),
   ADD KEY `annee_scolaire_id` (`annee_scolaire_id`);
+
+--
+-- Index pour la table `inscriptions_detaillees`
+--
+ALTER TABLE `inscriptions_detaillees`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `demande_admission_id` (`demande_admission_id`),
+  ADD KEY `annee_scolaire_id` (`annee_scolaire_id`),
+  ADD KEY `classe_id` (`classe_id`),
+  ADD KEY `idx_inscriptions_eleve` (`eleve_id`);
 
 --
 -- Index pour la table `livres`
@@ -2317,6 +2667,14 @@ ALTER TABLE `notifications_recouvrement`
   ADD KEY `type_notification` (`type_notification`),
   ADD KEY `status` (`status`),
   ADD KEY `created_by` (`created_by`);
+
+--
+-- Index pour la table `notifications_suivi`
+--
+ALTER TABLE `notifications_suivi`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `destinataire_id` (`destinataire_id`),
+  ADD KEY `idx_notifications_eleve` (`eleve_id`);
 
 --
 -- Index pour la table `paiements`
@@ -2417,6 +2775,12 @@ ALTER TABLE `sanctions`
   ADD KEY `enseignant_id` (`enseignant_id`);
 
 --
+-- Index pour la table `sections`
+--
+ALTER TABLE `sections`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Index pour la table `sms_logs`
 --
 ALTER TABLE `sms_logs`
@@ -2434,6 +2798,24 @@ ALTER TABLE `solvabilite_eleves`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_eleve_annee` (`eleve_id`,`annee_scolaire_id`),
   ADD KEY `annee_scolaire_id` (`annee_scolaire_id`);
+
+--
+-- Index pour la table `suivi_etapes_admission`
+--
+ALTER TABLE `suivi_etapes_admission`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `idx_suivi_etapes_demande` (`demande_admission_id`),
+  ADD KEY `idx_suivi_etapes_etape` (`etape_id`);
+
+--
+-- Index pour la table `suivi_scolaire`
+--
+ALTER TABLE `suivi_scolaire`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `annee_scolaire_id` (`annee_scolaire_id`),
+  ADD KEY `classe_id` (`classe_id`),
+  ADD KEY `idx_suivi_scolaire_eleve` (`eleve_id`);
 
 --
 -- Index pour la table `system_settings`
@@ -2497,7 +2879,8 @@ ALTER TABLE `transferts_sorties`
   ADD KEY `idx_type_mouvement` (`type_mouvement`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_date_demande` (`date_demande`),
-  ADD KEY `traite_par` (`traite_par`);
+  ADD KEY `traite_par` (`traite_par`),
+  ADD KEY `idx_transferts_eleve` (`eleve_id`);
 
 --
 -- Index pour la table `transfer_documents`
@@ -2575,7 +2958,7 @@ ALTER TABLE `absences`
 -- AUTO_INCREMENT pour la table `annees_scolaires`
 --
 ALTER TABLE `annees_scolaires`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT pour la table `annonces`
@@ -2611,7 +2994,7 @@ ALTER TABLE `categories_livres`
 -- AUTO_INCREMENT pour la table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT pour la table `commandes`
@@ -2632,16 +3015,28 @@ ALTER TABLE `criteres_admission_classes`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
+-- AUTO_INCREMENT pour la table `decisions_admission`
+--
+ALTER TABLE `decisions_admission`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT pour la table `demandes_admission`
 --
 ALTER TABLE `demandes_admission`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT pour la table `depenses`
 --
 ALTER TABLE `depenses`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `documents_eleve`
+--
+ALTER TABLE `documents_eleve`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `documents_eleves`
@@ -2653,7 +3048,7 @@ ALTER TABLE `documents_eleves`
 -- AUTO_INCREMENT pour la table `eleves`
 --
 ALTER TABLE `eleves`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT pour la table `emplois_temps`
@@ -2686,10 +3081,22 @@ ALTER TABLE `etablissements`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT pour la table `etapes_admission`
+--
+ALTER TABLE `etapes_admission`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+
+--
 -- AUTO_INCREMENT pour la table `evaluations`
 --
 ALTER TABLE `evaluations`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT pour la table `evaluations_admission`
+--
+ALTER TABLE `evaluations_admission`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `factures`
@@ -2701,7 +3108,7 @@ ALTER TABLE `factures`
 -- AUTO_INCREMENT pour la table `frais_eleves`
 --
 ALTER TABLE `frais_eleves`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT pour la table `frais_scolaires`
@@ -2719,7 +3126,13 @@ ALTER TABLE `incidents`
 -- AUTO_INCREMENT pour la table `inscriptions`
 --
 ALTER TABLE `inscriptions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT pour la table `inscriptions_detaillees`
+--
+ALTER TABLE `inscriptions_detaillees`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `livres`
@@ -2768,6 +3181,12 @@ ALTER TABLE `notifications_parents`
 --
 ALTER TABLE `notifications_recouvrement`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT pour la table `notifications_suivi`
+--
+ALTER TABLE `notifications_suivi`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `paiements`
@@ -2836,6 +3255,12 @@ ALTER TABLE `sanctions`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `sections`
+--
+ALTER TABLE `sections`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
 -- AUTO_INCREMENT pour la table `sms_logs`
 --
 ALTER TABLE `sms_logs`
@@ -2845,6 +3270,18 @@ ALTER TABLE `sms_logs`
 -- AUTO_INCREMENT pour la table `solvabilite_eleves`
 --
 ALTER TABLE `solvabilite_eleves`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `suivi_etapes_admission`
+--
+ALTER TABLE `suivi_etapes_admission`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `suivi_scolaire`
+--
+ALTER TABLE `suivi_scolaire`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
@@ -2917,13 +3354,13 @@ ALTER TABLE `types_sanctions`
 -- AUTO_INCREMENT pour la table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `user_actions_log`
 --
 ALTER TABLE `user_actions_log`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
 
 --
 -- Contraintes pour les tables déchargées
@@ -2987,6 +3424,13 @@ ALTER TABLE `criteres_admission_classes`
   ADD CONSTRAINT `criteres_admission_classes_ibfk_2` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE;
 
 --
+-- Contraintes pour la table `decisions_admission`
+--
+ALTER TABLE `decisions_admission`
+  ADD CONSTRAINT `decisions_admission_ibfk_1` FOREIGN KEY (`demande_admission_id`) REFERENCES `demandes_admission` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `decisions_admission_ibfk_2` FOREIGN KEY (`decideur_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Contraintes pour la table `demandes_admission`
 --
 ALTER TABLE `demandes_admission`
@@ -2996,6 +3440,20 @@ ALTER TABLE `demandes_admission`
   ADD CONSTRAINT `fk_demandes_admission_eleve_cree` FOREIGN KEY (`eleve_cree_id`) REFERENCES `eleves` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_demandes_admission_evalue_par` FOREIGN KEY (`evalue_par`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_demandes_admission_verifie_par` FOREIGN KEY (`verifie_par`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `documents_eleve`
+--
+ALTER TABLE `documents_eleve`
+  ADD CONSTRAINT `documents_eleve_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `documents_eleve_ibfk_2` FOREIGN KEY (`valide_par`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `eleves`
+--
+ALTER TABLE `eleves`
+  ADD CONSTRAINT `fk_eleves_annee_scolaire` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eleves_classe` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `emplois_temps`
@@ -3040,6 +3498,13 @@ ALTER TABLE `evaluations`
   ADD CONSTRAINT `evaluations_ibfk_4` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`);
 
 --
+-- Contraintes pour la table `evaluations_admission`
+--
+ALTER TABLE `evaluations_admission`
+  ADD CONSTRAINT `evaluations_admission_ibfk_1` FOREIGN KEY (`demande_admission_id`) REFERENCES `demandes_admission` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `evaluations_admission_ibfk_2` FOREIGN KEY (`evaluateur_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
 -- Contraintes pour la table `factures`
 --
 ALTER TABLE `factures`
@@ -3061,6 +3526,15 @@ ALTER TABLE `inscriptions`
   ADD CONSTRAINT `inscriptions_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`),
   ADD CONSTRAINT `inscriptions_ibfk_2` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`),
   ADD CONSTRAINT `inscriptions_ibfk_3` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`);
+
+--
+-- Contraintes pour la table `inscriptions_detaillees`
+--
+ALTER TABLE `inscriptions_detaillees`
+  ADD CONSTRAINT `inscriptions_detaillees_ibfk_1` FOREIGN KEY (`demande_admission_id`) REFERENCES `demandes_admission` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `inscriptions_detaillees_ibfk_2` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `inscriptions_detaillees_ibfk_3` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`),
+  ADD CONSTRAINT `inscriptions_detaillees_ibfk_4` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`);
 
 --
 -- Contraintes pour la table `livres`
@@ -3097,6 +3571,13 @@ ALTER TABLE `notifications_recouvrement`
   ADD CONSTRAINT `notifications_recouvrement_ibfk_1` FOREIGN KEY (`campagne_id`) REFERENCES `campagnes_recouvrement` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `notifications_recouvrement_ibfk_2` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `notifications_recouvrement_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `notifications_suivi`
+--
+ALTER TABLE `notifications_suivi`
+  ADD CONSTRAINT `notifications_suivi_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `notifications_suivi_ibfk_2` FOREIGN KEY (`destinataire_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Contraintes pour la table `paiements`
@@ -3154,6 +3635,22 @@ ALTER TABLE `sanctions`
 ALTER TABLE `solvabilite_eleves`
   ADD CONSTRAINT `solvabilite_eleves_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `solvabilite_eleves_ibfk_2` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `suivi_etapes_admission`
+--
+ALTER TABLE `suivi_etapes_admission`
+  ADD CONSTRAINT `suivi_etapes_admission_ibfk_1` FOREIGN KEY (`demande_admission_id`) REFERENCES `demandes_admission` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `suivi_etapes_admission_ibfk_2` FOREIGN KEY (`etape_id`) REFERENCES `etapes_admission` (`id`),
+  ADD CONSTRAINT `suivi_etapes_admission_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `suivi_scolaire`
+--
+ALTER TABLE `suivi_scolaire`
+  ADD CONSTRAINT `suivi_scolaire_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `suivi_scolaire_ibfk_2` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`),
+  ADD CONSTRAINT `suivi_scolaire_ibfk_3` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`);
 
 --
 -- Contraintes pour la table `transactions_cartes`

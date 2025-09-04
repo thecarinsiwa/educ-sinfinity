@@ -223,9 +223,27 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body text-center">
                 <?php if ($eleve['photo']): ?>
-                    <img src="../../../uploads/photos/<?php echo htmlspecialchars($eleve['photo']); ?>" 
+                    <?php 
+                    // Vérifier si le chemin contient déjà 'uploads/photos/'
+                    $photo_path = $eleve['photo'];
+                    if (strpos($photo_path, 'uploads/photos/') === 0) {
+                        // Le chemin contient déjà le dossier, on l'utilise tel quel
+                        $photo_src = "../../../" . $photo_path;
+                    } else {
+                        // Le chemin ne contient que le nom du fichier
+                        $photo_src = "../../../uploads/photos/" . $photo_path;
+                    }
+                    ?>
+                    <img src="<?php echo htmlspecialchars($photo_src); ?>" 
                          alt="Photo de <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?>"
-                         class="img-fluid rounded" style="max-height: 200px;">
+                         class="img-fluid rounded" style="max-height: 200px;"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px; display: none;">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-user fa-3x mb-2"></i>
+                            <br>Photo non trouvée
+                        </div>
+                    </div>
                 <?php else: ?>
                     <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px;">
                         <div class="text-center text-muted">

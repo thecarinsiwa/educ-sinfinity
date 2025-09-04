@@ -38,7 +38,7 @@ $cours1 = $database->query(
     "SELECT e.*, m.nom as matiere_nom, m.code as matiere_code,
             CONCAT(p.nom, ' ', p.prenom) as enseignant_nom,
             c.nom as classe_nom, c.niveau
-     FROM emplois_temps e
+     FROM emploi_temps e
      JOIN matieres m ON e.matiere_id = m.id
      JOIN personnel p ON e.enseignant_id = p.id
      JOIN classes c ON e.classe_id = c.id
@@ -50,7 +50,7 @@ $cours2 = $database->query(
     "SELECT e.*, m.nom as matiere_nom, m.code as matiere_code,
             CONCAT(p.nom, ' ', p.prenom) as enseignant_nom,
             c.nom as classe_nom, c.niveau
-     FROM emplois_temps e
+     FROM emploi_temps e
      JOIN matieres m ON e.matiere_id = m.id
      JOIN personnel p ON e.enseignant_id = p.id
      JOIN classes c ON e.classe_id = c.id
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cours_to_modify = $_POST['cours_to_modify'];
                 
                 $database->execute(
-                    "UPDATE emplois_temps SET heure_debut = ?, heure_fin = ? WHERE id = ?",
+                    "UPDATE emploi_temps SET heure_debut = ?, heure_fin = ? WHERE id = ?",
                     [$new_heure_debut, $new_heure_fin, $cours_to_modify]
                 );
                 
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cours_to_modify = $_POST['cours_to_modify'];
                 
                 $database->execute(
-                    "UPDATE emplois_temps SET enseignant_id = ? WHERE id = ?",
+                    "UPDATE emploi_temps SET enseignant_id = ? WHERE id = ?",
                     [$new_enseignant_id, $cours_to_modify]
                 );
                 
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cours_to_modify = $_POST['cours_to_modify'];
                 
                 $database->execute(
-                    "UPDATE emplois_temps SET salle = ? WHERE id = ?",
+                    "UPDATE emploi_temps SET salle = ? WHERE id = ?",
                     [$new_salle, $cours_to_modify]
                 );
                 
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'delete_course':
                 $cours_to_delete = $_POST['cours_to_delete'];
                 
-                $database->execute("DELETE FROM emplois_temps WHERE id = ?", [$cours_to_delete]);
+                $database->execute("DELETE FROM emploi_temps WHERE id = ?", [$cours_to_delete]);
                 
                 logUserAction('resolve_conflict', 'academic', "Conflit résolu en supprimant le cours ID: $cours_to_delete");
                 showMessage('success', 'Conflit résolu en supprimant le cours.');

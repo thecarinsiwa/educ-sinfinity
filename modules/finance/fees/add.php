@@ -20,6 +20,9 @@ $page_title = 'Ajouter un frais scolaire';
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 $errors = [];
 $success = false;
 
@@ -36,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type_frais = sanitizeInput($_POST['type_frais'] ?? '');
     $libelle = sanitizeInput($_POST['libelle'] ?? '');
     $montant = (float)($_POST['montant'] ?? 0);
+    $devise_id = (int)($_POST['devise_id'] ?? 0);
     $obligatoire = isset($_POST['obligatoire']) ? 1 : 0;
     $date_echeance = sanitizeInput($_POST['date_echeance'] ?? '');
     $description = sanitizeInput($_POST['description'] ?? '');
@@ -45,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($type_frais)) $errors[] = 'Le type de frais est obligatoire.';
     if (empty($libelle)) $errors[] = 'Le libellé est obligatoire.';
     if ($montant <= 0) $errors[] = 'Le montant doit être supérieur à 0.';
+    if (!$devise_id) $errors[] = 'La devise est obligatoire.';
     
     // Validation de la date d'échéance
     if (!empty($date_echeance) && !isValidDate($date_echeance)) {
@@ -81,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $columns = $database->query("DESCRIBE frais_scolaires")->fetchAll();
                 $existing_columns = array_column($columns, 'Field');
 
-                $required_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'annee_scolaire_id'];
+                $required_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'devise_id', 'montant_devise_par_defaut', 'annee_scolaire_id'];
                 $missing_columns = array_diff($required_columns, $existing_columns);
 
                 if (!empty($missing_columns)) {
@@ -91,8 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $database->beginTransaction();
 
                     // Construire la requête dynamiquement selon les colonnes disponibles
-                    $insert_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'annee_scolaire_id'];
-                    $insert_values = [$classe_id, $type_frais, $libelle, $montant, $current_year['id']];
+                    $insert_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'devise_id', 'montant_devise_par_defaut', 'annee_scolaire_id'];
+                    
+                    // Calculer le montant dans la devise par défaut
+                    $montant_devise_par_defaut = convertToDefaultCurrency($montant, $devise_id);
+                    
+                    $insert_values = [$classe_id, $type_frais, $libelle, $montant, $devise_id, $montant_devise_par_defaut, $current_year['id']];
 
                     // Ajouter les colonnes optionnelles si elles existent
                     if (in_array('obligatoire', $existing_columns)) {
@@ -148,7 +157,7 @@ try {
         $columns = $database->query("DESCRIBE frais_scolaires")->fetchAll();
         $existing_columns = array_column($columns, 'Field');
 
-        $required_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'annee_scolaire_id'];
+        $required_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'devise_id', 'montant_devise_par_defaut', 'annee_scolaire_id'];
         $missing_columns = array_diff($required_columns, $existing_columns);
 
         if (!empty($missing_columns)) {
@@ -177,6 +186,14 @@ include '../../../includes/header.php';
         Ajouter un frais scolaire
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info" disabled>
+                    <i class="fas fa-coins me-1"></i>
+                    Devise par défaut: <?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -289,25 +306,58 @@ include '../../../includes/header.php';
                         
                         <div class="col-md-4 mb-3">
                             <label for="montant" class="form-label">
-                                Montant (FC) <span class="text-danger">*</span>
+                                Montant <span class="text-danger">*</span>
                             </label>
-                            <input type="number" 
-                                   class="form-control" 
-                                   id="montant" 
-                                   name="montant" 
-                                   value="<?php echo htmlspecialchars($_POST['montant'] ?? ''); ?>"
-                                   min="1" 
-                                   max="10000000" 
-                                   step="0.01" 
-                                   required>
+                            <div class="input-group">
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="montant" 
+                                       name="montant" 
+                                       value="<?php echo htmlspecialchars($_POST['montant'] ?? ''); ?>"
+                                       min="1" 
+                                       max="10000000" 
+                                       step="0.01" 
+                                       required>
+                                <span class="input-group-text" id="montant-symbole">FC</span>
+                            </div>
                             <div class="invalid-feedback">
                                 Veuillez saisir un montant valide.
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Affichage de la conversion -->
+                    <div class="row" id="conversion-display" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-exchange-alt me-2"></i>Conversion automatique</h6>
+                                <div id="conversion-details">
+                                    <!-- Rempli par JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="devise_id" class="form-label">Devise <span class="text-danger">*</span></label>
+                            <select class="form-select" id="devise_id" name="devise_id" required onchange="updateMontantSymbole()">
+                                <option value="">Sélectionner...</option>
+                                <?php 
+                                $devises = getActiveCurrencies();
+                                foreach ($devises as $devise): 
+                                ?>
+                                    <option value="<?= $devise['id'] ?>" 
+                                            <?= ($_POST['devise_id'] ?? '') == $devise['id'] ? 'selected' : '' ?>
+                                            data-symbole="<?= htmlspecialchars($devise['symbole']) ?>"
+                                            data-taux="<?= $devise['taux_conversion'] ?>">
+                                        <?= htmlspecialchars($devise['code']) ?> - <?= htmlspecialchars($devise['nom']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
                             <label for="date_echeance" class="form-label">Date d'échéance</label>
                             <input type="date" 
                                    class="form-control" 
@@ -317,7 +367,7 @@ include '../../../includes/header.php';
                             <div class="form-text">Date limite de paiement (optionnel)</div>
                         </div>
                         
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="form-check mt-4">
                                 <input class="form-check-input" 
                                        type="checkbox" 
@@ -451,6 +501,67 @@ document.getElementById('type_frais').addEventListener('change', function() {
         
         libelle.value = types[this.value] + ' ' + new Date().getFullYear();
     }
+});
+
+// Mise à jour du symbole de la devise selon la sélection
+function updateMontantSymbole() {
+    const deviseSelect = document.getElementById('devise_id');
+    const symboleSpan = document.getElementById('montant-symbole');
+    const selectedOption = deviseSelect.options[deviseSelect.selectedIndex];
+    
+    if (selectedOption && selectedOption.dataset.symbole) {
+        symboleSpan.textContent = selectedOption.dataset.symbole;
+    } else {
+        symboleSpan.textContent = 'FC';
+    }
+    
+    // Mettre à jour la conversion
+    updateConversion();
+}
+
+// Mise à jour de l'affichage de la conversion
+function updateConversion() {
+    const montant = parseFloat(document.getElementById('montant').value) || 0;
+    const deviseSelect = document.getElementById('devise_id');
+    const selectedOption = deviseSelect.options[deviseSelect.selectedIndex];
+    const conversionDisplay = document.getElementById('conversion-display');
+    const conversionDetails = document.getElementById('conversion-details');
+    
+    if (montant > 0 && selectedOption && selectedOption.dataset.taux) {
+        const taux = parseFloat(selectedOption.dataset.taux);
+        const symbole = selectedOption.dataset.symbole;
+        const code = selectedOption.text.split(' - ')[0];
+        
+        // Calculer le montant en devise par défaut (CDF)
+        const montantCDF = montant / taux;
+        
+        conversionDetails.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Montant saisi :</strong> ${montant.toLocaleString()} ${symbole} (${code})
+                </div>
+                <div class="col-md-6">
+                    <strong>Équivalent en CDF :</strong> ${montantCDF.toLocaleString()} FC
+                </div>
+            </div>
+            <small class="text-muted mt-2 d-block">
+                Taux de conversion : 1 ${code} = ${(1/taux).toLocaleString()} FC
+            </small>
+        `;
+        
+        conversionDisplay.style.display = 'block';
+    } else {
+        conversionDisplay.style.display = 'none';
+    }
+}
+
+// Événements pour la conversion en temps réel
+document.getElementById('montant').addEventListener('input', updateConversion);
+document.getElementById('devise_id').addEventListener('change', updateConversion);
+
+// Initialiser le symbole au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    updateMontantSymbole();
 });
 </script>
 

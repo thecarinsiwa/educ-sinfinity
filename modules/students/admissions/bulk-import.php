@@ -200,14 +200,17 @@ function importEleves($file, $database) {
                 $annee_courante = date('Y');
                 $numero_eleve = $annee_courante . str_pad($imported + 1, 4, '0', STR_PAD_LEFT);
                 
+                // Générer le numéro de matricule
+                $numero_matricule = generateMatricule();
+                
                 // Insérer l'élève
                 $database->execute(
                     "INSERT INTO eleves (
-                        numero_eleve, nom, prenom, date_naissance, sexe, telephone_parent,
+                        numero_eleve, numero_matricule, nom, prenom, date_naissance, sexe, telephone_parent,
                         classe_id, annee_scolaire_id, status, date_inscription, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?, NOW())",
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?, NOW())",
                     [
-                        $numero_eleve, $nom, $prenom, $date_naissance, $sexe, $telephone_parent,
+                        $numero_eleve, $numero_matricule, $nom, $prenom, $date_naissance, $sexe, $telephone_parent,
                         $classe['id'], $current_year['id'], date('Y-m-d')
                     ]
                 );

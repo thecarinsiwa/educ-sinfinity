@@ -41,7 +41,7 @@ $classes = $database->query(
             COUNT(et.id) as nb_cours,
             GROUP_CONCAT(DISTINCT CONCAT(p.nom, ' ', p.prenom) SEPARATOR ', ') as enseignants
      FROM classes c
-     JOIN emplois_temps et ON c.id = et.classe_id
+     JOIN emploi_temps et ON c.id = et.classe_id
      LEFT JOIN personnel p ON et.enseignant_id = p.id
      WHERE et.matiere_id = ?
      GROUP BY c.id, c.nom, c.niveau, c.section
@@ -55,7 +55,7 @@ $enseignants = $database->query(
             COUNT(DISTINCT et.classe_id) as nb_classes,
             COUNT(et.id) as nb_cours
      FROM personnel p
-     JOIN emplois_temps et ON p.id = et.enseignant_id
+     JOIN emploi_temps et ON p.id = et.enseignant_id
      WHERE et.matiere_id = ?
      GROUP BY p.id, p.nom, p.prenom, p.specialite
      ORDER BY p.nom, p.prenom",

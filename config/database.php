@@ -100,14 +100,22 @@ class Database {
      * Valider une transaction
      */
     public function commit() {
-        return $this->connect()->commit();
+        try {
+            return $this->connect()->commit();
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de la validation de la transaction : " . $e->getMessage());
+        }
     }
 
     /**
      * Annuler une transaction
      */
     public function rollback() {
-        return $this->connect()->rollback();
+        try {
+            return $this->connect()->rollback();
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de l'annulation de la transaction : " . $e->getMessage());
+        }
     }
 }
 

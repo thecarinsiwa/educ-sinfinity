@@ -31,7 +31,7 @@ $sql = "SELECT c.*,
                p.nom as titulaire_nom, p.prenom as titulaire_prenom
         FROM classes c 
         LEFT JOIN inscriptions i ON c.id = i.classe_id AND i.status = 'inscrit'
-        LEFT JOIN emplois_temps et ON c.id = et.classe_id
+        LEFT JOIN emploi_temps et ON c.id = et.classe_id
         LEFT JOIN personnel p ON c.titulaire_id = p.id
         WHERE c.annee_scolaire_id = ?";
 

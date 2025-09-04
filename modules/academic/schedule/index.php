@@ -40,7 +40,7 @@ $sql = "SELECT et.*,
                c.nom as classe_nom, c.niveau,
                m.nom as matiere_nom, m.coefficient,
                p.nom as enseignant_nom, p.prenom as enseignant_prenom
-        FROM emplois_temps et
+        FROM emploi_temps et
         JOIN classes c ON et.classe_id = c.id
         JOIN matieres m ON et.matiere_id = m.id
         LEFT JOIN personnel p ON et.enseignant_id = p.id

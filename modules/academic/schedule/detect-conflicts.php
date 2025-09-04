@@ -37,8 +37,8 @@ function detectConflicts($database, $annee_id) {
                 m1.nom as matiere1, m2.nom as matiere2,
                 c1.nom as classe1, c2.nom as classe2,
                 'enseignant' as conflict_type
-         FROM emplois_temps e1
-         JOIN emplois_temps e2 ON e1.enseignant_id = e2.enseignant_id 
+         FROM emploi_temps e1
+         JOIN emploi_temps e2 ON e1.enseignant_id = e2.enseignant_id 
                                 AND e1.jour_semaine = e2.jour_semaine
                                 AND e1.id < e2.id
                                 AND e1.annee_scolaire_id = e2.annee_scolaire_id
@@ -62,8 +62,8 @@ function detectConflicts($database, $annee_id) {
                 CONCAT(p1.nom, ' ', p1.prenom) as enseignant1,
                 CONCAT(p2.nom, ' ', p2.prenom) as enseignant2,
                 'salle' as conflict_type
-         FROM emplois_temps e1
-         JOIN emplois_temps e2 ON e1.salle = e2.salle 
+         FROM emploi_temps e1
+         JOIN emploi_temps e2 ON e1.salle = e2.salle 
                                 AND e1.jour_semaine = e2.jour_semaine
                                 AND e1.id < e2.id
                                 AND e1.annee_scolaire_id = e2.annee_scolaire_id
@@ -89,8 +89,8 @@ function detectConflicts($database, $annee_id) {
                 CONCAT(p1.nom, ' ', p1.prenom) as enseignant1,
                 CONCAT(p2.nom, ' ', p2.prenom) as enseignant2,
                 'classe' as conflict_type
-         FROM emplois_temps e1
-         JOIN emplois_temps e2 ON e1.classe_id = e2.classe_id 
+         FROM emploi_temps e1
+         JOIN emploi_temps e2 ON e1.classe_id = e2.classe_id 
                                 AND e1.jour_semaine = e2.jour_semaine
                                 AND e1.id < e2.id
                                 AND e1.annee_scolaire_id = e2.annee_scolaire_id

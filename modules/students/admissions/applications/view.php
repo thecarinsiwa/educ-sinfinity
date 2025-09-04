@@ -48,6 +48,9 @@ try {
 
 $page_title = 'Candidature - ' . $candidature['nom_eleve'] . ' ' . $candidature['prenom_eleve'];
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 include '../../../../includes/header.php';
 ?>
 
@@ -63,6 +66,15 @@ include '../../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <?php if (checkPermission('students')): ?>
             <div class="btn-group me-2">
                 <a href="edit.php?id=<?php echo $candidature['id']; ?>" class="btn btn-warning">
@@ -425,13 +437,13 @@ include '../../../../includes/header.php';
                     <?php if ($candidature['frais_inscription']): ?>
                         <tr>
                             <td><strong>Frais d'inscription :</strong></td>
-                            <td><?php echo number_format($candidature['frais_inscription'], 0, ',', ' ') . ' FC'; ?></td>
+                            <td><?php echo formatMoneyDefault($candidature['frais_inscription']); ?></td>
                         </tr>
                     <?php endif; ?>
                     <?php if ($candidature['frais_scolarite']): ?>
                         <tr>
                             <td><strong>Frais de scolarité :</strong></td>
-                            <td><?php echo number_format($candidature['frais_scolarite'], 0, ',', ' ') . ' FC'; ?></td>
+                            <td><?php echo formatMoneyDefault($candidature['frais_scolarite']); ?></td>
                         </tr>
                     <?php endif; ?>
                     <?php if ($candidature['reduction_accordee']): ?>

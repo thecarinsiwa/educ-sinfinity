@@ -87,16 +87,11 @@ define('MODULES', [
         'name' => 'Gestion des Élèves',
         'icon' => 'fas fa-user-graduate',
         'description' => 'Inscriptions, dossiers, transferts',
-        'submenu' => [
-            'list' => [
-                'name' => 'Liste des Élèves',
-                'icon' => 'fas fa-list',
-                'url' => 'modules/students/list.php'
-            ],
+        'submenu' => [           
             'add' => [
-                'name' => 'Ajouter un Élève',
-                'icon' => 'fas fa-plus',
-                'url' => 'modules/students/add.php'
+                'name' => 'Gerer les Élèves',
+                'icon' => 'fas fa-users',
+                'url' => 'modules/students/'
             ],
             'admissions' => [
                 'name' => 'Admissions',
@@ -112,6 +107,11 @@ define('MODULES', [
                 'name' => 'Transferts',
                 'icon' => 'fas fa-exchange-alt',
                 'url' => 'modules/students/transfers/'
+            ],
+            'student-tracking' => [
+                'name' => 'Suivi des Élèves',
+                'icon' => 'fas fa-tasks',
+                'url' => 'modules/students/student-tracking/'
             ]
         ]
     ],
@@ -196,6 +196,11 @@ define('MODULES', [
         'icon' => 'fas fa-money-bill-wave',
         'description' => 'Frais scolaires, comptabilité',
         'submenu' => [
+            'dashboard' => [
+                'name' => 'Tableau de Bord',
+                'icon' => 'fas fa-tachometer-alt',
+                'url' => 'modules/finance/'
+            ],
             'fees' => [
                 'name' => 'Frais Scolaires',
                 'icon' => 'fas fa-dollar-sign',
@@ -205,6 +210,11 @@ define('MODULES', [
                 'name' => 'Paiements',
                 'icon' => 'fas fa-credit-card',
                 'url' => 'modules/finance/payments/'
+            ],
+            'devises' => [
+                'name' => 'Devises',
+                'icon' => 'fas fa-exchange-alt',
+                'url' => 'modules/finance/devises/'
             ],
             'expenses' => [
                 'name' => 'Dépenses',

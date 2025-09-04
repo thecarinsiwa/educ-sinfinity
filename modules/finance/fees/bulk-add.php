@@ -20,6 +20,9 @@ $page_title = 'Ajout en lot de frais scolaires';
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 $errors = [];
 $success_count = 0;
 $skipped_count = 0;
@@ -141,6 +144,14 @@ include '../../../includes/header.php';
         Ajout en lot de frais scolaires
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info" disabled>
+                    <i class="fas fa-coins me-1"></i>
+                    Devise par défaut: <?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>

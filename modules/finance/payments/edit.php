@@ -44,6 +44,9 @@ $page_title = 'Modifier le paiement - ' . $paiement['recu_numero'];
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 $errors = [];
 $success = false;
 
@@ -121,6 +124,15 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="receipt.php?id=<?php echo $id; ?>" class="btn btn-outline-primary">
                 <i class="fas fa-receipt me-1"></i>

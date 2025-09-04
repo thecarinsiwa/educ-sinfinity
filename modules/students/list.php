@@ -188,7 +188,7 @@ include '../../includes/header.php';
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <a href="../index.php" class="btn btn-outline-secondary">
+            <a href="./index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour
             </a>
@@ -227,6 +227,13 @@ include '../../includes/header.php';
                 </a></li>
                 <li><a class="dropdown-item" href="transfers/">
                     <i class="fas fa-exchange-alt me-2"></i>Transferts
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="enrollment.php">
+                    <i class="fas fa-user-plus me-2"></i>Inscriptions Nouvelle Année
+                </a></li>
+                <li><a class="dropdown-item" href="enrollment-history.php">
+                    <i class="fas fa-history me-2"></i>Historique des Inscriptions
                 </a></li>
             </ul>
         </div>

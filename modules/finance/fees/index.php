@@ -20,6 +20,9 @@ $page_title = 'Gestion des Frais Scolaires';
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 // Paramètres de filtrage
 $niveau_filter = sanitizeInput($_GET['niveau'] ?? '');
 $type_filter = sanitizeInput($_GET['type'] ?? '');
@@ -61,9 +64,11 @@ try {
     $table_check = $database->query("SHOW TABLES LIKE 'frais_scolaires'")->fetch();
 
     if ($table_check) {
-        $sql = "SELECT f.*, c.nom as classe_nom, c.niveau
+        $sql = "SELECT f.*, c.nom as classe_nom, c.niveau,
+                       d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
                 FROM frais_scolaires f
                 JOIN classes c ON f.classe_id = c.id
+                LEFT JOIN devises d ON f.devise_id = d.id
                 WHERE f.annee_scolaire_id = ?";
 
         $params = [$current_year['id'] ?? 0];
@@ -99,7 +104,7 @@ $stats = [];
 $stats['total_configurations'] = count($frais);
 $stats['classes_configurees'] = count(array_unique(array_column($frais, 'classe_id')));
 $stats['classes_total'] = count($classes);
-$stats['montant_moyen'] = count($frais) > 0 ? round(array_sum(array_column($frais, 'montant')) / count($frais)) : 0;
+$stats['montant_moyen'] = count($frais) > 0 ? round(array_sum(array_column($frais, 'montant_devise_par_defaut')) / count($frais)) : 0;
 
 // Répartition par niveau
 $frais_par_niveau = [];
@@ -113,9 +118,9 @@ foreach ($frais as $frais_item) {
         ];
     }
     $frais_par_niveau[$niveau]['count']++;
-    $frais_par_niveau[$niveau]['total'] += $frais_item['montant'];
+    $frais_par_niveau[$niveau]['total'] += $frais_item['montant_devise_par_defaut'] ?? $frais_item['montant'];
     $frais_par_niveau[$niveau]['types'][$frais_item['type_frais']] = 
-        ($frais_par_niveau[$niveau]['types'][$frais_item['type_frais']] ?? 0) + $frais_item['montant'];
+        ($frais_par_niveau[$niveau]['types'][$frais_item['type_frais']] ?? 0) + ($frais_item['montant_devise_par_defaut'] ?? $frais_item['montant']);
 }
 
 include '../../../includes/header.php';
@@ -127,6 +132,14 @@ include '../../../includes/header.php';
         Gestion des Frais Scolaires
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info" disabled>
+                    <i class="fas fa-coins me-1"></i>
+                    Devise par défaut: <?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="../index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -207,7 +220,7 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5><?php echo formatMoney($stats['montant_moyen']); ?></h5>
+                        <h5><?php echo formatCurrency($stats['montant_moyen']); ?></h5>
                         <p class="mb-0">Montant moyen</p>
                     </div>
                     <div class="align-self-center">
@@ -233,6 +246,19 @@ include '../../../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Note sur la devise par défaut -->
+<?php if ($devise_par_defaut): ?>
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>
+            <strong>Note :</strong> Tous les montants sont affichés dans la devise par défaut : 
+            <span class="badge bg-info"><?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)</span>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Filtres -->
 <div class="card mb-4">
@@ -334,9 +360,16 @@ include '../../../includes/header.php';
                                     </span>
                                 </td>
                                 <td>
-                                    <strong class="text-success">
-                                        <?php echo formatMoney($frais_item['montant']); ?>
-                                    </strong>
+                                    <div>
+                                        <strong class="text-success">
+                                            <?php echo formatCurrency($frais_item['montant'], $frais_item['devise_id']); ?>
+                                        </strong>
+                                        <?php if ($frais_item['devise_id'] && $frais_item['montant_devise_par_defaut']): ?>
+                                            <br><small class="text-muted">
+                                                <?= formatCurrency($frais_item['montant_devise_par_defaut']) ?> (équivalent)
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <?php if ($frais_item['obligatoire']): ?>
@@ -471,7 +504,7 @@ include '../../../includes/header.php';
                                             <small class="text-muted">Configurations</small>
                                         </div>
                                         <div class="col-6">
-                                            <h5 class="text-success"><?php echo formatMoney($data['total']); ?></h5>
+                                            <h5 class="text-success"><?php echo formatCurrency($data['total']); ?></h5>
                                             <small class="text-muted">Total</small>
                                         </div>
                                     </div>
@@ -480,7 +513,7 @@ include '../../../includes/header.php';
                                     <?php foreach ($data['types'] as $type => $montant): ?>
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <small><?php echo ucfirst($type); ?></small>
-                                            <span class="badge bg-light text-dark"><?php echo formatMoney($montant); ?></span>
+                                            <span class="badge bg-light text-dark"><?php echo formatCurrency($montant); ?></span>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>

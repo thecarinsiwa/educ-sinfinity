@@ -116,16 +116,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $numero_eleve = $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
                 
+                // Générer le numéro de matricule
+                $numero_matricule = generateMatricule();
+                
                 // Créer l'élève
                 $database->execute(
                     "INSERT INTO eleves (
-                        numero_eleve, nom, prenom, date_naissance, lieu_naissance, sexe,
+                        numero_eleve, numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe,
                         adresse, telephone, email, nom_pere, nom_mere, profession_pere, profession_mere,
                         telephone_parent, personne_contact, telephone_contact, relation_contact,
                         classe_id, annee_scolaire_id, status, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', NOW())",
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', NOW())",
                     [
-                        $numero_eleve, $candidature['nom_eleve'], $candidature['prenom_eleve'],
+                        $numero_eleve, $numero_matricule, $candidature['nom_eleve'], $candidature['prenom_eleve'],
                         $candidature['date_naissance'], $candidature['lieu_naissance'], $candidature['sexe'],
                         $candidature['adresse'], $candidature['telephone'], $candidature['email'],
                         $candidature['nom_pere'], $candidature['nom_mere'], 

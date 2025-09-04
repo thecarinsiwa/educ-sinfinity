@@ -27,13 +27,15 @@ $sql = "SELECT p.*,
                e.nom, e.prenom, e.numero_matricule, e.date_naissance,
                c.nom as classe_nom, c.niveau,
                u.username as enregistre_par,
-               a.annee as annee_scolaire
+               a.annee as annee_scolaire,
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
         LEFT JOIN users u ON p.user_id = u.id
         JOIN annees_scolaires a ON p.annee_scolaire_id = a.id
+        LEFT JOIN devises d ON p.devise_id = d.id
         WHERE p.id = ?";
 
 $paiement = $database->query($sql, [$id])->fetch();
@@ -44,6 +46,9 @@ if (!$paiement) {
 }
 
 $page_title = 'Détails du paiement - ' . $paiement['recu_numero'];
+
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
 
 include '../../../includes/header.php';
 ?>
@@ -60,6 +65,15 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="receipt.php?id=<?php echo $paiement['id']; ?>" class="btn btn-primary">
                 <i class="fas fa-receipt me-1"></i>
@@ -109,6 +123,9 @@ include '../../../includes/header.php';
                                         'inscription' => 'Frais d\'inscription',
                                         'mensualite' => 'Mensualité',
                                         'examen' => 'Frais d\'examen',
+                                        'uniforme' => 'Uniforme',
+                                        'transport' => 'Transport',
+                                        'cantine' => 'Cantine',
                                         'autre' => 'Autre'
                                     ];
                                     echo $types[$paiement['type_paiement']] ?? ucfirst($paiement['type_paiement']);
@@ -116,10 +133,29 @@ include '../../../includes/header.php';
                                 </td>
                             </tr>
                             <tr>
+                                <td class="fw-bold">Devise :</td>
+                                <td>
+                                    <?php if ($paiement['devise_code']): ?>
+                                        <span class="badge bg-info">
+                                            <?php echo htmlspecialchars($paiement['devise_code']); ?> - 
+                                            <?php echo htmlspecialchars($paiement['devise_nom']); ?>
+                                        </span>
+                                        <?php if ($paiement['devise_code'] !== $devise_par_defaut['code']): ?>
+                                            <br>
+                                            <small class="text-muted">
+                                                Devise différente de la devise par défaut
+                                            </small>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">Non spécifiée</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="fw-bold">Montant :</td>
                                 <td>
                                     <span class="fs-4 text-success fw-bold">
-                                        <?php echo formatMoney($paiement['montant']); ?>
+                                        <?php echo formatMoneyWithDefault($paiement['montant'], $paiement['devise_id'], $paiement['montant_devise_par_defaut']); ?>
                                     </span>
                                 </td>
                             </tr>
@@ -165,6 +201,32 @@ include '../../../includes/header.php';
                     <p class="text-muted"><?php echo htmlspecialchars($paiement['observation']); ?></p>
                 </div>
                 <?php endif; ?>
+                
+                <!-- Informations de conversion -->
+                <?php if ($devise_par_defaut && $paiement['devise_code'] && $paiement['devise_code'] !== $devise_par_defaut['code']): ?>
+                <div class="mt-3">
+                    <div class="alert alert-info">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Informations de conversion
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Montant original :</strong><br>
+                                <?php echo formatMoney($paiement['montant']); ?> 
+                                <?php echo htmlspecialchars($paiement['devise_symbole']); ?>
+                                (<?php echo htmlspecialchars($paiement['devise_code']); ?>)
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Équivalent en devise par défaut :</strong><br>
+                                <?php echo formatMoney($paiement['montant_devise_par_defaut'] ?? $paiement['montant']); ?> 
+                                <?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>
+                                (<?php echo htmlspecialchars($devise_par_defaut['code']); ?>)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -208,6 +270,42 @@ include '../../../includes/header.php';
     </div>
 
     <div class="col-lg-4">
+        <!-- Informations de devise -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    Informations de devise
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if ($devise_par_defaut): ?>
+                    <div class="text-center mb-3">
+                        <h6 class="text-muted">Devise par défaut</h6>
+                        <h4 class="text-info">
+                            <?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>
+                            <?php echo htmlspecialchars($devise_par_defaut['code']); ?>
+                        </h4>
+                        <small class="text-muted"><?php echo htmlspecialchars($devise_par_defaut['nom']); ?></small>
+                    </div>
+                    
+                    <?php if ($paiement['devise_code'] && $paiement['devise_code'] !== $devise_par_defaut['code']): ?>
+                        <div class="alert alert-warning">
+                            <small>
+                                <i class="fas fa-info-circle me-1"></i>
+                                Ce paiement a été effectué dans une devise différente de la devise par défaut.
+                            </small>
+                        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="text-center text-muted">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <p>Aucune devise par défaut configurée</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <!-- Actions rapides -->
         <div class="card mb-4">
             <div class="card-header">

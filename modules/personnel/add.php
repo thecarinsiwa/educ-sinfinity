@@ -23,22 +23,22 @@ $success = false;
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validation des données personnelles
-    $matricule = sanitizeInput($_POST['matricule'] ?? '');
-    $nom = sanitizeInput($_POST['nom'] ?? '');
-    $prenom = sanitizeInput($_POST['prenom'] ?? '');
+    $matricule = trim(sanitizeInput($_POST['matricule'] ?? ''));
+    $nom = trim(sanitizeInput($_POST['nom'] ?? ''));
+    $prenom = trim(sanitizeInput($_POST['prenom'] ?? ''));
     $sexe = sanitizeInput($_POST['sexe'] ?? '');
-    $date_naissance = sanitizeInput($_POST['date_naissance'] ?? '');
-    $lieu_naissance = sanitizeInput($_POST['lieu_naissance'] ?? '');
-    $adresse = sanitizeInput($_POST['adresse'] ?? '');
-    $telephone = sanitizeInput($_POST['telephone'] ?? '');
-    $email = sanitizeInput($_POST['email'] ?? '');
+    $date_naissance = trim(sanitizeInput($_POST['date_naissance'] ?? ''));
+    $lieu_naissance = trim(sanitizeInput($_POST['lieu_naissance'] ?? ''));
+    $adresse = trim(sanitizeInput($_POST['adresse'] ?? ''));
+    $telephone = trim(sanitizeInput($_POST['telephone'] ?? ''));
+    $email = trim(sanitizeInput($_POST['email'] ?? ''));
     
     // Informations professionnelles
     $fonction = sanitizeInput($_POST['fonction'] ?? '');
-    $specialite = sanitizeInput($_POST['specialite'] ?? '');
-    $diplome = sanitizeInput($_POST['diplome'] ?? '');
+    $specialite = trim(sanitizeInput($_POST['specialite'] ?? ''));
+    $diplome = trim(sanitizeInput($_POST['diplome'] ?? ''));
     $date_embauche = sanitizeInput($_POST['date_embauche'] ?? '');
-    $salaire_base = sanitizeInput($_POST['salaire_base'] ?? '');
+    $salaire_base = trim(sanitizeInput($_POST['salaire_base'] ?? ''));
     
     // Informations de compte utilisateur (optionnel)
     $create_account = isset($_POST['create_account']);
@@ -82,6 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($username)) $errors[] = 'Le nom d\'utilisateur est obligatoire pour créer un compte.';
         if (empty($user_password)) $errors[] = 'Le mot de passe est obligatoire pour créer un compte.';
         if (empty($user_role)) $errors[] = 'Le rôle utilisateur est obligatoire pour créer un compte.';
+        if (empty($email)) $errors[] = 'L\'adresse email est obligatoire pour créer un compte utilisateur.';
+        
+        // Vérifier la longueur du mot de passe
+        if (!empty($user_password) && strlen($user_password) < 8) {
+            $errors[] = 'Le mot de passe doit contenir au moins 8 caractères.';
+        }
         
         // Vérifier l'unicité du nom d'utilisateur
         if (!empty($username)) {
@@ -110,20 +116,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Créer le compte utilisateur si demandé
             if ($create_account) {
                 $hashed_password = password_hash($user_password, PASSWORD_DEFAULT);
-                $sql_user = "INSERT INTO users (username, email, password, role, status) VALUES (?, ?, ?, ?, 'actif')";
-                $database->execute($sql_user, [$username, $email, $hashed_password, $user_role]);
+                $sql_user = "INSERT INTO users (username, email, password, nom, prenom, role, status) VALUES (?, ?, ?, ?, ?, ?, 'actif')";
+                $database->execute($sql_user, [$username, $email, $hashed_password, $nom, $prenom, $user_role]);
                 $user_id = $database->lastInsertId();
             }
             
             // Insérer le membre du personnel
             $sql = "INSERT INTO personnel (matricule, nom, prenom, sexe, date_naissance, lieu_naissance, 
                                          adresse, telephone, email, fonction, specialite, diplome, 
-                                         date_embauche, salaire_base, status, user_id) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?)";
+                                         date_embauche, salaire_base, user_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $database->execute($sql, [
-                $matricule, $nom, $prenom, $sexe, $date_naissance, $lieu_naissance,
-                $adresse, $telephone, $email, $fonction, $specialite, $diplome,
+                $matricule, $nom, $prenom, $sexe, $date_naissance ?: null, $lieu_naissance ?: null,
+                $adresse ?: null, $telephone ?: null, $email ?: null, $fonction, $specialite ?: null, $diplome ?: null,
                 $date_embauche, $salaire_base ?: null, $user_id
             ]);
             
@@ -131,7 +137,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $database->commit();
             
-            showMessage('success', 'Membre du personnel ajouté avec succès !');
+            // Message de succès avec détails
+            $success_message = 'Membre du personnel ajouté avec succès !';
+            if ($create_account) {
+                $success_message .= ' Un compte utilisateur a également été créé avec le nom d\'utilisateur : ' . $username;
+            }
+            
+            showMessage('success', $success_message);
             redirectTo('view.php?id=' . $personnel_id);
             
         } catch (Exception $e) {
@@ -256,12 +268,13 @@ include '../../includes/header.php';
                                    value="<?php echo htmlspecialchars($_POST['telephone'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label">Email <span id="email-required" class="text-danger" style="display: none;">*</span></label>
                             <input type="email" 
                                    class="form-control" 
                                    id="email" 
                                    name="email" 
                                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                            <small id="email-help" class="text-muted" style="display: none;">Obligatoire pour créer un compte utilisateur</small>
                         </div>
                     </div>
                     
@@ -389,11 +402,19 @@ include '../../includes/header.php';
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="user_password" class="form-label">Mot de passe</label>
-                            <input type="password"
-                                   class="form-control"
-                                   id="user_password"
-                                   name="user_password"
-                                   placeholder="Mot de passe sécurisé">
+                            <div class="input-group">
+                                <input type="password"
+                                       class="form-control"
+                                       id="user_password"
+                                       name="user_password"
+                                       placeholder="Mot de passe sécurisé">
+                                <button class="btn btn-outline-secondary" 
+                                        type="button" 
+                                        id="generate-password"
+                                        title="Générer un mot de passe sécurisé">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                            </div>
                             <small class="text-muted">Minimum 8 caractères</small>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -480,17 +501,26 @@ document.getElementById('create_account').addEventListener('change', function() 
     const usernameField = document.getElementById('username');
     const passwordField = document.getElementById('user_password');
     const roleField = document.getElementById('user_role');
+    const emailField = document.getElementById('email');
+    const emailRequired = document.getElementById('email-required');
+    const emailHelp = document.getElementById('email-help');
 
     if (this.checked) {
         accountFields.style.display = 'block';
         usernameField.required = true;
         passwordField.required = true;
         roleField.required = true;
+        emailField.required = true;
+        emailRequired.style.display = 'inline';
+        emailHelp.style.display = 'block';
     } else {
         accountFields.style.display = 'none';
         usernameField.required = false;
         passwordField.required = false;
         roleField.required = false;
+        emailField.required = false;
+        emailRequired.style.display = 'none';
+        emailHelp.style.display = 'none';
     }
 });
 
@@ -568,6 +598,65 @@ document.getElementById('salaire_base').addEventListener('input', function() {
     if (value) {
         this.value = parseInt(value);
     }
+});
+
+// Génération automatique de mot de passe
+document.getElementById('generate-password').addEventListener('click', function() {
+    const passwordField = document.getElementById('user_password');
+    
+    // Caractères pour le mot de passe
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const symbols = '!@#$%^&*';
+    
+    let password = '';
+    
+    // Assurer au moins un caractère de chaque type
+    password += lowercase[Math.floor(Math.random() * lowercase.length)];
+    password += uppercase[Math.floor(Math.random() * uppercase.length)];
+    password += numbers[Math.floor(Math.random() * numbers.length)];
+    password += symbols[Math.floor(Math.random() * symbols.length)];
+    
+    // Compléter avec des caractères aléatoires
+    const allChars = lowercase + uppercase + numbers + symbols;
+    for (let i = 4; i < 12; i++) {
+        password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+    
+    // Mélanger le mot de passe
+    password = password.split('').sort(() => Math.random() - 0.5).join('');
+    
+    passwordField.value = password;
+    passwordField.type = 'text'; // Afficher temporairement
+    
+    // Remettre en mode password après 3 secondes
+    setTimeout(() => {
+        passwordField.type = 'password';
+    }, 3000);
+    
+    // Message informatif
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-key me-2"></i>
+                Mot de passe généré ! Il sera masqué dans 3 secondes.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Supprimer l'élément après fermeture
+    toast.addEventListener('hidden.bs.toast', () => {
+        document.body.removeChild(toast);
+    });
 });
 </script>
 

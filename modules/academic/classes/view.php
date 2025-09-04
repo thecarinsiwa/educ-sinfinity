@@ -55,7 +55,7 @@ $emploi_temps = $database->query(
     "SELECT et.*, 
             m.nom as matiere_nom, m.coefficient,
             p.nom as enseignant_nom, p.prenom as enseignant_prenom
-     FROM emplois_temps et
+     FROM emploi_temps et
      JOIN matieres m ON et.matiere_id = m.id
      LEFT JOIN personnel p ON et.enseignant_id = p.id
      WHERE et.classe_id = ?

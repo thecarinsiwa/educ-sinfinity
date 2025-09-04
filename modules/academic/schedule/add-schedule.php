@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($jour && $heure_debut && $heure_fin && $matiere_id && $enseignant_id) {
         $database->query(
-            "INSERT INTO emplois_temps (classe_id, matiere_id, enseignant_id, jour_semaine, heure_debut, heure_fin, salle, annee_scolaire_id)
+            "INSERT INTO emploi_temps (classe_id, matiere_id, enseignant_id, jour_semaine, heure_debut, heure_fin, salle, annee_scolaire_id)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [$class_id, $matiere_id, $enseignant_id, $jour, $heure_debut, $heure_fin, $salle, $annee_scolaire_id]
         );

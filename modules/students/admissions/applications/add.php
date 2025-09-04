@@ -100,6 +100,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Format d\'email invalide.';
     }
     
+    // Validation de l'année précédente
+    if (strlen($annee_precedente) > 50) {
+        $errors[] = 'L\'année précédente ne peut pas dépasser 50 caractères.';
+    }
+    
     // Validation de la moyenne
     if ($moyenne_precedente && ($moyenne_precedente < 0 || $moyenne_precedente > 20)) {
         $errors[] = 'La moyenne précédente doit être entre 0 et 20.';
@@ -367,10 +372,12 @@ include '../../../../includes/header.php';
                            value="<?php echo htmlspecialchars($_POST['classe_precedente'] ?? ''); ?>">
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="annee_precedente" class="form-label">Année scolaire</label>
+                    <label for="annee_precedente" class="form-label">Année scolaire précédente</label>
                     <input type="text" class="form-control" id="annee_precedente" name="annee_precedente" 
                            value="<?php echo htmlspecialchars($_POST['annee_precedente'] ?? ''); ?>" 
-                           placeholder="Ex: 2023-2024">
+                           placeholder="Ex: 2023-2024" maxlength="50"
+                           title="Format recommandé: AAAA-AAAA (ex: 2023-2024)">
+                    <div class="form-text">Format recommandé: AAAA-AAAA</div>
                 </div>
             </div>
             <div class="row">

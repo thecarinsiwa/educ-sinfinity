@@ -55,9 +55,9 @@ $stats_generales = $database->query(
     "SELECT 
         COUNT(DISTINCT e.id) as total_evaluations,
         COUNT(n.id) as total_notes,
-        AVG(n.note) as moyenne_generale,
-        MIN(n.note) as note_min_globale,
-        MAX(n.note) as note_max_globale,
+        COALESCE(AVG(n.note), 0) as moyenne_generale,
+        COALESCE(MIN(n.note), 0) as note_min_globale,
+        COALESCE(MAX(n.note), 0) as note_max_globale,
         COUNT(DISTINCT n.eleve_id) as eleves_evalues
      FROM evaluations e
      LEFT JOIN notes n ON e.id = n.evaluation_id
@@ -71,9 +71,9 @@ $stats_periodes = $database->query(
         e.periode,
         COUNT(DISTINCT e.id) as nb_evaluations,
         COUNT(n.id) as nb_notes,
-        AVG(n.note) as moyenne_periode,
-        MIN(n.note) as note_min,
-        MAX(n.note) as note_max
+        COALESCE(AVG(n.note), 0) as moyenne_periode,
+        COALESCE(MIN(n.note), 0) as note_min,
+        COALESCE(MAX(n.note), 0) as note_max
      FROM evaluations e
      LEFT JOIN notes n ON e.id = n.evaluation_id
      WHERE e.annee_scolaire_id = ?
@@ -89,9 +89,9 @@ $stats_matieres = $database->query(
         m.coefficient,
         COUNT(DISTINCT e.id) as nb_evaluations,
         COUNT(n.id) as nb_notes,
-        AVG(n.note) as moyenne_matiere,
-        MIN(n.note) as note_min,
-        MAX(n.note) as note_max
+        COALESCE(AVG(n.note), 0) as moyenne_matiere,
+        COALESCE(MIN(n.note), 0) as note_min,
+        COALESCE(MAX(n.note), 0) as note_max
      FROM matieres m
      LEFT JOIN evaluations e ON m.id = e.matiere_id AND e.annee_scolaire_id = ?
      LEFT JOIN notes n ON e.id = n.evaluation_id
@@ -108,9 +108,9 @@ $stats_classes = $database->query(
         c.niveau,
         COUNT(DISTINCT e.id) as nb_evaluations,
         COUNT(n.id) as nb_notes,
-        AVG(n.note) as moyenne_classe,
-        MIN(n.note) as note_min,
-        MAX(n.note) as note_max,
+        COALESCE(AVG(n.note), 0) as moyenne_classe,
+        COALESCE(MIN(n.note), 0) as note_min,
+        COALESCE(MAX(n.note), 0) as note_max,
         COUNT(DISTINCT i.eleve_id) as nb_eleves_inscrits
      FROM classes c
      LEFT JOIN evaluations e ON c.id = e.classe_id AND e.annee_scolaire_id = ?
@@ -151,9 +151,9 @@ $top_eleves = $database->query(
         el.numero_matricule,
         c.nom as classe_nom,
         COUNT(n.id) as nb_notes,
-        AVG(n.note) as moyenne_eleve,
-        MIN(n.note) as note_min,
-        MAX(n.note) as note_max
+        COALESCE(AVG(n.note), 0) as moyenne_eleve,
+        COALESCE(MIN(n.note), 0) as note_min,
+        COALESCE(MAX(n.note), 0) as note_max
      FROM eleves el
      JOIN inscriptions i ON el.id = i.eleve_id
      JOIN classes c ON i.classe_id = c.id
@@ -328,13 +328,9 @@ include '../../../includes/header.php';
                                         <td><?php echo $periode['nb_evaluations']; ?></td>
                                         <td><?php echo $periode['nb_notes']; ?></td>
                                         <td>
-                                            <?php if ($periode['moyenne_periode']): ?>
-                                                <span class="badge bg-success">
-                                                    <?php echo round($periode['moyenne_periode'], 2); ?>/20
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
-                                            <?php endif; ?>
+                                            <span class="badge bg-success">
+                                                <?php echo round($periode['moyenne_periode'], 2); ?>/20
+                                            </span>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -383,17 +379,13 @@ include '../../../includes/header.php';
                                         <td><?php echo $matiere['nb_evaluations']; ?></td>
                                         <td><?php echo $matiere['nb_notes']; ?></td>
                                         <td>
-                                            <?php if ($matiere['moyenne_matiere']): ?>
-                                                <?php 
-                                                $moyenne = round($matiere['moyenne_matiere'], 2);
-                                                $color = $moyenne >= 14 ? 'success' : ($moyenne >= 10 ? 'warning' : 'danger');
-                                                ?>
-                                                <span class="badge bg-<?php echo $color; ?>">
-                                                    <?php echo $moyenne; ?>/20
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
-                                            <?php endif; ?>
+                                            <?php 
+                                            $moyenne = round($matiere['moyenne_matiere'], 2);
+                                            $color = $moyenne >= 14 ? 'success' : ($moyenne >= 10 ? 'warning' : 'danger');
+                                            ?>
+                                            <span class="badge bg-<?php echo $color; ?>">
+                                                <?php echo $moyenne; ?>/20
+                                            </span>
                                         </td>
                                         <td>
                                             <?php if ($matiere['note_min'] && $matiere['note_max']): ?>
@@ -504,17 +496,13 @@ include '../../../includes/header.php';
                                         <td><?php echo $classe['nb_evaluations']; ?></td>
                                         <td><?php echo $classe['nb_notes']; ?></td>
                                         <td>
-                                            <?php if ($classe['moyenne_classe']): ?>
-                                                <?php 
-                                                $moyenne = round($classe['moyenne_classe'], 2);
-                                                $color = $moyenne >= 14 ? 'success' : ($moyenne >= 10 ? 'warning' : 'danger');
-                                                ?>
-                                                <span class="badge bg-<?php echo $color; ?>">
-                                                    <?php echo $moyenne; ?>/20
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
-                                            <?php endif; ?>
+                                            <?php 
+                                            $moyenne = round($classe['moyenne_classe'], 2);
+                                            $color = $moyenne >= 14 ? 'success' : ($moyenne >= 10 ? 'warning' : 'danger');
+                                            ?>
+                                            <span class="badge bg-<?php echo $color; ?>">
+                                                <?php echo $moyenne; ?>/20
+                                            </span>
                                         </td>
                                         <td>
                                             <?php if ($classe['note_min'] && $classe['note_max']): ?>
@@ -526,24 +514,20 @@ include '../../../includes/header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?php if ($classe['moyenne_classe']): ?>
-                                                <?php 
-                                                $moyenne = round($classe['moyenne_classe'], 2);
-                                                if ($moyenne >= 16) {
-                                                    echo '<i class="fas fa-star text-warning" title="Excellent"></i>';
-                                                } elseif ($moyenne >= 14) {
-                                                    echo '<i class="fas fa-thumbs-up text-success" title="Très bien"></i>';
-                                                } elseif ($moyenne >= 12) {
-                                                    echo '<i class="fas fa-check text-info" title="Bien"></i>';
-                                                } elseif ($moyenne >= 10) {
-                                                    echo '<i class="fas fa-minus text-warning" title="Passable"></i>';
-                                                } else {
-                                                    echo '<i class="fas fa-times text-danger" title="Insuffisant"></i>';
-                                                }
-                                                ?>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
-                                            <?php endif; ?>
+                                            <?php 
+                                            $moyenne = round($classe['moyenne_classe'], 2);
+                                            if ($moyenne >= 16) {
+                                                echo '<i class="fas fa-star text-warning" title="Excellent"></i>';
+                                            } elseif ($moyenne >= 14) {
+                                                echo '<i class="fas fa-thumbs-up text-success" title="Très bien"></i>';
+                                            } elseif ($moyenne >= 12) {
+                                                echo '<i class="fas fa-check text-info" title="Bien"></i>';
+                                            } elseif ($moyenne >= 10) {
+                                                echo '<i class="fas fa-minus text-warning" title="Passable"></i>';
+                                            } else {
+                                                echo '<i class="fas fa-times text-danger" title="Insuffisant"></i>';
+                                            }
+                                            ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -45,7 +45,7 @@ $usage_stats = $database->query(
         COUNT(DISTINCT et.enseignant_id) as nb_enseignants,
         COUNT(et.id) as nb_cours,
         COUNT(DISTINCT e.id) as nb_evaluations
-     FROM emplois_temps et
+     FROM emploi_temps et
      LEFT JOIN evaluations e ON et.matiere_id = e.matiere_id
      WHERE et.matiere_id = ?",
     [$matiere_id]
@@ -84,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Validation du volume horaire
-    if ($volume_horaire && ($volume_horaire < 1 || $volume_horaire > 20)) {
-        $errors[] = 'Le volume horaire doit être compris entre 1 et 20 heures par semaine.';
+    if ($volume_horaire && ($volume_horaire < 0 || $volume_horaire > 70)) {
+        $errors[] = 'Le volume horaire doit être compris entre 0 et 70 heures par semaine.';
     }
     
     // Si pas d'erreurs, mettre à jour la matière
@@ -271,11 +271,11 @@ include '../../../includes/header.php';
                                            id="volume_horaire" 
                                            name="volume_horaire" 
                                            value="<?php echo $matiere['volume_horaire']; ?>"
-                                           min="1" 
-                                           max="20">
+                                           min="0" 
+                                           max="70">
                                     <span class="input-group-text">h/semaine</span>
                                 </div>
-                                <small class="form-text text-muted">Entre 1 et 20 heures par semaine</small>
+                                <small class="form-text text-muted">Entre 0 et 70 heures par semaine</small>
                             </div>
                         </div>
                     </div>

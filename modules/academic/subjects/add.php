@@ -91,8 +91,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Validation du volume horaire
-    if ($volume_horaire && ($volume_horaire < 1 || $volume_horaire > 20)) {
-        $errors[] = 'Le volume horaire doit être compris entre 1 et 20 heures par semaine.';
+    if ($volume_horaire && ($volume_horaire < 0 || $volume_horaire > 70)) {
+        $errors[] = 'Le volume horaire doit être compris entre 0 et 70 heures par semaine.';
     }
     
     // Si pas d'erreurs, enregistrer la matière
@@ -207,8 +207,8 @@ include '../../../includes/header.php';
                                        class="form-control" 
                                        id="volume_horaire" 
                                        name="volume_horaire" 
-                                       min="1" 
-                                       max="20"
+                                       min="0" 
+                                       max="70"
                                        placeholder="Ex: 4"
                                        value="<?php echo htmlspecialchars($_POST['volume_horaire'] ?? ''); ?>">
                                 <span class="input-group-text">h/semaine</span>

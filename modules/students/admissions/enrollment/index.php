@@ -69,16 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $database->beginTransaction();
                 
                 try {
+                    // Générer le numéro de matricule
+                    $numero_matricule = generateMatricule();
+                    
                     // Créer l'élève
                     $database->execute(
                         "INSERT INTO eleves (
-                            numero_eleve, nom, prenom, date_naissance, lieu_naissance, sexe,
+                            numero_eleve, numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe,
                             adresse, telephone, email, nom_pere, nom_mere, profession_pere, profession_mere,
                             telephone_parent, personne_contact, telephone_contact, relation_contact,
                             classe_id, annee_scolaire_id, status, date_inscription, created_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?, NOW())",
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?, NOW())",
                         [
-                            $numero_eleve, $candidature['nom_eleve'], $candidature['prenom_eleve'],
+                            $numero_eleve, $numero_matricule, $candidature['nom_eleve'], $candidature['prenom_eleve'],
                             $candidature['date_naissance'], $candidature['lieu_naissance'], $candidature['sexe'],
                             $candidature['adresse'], $candidature['telephone'], $candidature['email'],
                             $candidature['nom_pere'], $candidature['nom_mere'], 
@@ -159,15 +162,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les candidatures acceptées
+// Récupérer les candidatures acceptées (prêtes à être inscrites)
 try {
     $candidatures_acceptees = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,
-                DATEDIFF(NOW(), da.date_traitement) as jours_depuis_acceptation
+                DATEDIFF(NOW(), COALESCE(da.date_traitement, da.created_at)) as jours_depuis_acceptation
          FROM demandes_admission da
          LEFT JOIN classes c ON da.classe_demandee_id = c.id
          WHERE da.status = 'acceptee'
-         ORDER BY da.date_traitement DESC"
+         ORDER BY COALESCE(da.date_traitement, da.created_at) DESC"
     )->fetchAll();
 } catch (Exception $e) {
     $candidatures_acceptees = [];
@@ -225,8 +228,8 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                <h5 class="card-title"><?php echo number_format($stats['acceptees']); ?></h5>
-                <p class="card-text text-muted">Candidatures acceptées</p>
+                                        <h5 class="card-title"><?php echo number_format($stats['acceptees']); ?></h5>
+                        <p class="card-text text-muted">Candidatures acceptées</p>
             </div>
         </div>
     </div>

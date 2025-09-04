@@ -22,18 +22,20 @@ if (!$id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations du paiement
+// Récupérer les informations du paiement avec devise
 $sql = "SELECT p.*, 
                e.nom, e.prenom, e.numero_matricule, e.date_naissance,
                c.nom as classe_nom, c.niveau,
                u.username as enregistre_par,
-               a.annee as annee_scolaire
+               a.annee as annee_scolaire,
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
         LEFT JOIN users u ON p.user_id = u.id
         JOIN annees_scolaires a ON p.annee_scolaire_id = a.id
+        LEFT JOIN devises d ON p.devise_id = d.id
         WHERE p.id = ?";
 
 $paiement = $database->query($sql, [$id])->fetch();
@@ -44,6 +46,9 @@ if (!$paiement) {
 }
 
 $page_title = 'Reçu de paiement - ' . $paiement['recu_numero'];
+
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
 
 // Informations de l'établissement
 $etablissement = $database->query("SELECT * FROM etablissements LIMIT 1")->fetch();
@@ -102,7 +107,19 @@ function nombreEnLettres($nombre) {
     return trim($resultat);
 }
 
-$montant_lettres = ucfirst(nombreEnLettres($paiement['montant'])) . ' francs congolais';
+// Formater le montant avec la devise
+function formatMontant($montant, $devise_symbole = 'FC') {
+    return number_format($montant, 2, ',', ' ') . ' ' . $devise_symbole;
+}
+
+// Déterminer la devise à utiliser
+$devise_affichage = $paiement['devise_symbole'] ?? ($devise_par_defaut['symbole'] ?? 'FC');
+$devise_code = $paiement['devise_code'] ?? ($devise_par_defaut['code'] ?? 'FC');
+
+// Montant en lettres (utiliser le montant en devise par défaut si disponible)
+$montant_pour_lettres = $paiement['montant_devise_par_defaut'] ?? $paiement['montant'];
+$montant_lettres = ucfirst(nombreEnLettres(intval($montant_pour_lettres))) . ' ' . 
+                   ($devise_par_defaut['nom'] ?? 'francs congolais');
 
 include '../../../includes/header.php';
 ?>
@@ -114,17 +131,26 @@ include '../../../includes/header.php';
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <a href="index.php" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>
-                Retour
-            </a>
+                    <a href="index.php" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour
+        </a>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         </div>
         <div class="btn-group">
             <button onclick="window.print()" class="btn btn-primary">
                 <i class="fas fa-print me-1"></i>
                 Imprimer
             </button>
-            <button onclick="exportToPDF('receipt-content', 'recu_<?php echo $paiement['recu_numero']; ?>.pdf')"
+            <button onclick="exportToPDFWithFallback('receipt-content', 'recu_<?php echo $paiement['recu_numero']; ?>.pdf', 'Reçu de paiement N° <?php echo $paiement['recu_numero']; ?>')"
                     class="btn btn-outline-primary">
                 <i class="fas fa-file-pdf me-1"></i>
                 PDF
@@ -248,7 +274,7 @@ include '../../../includes/header.php';
 
                                 </td>
                                 <td class="text-end">
-                                    <strong class="fs-5"><?php echo formatMoney($paiement['montant']); ?></strong>
+                                    <strong class="fs-5"><?php echo formatMontant($paiement['montant'], $devise_affichage); ?></strong>
                                 </td>
                             </tr>
                         </tbody>
@@ -256,12 +282,31 @@ include '../../../includes/header.php';
                             <tr>
                                 <th colspan="3" class="text-end">TOTAL PAYÉ :</th>
                                 <th class="text-end">
-                                    <h4 class="mb-0"><?php echo formatMoney($paiement['montant']); ?></h4>
+                                    <h4 class="mb-0"><?php echo formatMontant($paiement['montant'], $devise_affichage); ?></h4>
                                 </th>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
+                
+                <!-- Informations de devise et conversion -->
+                <?php if ($paiement['devise_id'] && $paiement['montant_devise_par_defaut']): ?>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Devise du paiement :</strong> <?php echo htmlspecialchars($devise_code); ?> (<?php echo htmlspecialchars($devise_affichage); ?>)
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Équivalent en devise par défaut :</strong> 
+                                    <?php echo formatMontant($paiement['montant_devise_par_defaut'], $devise_par_defaut['symbole'] ?? 'FC'); ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         
@@ -377,5 +422,110 @@ include '../../../includes/header.php';
     }
 }
 </style>
+
+<script>
+// Initialiser les tooltips Bootstrap si disponible
+if (typeof bootstrap !== 'undefined') {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+// Fonction PDF simplifiée
+function exportToPDFWithFallback(elementId, filename, title) {
+    console.log('Début de la fonction PDF');
+    
+    // Vérifier si les bibliothèques sont disponibles
+    if (typeof window.jsPDF !== 'undefined' && typeof html2canvas !== 'undefined') {
+        console.log('Bibliothèques PDF disponibles, utilisation de exportToPDF');
+        try {
+            exportToPDF(elementId, filename, title);
+        } catch (error) {
+            console.error('Erreur avec exportToPDF:', error);
+            // Fallback vers l'impression
+            printReceipt(elementId, title);
+        }
+    } else {
+        console.log('Bibliothèques PDF non disponibles, utilisation de l\'impression');
+        printReceipt(elementId, title);
+    }
+}
+
+// Fonction d'impression simplifiée
+function printReceipt(elementId, title) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        alert('Erreur: Élément à exporter non trouvé');
+        return;
+    }
+    
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) {
+        alert('Erreur: Impossible d\'ouvrir la fenêtre d\'impression. Vérifiez que les popups ne sont pas bloqués.');
+        return;
+    }
+    
+    const currentDate = new Date().toLocaleDateString('fr-FR');
+    const currentTime = new Date().toLocaleTimeString('fr-FR');
+    
+    printWindow.document.write('<!DOCTYPE html>');
+    printWindow.document.write('<html lang="fr">');
+    printWindow.document.write('<head>');
+    printWindow.document.write('<meta charset="UTF-8">');
+    printWindow.document.write('<title>' + title + ' - Educ-Sinfinity</title>');
+    printWindow.document.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">');
+    printWindow.document.write('<style>');
+    printWindow.document.write('@media print { body { font-size: 12px; } .no-print { display: none !important; } }');
+    printWindow.document.write('@page { margin: 2cm; size: A4; }');
+    printWindow.document.write('.print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head>');
+    printWindow.document.write('<body>');
+    printWindow.document.write('<div class="print-header">');
+    printWindow.document.write('<h2>EDUC-SINFINITY</h2>');
+    printWindow.document.write('<p>Système de Gestion Scolaire - République Démocratique du Congo</p>');
+    printWindow.document.write('<h3>' + title + '</h3>');
+    printWindow.document.write('<p><small>Généré le ' + currentDate + ' à ' + currentTime + '</small></p>');
+    printWindow.document.write('</div>');
+    printWindow.document.write('<div class="print-content">');
+    printWindow.document.write(element.innerHTML);
+    printWindow.document.write('</div>');
+    printWindow.document.write('</body>');
+    printWindow.document.write('</html>');
+    printWindow.document.close();
+    
+    // Lancer l'impression après un court délai
+    setTimeout(function() {
+        printWindow.print();
+        setTimeout(function() {
+            printWindow.close();
+        }, 1000);
+    }, 500);
+}
+
+// Debug: Vérifier les bibliothèques PDF
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== DEBUG BIBLIOTHÈQUES PDF ===');
+    console.log('window.jsPDF:', typeof window.jsPDF);
+    console.log('jsPDF:', typeof jsPDF);
+    console.log('html2canvas:', typeof html2canvas);
+    
+    if (typeof window.jsPDF !== 'undefined') {
+        console.log('jsPDF disponible via window.jsPDF');
+    } else if (typeof jsPDF !== 'undefined') {
+        console.log('jsPDF disponible via jsPDF');
+    } else {
+        console.error('jsPDF non disponible');
+    }
+    
+    if (typeof html2canvas !== 'undefined') {
+        console.log('html2canvas disponible');
+    } else {
+        console.error('html2canvas non disponible');
+    }
+    console.log('=== FIN DEBUG ===');
+});
+</script>
 
 <?php include '../../../includes/footer.php'; ?>

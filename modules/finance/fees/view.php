@@ -22,10 +22,12 @@ if (!$id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations du frais
-$sql = "SELECT f.*, c.nom as classe_nom, c.niveau, c.section
+// Récupérer les informations du frais avec devise
+$sql = "SELECT f.*, c.nom as classe_nom, c.niveau, c.section,
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
         FROM frais_scolaires f
         JOIN classes c ON f.classe_id = c.id
+        LEFT JOIN devises d ON f.devise_id = d.id
         WHERE f.id = ?";
 
 $frais = $database->query($sql, [$id])->fetch();
@@ -37,6 +39,9 @@ if (!$frais) {
 
 $page_title = 'Détails du frais - ' . $frais['libelle'];
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 include '../../../includes/header.php';
 ?>
 
@@ -46,6 +51,14 @@ include '../../../includes/header.php';
         Détails du frais scolaire
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info" disabled>
+                    <i class="fas fa-coins me-1"></i>
+                    Devise par défaut: <?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -66,6 +79,20 @@ include '../../../includes/header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Note sur la devise par défaut -->
+<?php if ($devise_par_defaut): ?>
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>
+            <strong>Note :</strong> Les montants sont affichés dans leur devise d'origine. 
+            La devise par défaut du système est : 
+            <span class="badge bg-info"><?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)</span>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row">
     <div class="col-lg-8">
@@ -117,9 +144,16 @@ include '../../../includes/header.php';
                             <tr>
                                 <td class="fw-bold">Montant :</td>
                                 <td>
-                                    <span class="fs-4 text-success fw-bold">
-                                        <?php echo formatMoney($frais['montant']); ?>
-                                    </span>
+                                    <div>
+                                        <span class="fs-4 text-success fw-bold">
+                                            <?php echo formatCurrency($frais['montant'], $frais['devise_id']); ?>
+                                        </span>
+                                        <?php if ($frais['devise_id'] && isset($frais['montant_devise_par_defaut']) && $frais['montant_devise_par_defaut']): ?>
+                                            <br><small class="text-muted">
+                                                Équivalent : <?php echo formatCurrency($frais['montant_devise_par_defaut']); ?>
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -266,7 +300,7 @@ include '../../../includes/header.php';
                     <div class="col-md-3">
                         <div class="card border-0 bg-light">
                             <div class="card-body">
-                                <h4 class="text-success"><?php echo formatMoney($total_collecte); ?></h4>
+                                <h4 class="text-success"><?php echo formatCurrency($total_collecte); ?></h4>
                                 <small class="text-muted">Collecté</small>
                             </div>
                         </div>
@@ -285,8 +319,8 @@ include '../../../includes/header.php';
                         </div>
                     </div>
                     <small class="text-muted">
-                        Collecté : <?php echo formatMoney($total_collecte); ?> / 
-                        Attendu : <?php echo formatMoney($total_attendu); ?>
+                        Collecté : <?php echo formatCurrency($total_collecte); ?> / 
+                        Attendu : <?php echo formatCurrency($total_attendu); ?>
                     </small>
                 </div>
             </div>

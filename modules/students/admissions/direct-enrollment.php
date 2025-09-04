@@ -89,16 +89,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $database->beginTransaction();
         
         try {
-            // Créer l'élève
+            // Générer le numéro de demande unique
+            $annee_courante = date('Y');
+            $last_demande = $database->query(
+                "SELECT numero_demande FROM demandes_admission WHERE numero_demande LIKE ? ORDER BY numero_demande DESC LIMIT 1",
+                ['ADM' . $annee_courante . '%']
+            )->fetch();
+            
+            if ($last_demande) {
+                $last_number = intval(substr($last_demande['numero_demande'], -4));
+                $new_number = $last_number + 1;
+            } else {
+                $new_number = 1;
+            }
+            
+            $numero_demande = 'ADM' . $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
+            
+            // Créer la demande d'admission avec status "en_cours_traitement"
+            $database->execute(
+                "INSERT INTO demandes_admission (
+                    numero_demande, annee_scolaire_id, classe_demandee_id, nom_eleve, prenom_eleve,
+                    date_naissance, lieu_naissance, sexe, adresse, telephone, email, nom_pere, nom_mere,
+                    profession_pere, profession_mere, telephone_parent, personne_contact, telephone_contact,
+                    relation_contact, frais_inscription, frais_scolarite, reduction_accordee,
+                    status, priorite, motif_demande, observations, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'en_cours_traitement', 'normale', 'Inscription directe - Élève non évalué', 'Inscription directe sans évaluation préalable', NOW())",
+                [
+                    $numero_demande, $current_year['id'], $classe_id, $nom, $prenom,
+                    $date_naissance, $lieu_naissance, $sexe, $adresse, $telephone, $email,
+                    $nom_pere, $nom_mere, $profession_pere, $profession_mere, $telephone_parent,
+                    $personne_contact, $telephone_contact, $relation_contact,
+                    $frais_inscription, $frais_scolarite, $reduction_accordee
+                ]
+            );
+            
+            $demande_id = $database->lastInsertId();
+            
+            // Générer le numéro de matricule
+            $numero_matricule = generateMatricule();
+            
+            // Créer l'élève avec status "non-evalué"
             $database->execute(
                 "INSERT INTO eleves (
-                    numero_eleve, nom, prenom, date_naissance, lieu_naissance, sexe,
+                    numero_eleve, numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe,
                     adresse, telephone, email, nom_pere, nom_mere, profession_pere, profession_mere,
                     telephone_parent, personne_contact, telephone_contact, relation_contact,
                     classe_id, annee_scolaire_id, status, date_inscription, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif', ?, NOW())",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'non-evalué', ?, NOW())",
                 [
-                    $numero_eleve, $nom, $prenom, $date_naissance, $lieu_naissance, $sexe,
+                    $numero_eleve, $numero_matricule, $nom, $prenom, $date_naissance, $lieu_naissance, $sexe,
                     $adresse, $telephone, $email, $nom_pere, $nom_mere, 
                     $profession_pere, $profession_mere, $telephone_parent, 
                     $personne_contact, $telephone_contact, $relation_contact,
@@ -107,6 +146,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             
             $student_id = $database->lastInsertId();
+            
+            // Mettre à jour la demande avec l'ID de l'élève créé
+            $database->execute(
+                "UPDATE demandes_admission SET eleve_cree_id = ? WHERE id = ?",
+                [$student_id, $demande_id]
+            );
             
             // Créer l'enregistrement financier si des frais sont spécifiés
             if ($frais_inscription > 0 || $frais_scolarite > 0) {
@@ -126,10 +171,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $database->commit();
             
-            showMessage('success', "Élève inscrit directement avec succès. Numéro d'élève : $numero_eleve");
+            showMessage('success', "Demande d'admission créée avec succès. Numéro de demande : $numero_demande. L'élève a le status 'non-évalué' et devra passer par le processus d'évaluation.");
             
-            // Rediriger vers le dossier de l'élève
-            redirectTo("../records/view.php?id=$student_id");
+            // Rediriger vers la demande d'admission
+            redirectTo("applications/view.php?id=$demande_id");
             
         } catch (Exception $e) {
             $database->rollback();
@@ -149,7 +194,7 @@ try {
     showMessage('error', 'Erreur lors du chargement des classes : ' . $e->getMessage());
 }
 
-$page_title = "Inscription Directe";
+$page_title = "Inscription Directe - Demande d'Admission";
 include '../../../includes/header.php';
 ?>
 
@@ -174,11 +219,11 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<div class="alert alert-warning">
-    <i class="fas fa-exclamation-triangle me-2"></i>
-    <strong>Inscription directe :</strong> Cette fonction permet d'inscrire immédiatement un élève 
-    sans passer par le processus normal de candidature. À utiliser uniquement dans des cas exceptionnels 
-    (réinscription, transfert urgent, etc.).
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Inscription directe :</strong> Cette fonction crée une demande d'admission avec le status "en cours de traitement" 
+    et inscrit l'élève avec le status "non-évalué". L'élève devra passer par le processus d'évaluation 
+    avant d'être définitivement accepté. À utiliser pour les inscriptions urgentes nécessitant une évaluation ultérieure.
 </div>
 
 <form method="POST" class="needs-validation" novalidate>
@@ -408,8 +453,8 @@ include '../../../includes/header.php';
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-user-check me-1"></i>
-                            Inscrire l'élève
+                            <i class="fas fa-user-plus me-1"></i>
+                            Créer la demande d'admission
                         </button>
                         <a href="index.php" class="btn btn-secondary">
                             <i class="fas fa-times me-1"></i>

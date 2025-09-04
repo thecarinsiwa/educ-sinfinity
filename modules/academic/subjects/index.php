@@ -27,7 +27,7 @@ $sql = "SELECT m.*,
                COUNT(DISTINCT et.classe_id) as nb_classes,
                COUNT(DISTINCT et.enseignant_id) as nb_enseignants
         FROM matieres m 
-        LEFT JOIN emplois_temps et ON m.id = et.matiere_id
+        LEFT JOIN emploi_temps et ON m.id = et.matiere_id
         WHERE 1=1";
 
 $params = [];

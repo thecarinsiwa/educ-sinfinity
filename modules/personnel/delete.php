@@ -37,7 +37,7 @@ if (!$membre) {
 $dependencies = [];
 
 // Vérifier les emplois du temps
-$stmt = $database->query("SELECT COUNT(*) as count FROM emplois_temps WHERE enseignant_id = ?", [$id]);
+$stmt = $database->query("SELECT COUNT(*) as count FROM emploi_temps WHERE enseignant_id = ?", [$id]);
 if ($stmt->fetch()['count'] > 0) {
     $dependencies[] = "Emplois du temps assignés";
 }
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
             
             if ($force_delete) {
                 // Supprimer les dépendances
-                $database->execute("DELETE FROM emplois_temps WHERE enseignant_id = ?", [$id]);
+                $database->execute("DELETE FROM emploi_temps WHERE enseignant_id = ?", [$id]);
                 $database->execute("UPDATE evaluations SET enseignant_id = NULL WHERE enseignant_id = ?", [$id]);
             }
             

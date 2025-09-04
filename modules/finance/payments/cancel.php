@@ -41,6 +41,9 @@ if (!$paiement) {
 
 $page_title = 'Annuler le paiement - ' . $paiement['recu_numero'];
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 $errors = [];
 $success = false;
 
@@ -130,6 +133,15 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

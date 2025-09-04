@@ -171,13 +171,6 @@ function exportToCSV(tableId, filename = 'export.csv') {
  * @param {string} title - Titre du document
  */
 function exportToPDF(elementId, filename = 'document.pdf', title = 'Document') {
-    // Vérifier si jsPDF est disponible
-    if (typeof window.jsPDF === 'undefined') {
-        console.error('jsPDF non disponible');
-        alert('Erreur: Bibliothèque PDF non chargée. Veuillez recharger la page.');
-        return;
-    }
-
     const element = document.getElementById(elementId);
     if (!element) {
         console.error('Élément non trouvé:', elementId);
@@ -185,33 +178,47 @@ function exportToPDF(elementId, filename = 'document.pdf', title = 'Document') {
         return;
     }
 
-    // Créer une nouvelle instance jsPDF
-    const { jsPDF } = window.jsPDF;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    // Vérifier si les bibliothèques sont disponibles
+    if (typeof window.jsPDF === 'undefined') {
+        console.error('jsPDF non disponible');
+        alert('Erreur: Bibliothèque PDF non chargée. Veuillez recharger la page.');
+        return;
+    }
 
-    // Ajouter l'en-tête
-    pdf.setFontSize(20);
-    pdf.text('EDUC-SINFINITY', 105, 20, { align: 'center' });
-    
-    pdf.setFontSize(12);
-    pdf.text('Système de Gestion Scolaire - RDC', 105, 30, { align: 'center' });
-    
-    pdf.setFontSize(16);
-    pdf.text(title, 105, 45, { align: 'center' });
-    
-    pdf.setFontSize(10);
-    const date = new Date().toLocaleDateString('fr-FR');
-    pdf.text(`Généré le ${date}`, 105, 55, { align: 'center' });
+    if (typeof html2canvas === 'undefined') {
+        console.error('html2canvas non disponible');
+        alert('Erreur: Bibliothèque html2canvas non chargée. Veuillez recharger la page.');
+        return;
+    }
 
-    // Ligne de séparation
-    pdf.line(20, 60, 190, 60);
+    try {
+        // Créer une nouvelle instance jsPDF
+        const { jsPDF } = window.jsPDF;
+        const pdf = new jsPDF('p', 'mm', 'a4');
 
-    // Utiliser html2canvas pour convertir l'élément en image
-    if (typeof html2canvas !== 'undefined') {
+        // Ajouter l'en-tête
+        pdf.setFontSize(20);
+        pdf.text('EDUC-SINFINITY', 105, 20, { align: 'center' });
+        
+        pdf.setFontSize(12);
+        pdf.text('Système de Gestion Scolaire - RDC', 105, 30, { align: 'center' });
+        
+        pdf.setFontSize(16);
+        pdf.text(title, 105, 45, { align: 'center' });
+        
+        pdf.setFontSize(10);
+        const date = new Date().toLocaleDateString('fr-FR');
+        pdf.text(`Généré le ${date}`, 105, 55, { align: 'center' });
+
+        // Ligne de séparation
+        pdf.line(20, 60, 190, 60);
+
+        // Utiliser html2canvas pour convertir l'élément en image
         html2canvas(element, {
             scale: 2,
             useCORS: true,
-            allowTaint: true
+            allowTaint: true,
+            backgroundColor: '#ffffff'
         }).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
             const imgWidth = 170; // Largeur en mm
@@ -245,15 +252,11 @@ function exportToPDF(elementId, filename = 'document.pdf', title = 'Document') {
             pdf.save(filename);
         }).catch(error => {
             console.error('Erreur lors de la génération du PDF:', error);
-            alert('Erreur lors de la génération du PDF');
+            alert('Erreur lors de la génération du PDF: ' + error.message);
         });
-    } else {
-        // Fallback sans html2canvas - texte simple
-        pdf.setFontSize(12);
-        const text = element.innerText;
-        const lines = pdf.splitTextToSize(text, 170);
-        pdf.text(lines, 20, 70);
-        pdf.save(filename);
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation du PDF:', error);
+        alert('Erreur lors de l\'initialisation du PDF: ' + error.message);
     }
 }
 

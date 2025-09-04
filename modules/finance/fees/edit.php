@@ -40,6 +40,9 @@ $page_title = 'Modifier le frais - ' . $frais['libelle'];
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 $errors = [];
 
 // Récupérer les classes
@@ -146,6 +149,14 @@ include '../../../includes/header.php';
         Modifier le frais scolaire
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($devise_par_defaut): ?>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-info" disabled>
+                    <i class="fas fa-coins me-1"></i>
+                    Devise par défaut: <?php echo htmlspecialchars($devise_par_defaut['code']); ?> (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
+                </button>
+            </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="view.php?id=<?php echo $id; ?>" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
