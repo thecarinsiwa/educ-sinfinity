@@ -233,6 +233,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $eleve_id = $database->lastInsertId();
                     
+                    // Générer automatiquement la carte d'élève
+                    require_once '../cartes_eleves/auto-generate.php';
+                    $carte_id = autoGenerateStudentCard($eleve_id, $current_year['id']);
+                    
                     // Créer l'inscription
                     $database->query(
                         "INSERT INTO inscriptions (eleve_id, classe_id, annee_scolaire_id, date_inscription, frais_inscription_paye, status, created_at) 

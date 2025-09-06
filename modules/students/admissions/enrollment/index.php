@@ -94,6 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $student_id = $database->lastInsertId();
                     
+                    // Générer automatiquement la carte d'élève
+                    require_once '../../../cartes_eleves/auto-generate.php';
+                    $carte_id = autoGenerateStudentCard($student_id, $candidature['annee_scolaire_id']);
+                    
                     // Créer l'enregistrement financier
                     $database->execute(
                         "INSERT INTO frais_eleves (

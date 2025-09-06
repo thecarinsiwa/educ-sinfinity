@@ -26,21 +26,40 @@ function requireLogin() {
 /**
  * Obtenir les informations de l'utilisateur connecté
  */
-function getCurrentUser() {
+function getCurrentUser($database = null) {
     if (!isLoggedIn()) {
         return null;
     }
     
-    global $database;
-    $stmt = $database->query(
-        "SELECT u.*, p.nom, p.prenom, p.fonction 
-         FROM users u 
-         LEFT JOIN personnel p ON u.id = p.user_id 
-         WHERE u.id = ?", 
-        [$_SESSION['user_id']]
-    );
+    // Si $database n'est pas fourni, essayer de l'obtenir globalement
+    if ($database === null) {
+        global $database;
+    }
     
-    return $stmt->fetch();
+    // Si toujours null, essayer de créer une nouvelle connexion
+    if ($database === null) {
+        try {
+            require_once dirname(__DIR__) . '/config/database.php';
+        } catch (Exception $e) {
+            error_log("Erreur connexion DB dans getCurrentUser: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    try {
+        $stmt = $database->query(
+            "SELECT u.*, p.nom, p.prenom, p.fonction 
+             FROM users u 
+             LEFT JOIN personnel p ON u.id = p.user_id 
+             WHERE u.id = ?", 
+            [$_SESSION['user_id']]
+        );
+        
+        return $stmt->fetch();
+    } catch (Exception $e) {
+        error_log("Erreur getCurrentUser: " . $e->getMessage());
+        return null;
+    }
 }
 
 /**
@@ -716,5 +735,45 @@ function formatMoneyWithDefault($montant, $devise_id, $montant_devise_par_defaut
         error_log("Erreur lors du formatage avec devise par défaut: " . $e->getMessage());
         return formatCurrency($montant, null, true);
     }
+}
+
+/**
+ * Vérifier si l'utilisateur a une permission spécifique
+ */
+function hasPermission($module, $action = 'view', $database = null) {
+    if (!isLoggedIn()) {
+        return false;
+    }
+    
+    $user = getCurrentUser($database);
+    if (!$user) {
+        return false;
+    }
+    
+    // L'administrateur a toutes les permissions
+    if ($user['role'] === 'admin') {
+        return true;
+    }
+    
+    // Vérifier les permissions basées sur le rôle
+    $permissions = ROLES[$user['role']]['permissions'] ?? [];
+    
+    // Permission spécifique pour le module
+    $specific_permission = $module . '_' . $action;
+    
+    // Vérifier les permissions
+    if (in_array('all', $permissions)) {
+        return true;
+    }
+    
+    if (in_array($module, $permissions)) {
+        return true;
+    }
+    
+    if (in_array($specific_permission, $permissions)) {
+        return true;
+    }
+    
+    return false;
 }
 ?>

@@ -65,19 +65,19 @@ define('ROLES', [
     ],
     'directeur' => [
         'name' => 'Directeur',
-        'permissions' => ['students', 'personnel', 'academic', 'evaluations', 'finance', 'recouvrement', 'reports']
+        'permissions' => ['students', 'personnel', 'academic', 'evaluations', 'finance', 'recouvrement', 'reports', 'cartes_eleves']
     ],
     'enseignant' => [
         'name' => 'Enseignant',
-        'permissions' => ['students_view', 'evaluations', 'academic_view']
+        'permissions' => ['students_view', 'evaluations', 'academic_view', 'cartes_eleves_scan']
     ],
     'secretaire' => [
         'name' => 'Secrétaire',
-        'permissions' => ['students', 'academic', 'communication']
+        'permissions' => ['students', 'academic', 'communication', 'cartes_eleves']
     ],
     'comptable' => [
         'name' => 'Comptable',
-        'permissions' => ['finance', 'recouvrement', 'reports_finance']
+        'permissions' => ['finance', 'recouvrement', 'reports_finance', 'cartes_eleves']
     ]
 ]);
 
@@ -333,6 +333,28 @@ define('MODULES', [
                 'name' => 'Modèles',
                 'icon' => 'fas fa-file-alt',
                 'url' => 'modules/communication/templates/'
+            ]
+        ]
+    ],
+    'cartes_eleves' => [
+        'name' => 'Cartes d\'Élèves',
+        'icon' => 'fas fa-id-card',
+        'description' => 'Cartes d\'identification avec QR Code',
+        'submenu' => [
+            'list' => [
+                'name' => 'Liste des Cartes',
+                'icon' => 'fas fa-list',
+                'url' => 'modules/cartes_eleves/index.php'
+            ],
+            'scanner' => [
+                'name' => 'Scanner QR Code',
+                'icon' => 'fas fa-qrcode',
+                'url' => 'modules/cartes_eleves/qr-scanner.php'
+            ],
+            'settings' => [
+                'name' => 'Paramètres',
+                'icon' => 'fas fa-cog',
+                'url' => 'modules/cartes_eleves/settings.php'
             ]
         ]
     ],
