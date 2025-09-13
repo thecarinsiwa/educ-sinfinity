@@ -15,12 +15,8 @@ if (!isLoggedIn()) {
     exit;
 }
 
-// Vérifier les permissions
-if (!checkPermission('students')) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Permissions insuffisantes']);
-    exit;
-}
+require_once '../../../includes/permissions-pages.php';
+requirePagePermissionFromDB('students', 'attendance', 'read', '../../../dashboard.php');
 
 $classe_id = (int)($_GET['classe_id'] ?? 0);
 $include_attendance = isset($_GET['include_attendance']);

@@ -7,16 +7,14 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('library') && !checkPermission('library_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('library', 'books', 'read', '../../dashboard.php');
 
 // Traitement des actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('library')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('library')) {
     try {
         $action = $_POST['action'] ?? '';
         
@@ -189,7 +187,7 @@ include '../../../includes/header.php';
                 Retour à la bibliothèque
             </a>
         </div>
-        <?php if (checkPermission('library')): ?>
+        <?php if (checkPagePermission('library')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -370,7 +368,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-book fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun livre trouvé</h5>
                 <p class="text-muted">Aucun livre ne correspond aux critères sélectionnés.</p>
-                <?php if (checkPermission('library')): ?>
+                <?php if (checkPagePermission('library')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Ajouter le premier livre
@@ -385,7 +383,7 @@ include '../../../includes/header.php';
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
-                                <?php if (checkPermission('library')): ?>
+                                <?php if (checkPagePermission('library')): ?>
                                     <th width="40">
                                         <input type="checkbox" id="selectAll" class="form-check-input">
                                     </th>
@@ -402,7 +400,7 @@ include '../../../includes/header.php';
                         <tbody>
                             <?php foreach ($livres as $livre): ?>
                                 <tr>
-                                    <?php if (checkPermission('library')): ?>
+                                    <?php if (checkPagePermission('library')): ?>
                                         <td>
                                             <input type="checkbox" name="livre_ids[]"
                                                    value="<?php echo $livre['id']; ?>"
@@ -498,7 +496,7 @@ include '../../../includes/header.php';
                                                class="btn btn-outline-info" title="Voir les détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPermission('library')): ?>
+                                            <?php if (checkPagePermission('library')): ?>
                                                 <a href="edit.php?id=<?php echo $livre['id']; ?>"
                                                    class="btn btn-outline-primary" title="Modifier">
                                                     <i class="fas fa-edit"></i>

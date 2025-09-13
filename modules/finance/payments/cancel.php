@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'payments', 'delete', '../../dashboard.php');
 
 // Récupérer l'ID du paiement
 $id = (int)($_GET['id'] ?? 0);
@@ -25,11 +23,13 @@ if (!$id) {
 // Récupérer les informations du paiement
 $sql = "SELECT p.*, 
                e.nom, e.prenom, e.numero_matricule,
-               c.nom as classe_nom, c.niveau
+               c.nom as classe_nom, c.niveau,
+               tf.nom as type_paiement
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
+        JOIN type_frais tf ON p.type_frais_id = tf.id
         WHERE p.id = ?";
 
 $paiement = $database->query($sql, [$id])->fetch();

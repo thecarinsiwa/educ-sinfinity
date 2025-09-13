@@ -1,23 +1,21 @@
-<?php
+﻿<?php
 /**
  * Module de recouvrement - Tableau de bord
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('recouvrement_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../dashboard.php');
-}
+requirePagePermissionFromDB('recouvrement', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Recouvrement';
 
-// Obtenir l'année scolaire actuelle
+// Obtenir l'annÃ©e scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
 // Statistiques de recouvrement
@@ -38,8 +36,9 @@ try {
              FROM eleves e
              JOIN inscriptions i ON e.id = i.eleve_id
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
              WHERE i.annee_scolaire_id = ? 
                  AND fs.annee_scolaire_id = ?
@@ -69,8 +68,9 @@ try {
              FROM eleves e
              JOIN inscriptions i ON e.id = i.eleve_id
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
              WHERE i.annee_scolaire_id = ? 
                  AND fs.annee_scolaire_id = ?
@@ -102,8 +102,9 @@ try {
              FROM eleves e
              JOIN inscriptions i ON e.id = i.eleve_id
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
              WHERE i.annee_scolaire_id = ? 
                  AND fs.annee_scolaire_id = ?
@@ -128,6 +129,7 @@ try {
          FROM eleves e
          JOIN inscriptions i ON e.id = i.eleve_id
          JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
          LEFT JOIN (
         SELECT 
                  eleve_id,
@@ -136,7 +138,7 @@ try {
              FROM paiements 
              WHERE annee_scolaire_id = ?
              GROUP BY eleve_id, type_paiement
-         ) p ON e.id = p.eleve_id AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+         ) p ON e.id = p.eleve_id AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
          WHERE i.annee_scolaire_id = ? AND fs.annee_scolaire_id = ?
          GROUP BY fs.type_frais
          HAVING total_dettes > 0
@@ -147,7 +149,7 @@ try {
     $stats['dettes_par_type'] = $dettes_par_type;
     
 } catch (Exception $e) {
-    showMessage('error', 'Erreur lors de la récupération des statistiques : ' . $e->getMessage());
+    showMessage('error', 'Erreur lors de la rÃ©cupÃ©ration des statistiques : ' . $e->getMessage());
 }
 
 include '../../includes/header.php';
@@ -162,7 +164,7 @@ include '../../includes/header.php';
         <div class="btn-group me-2">
             <a href="../finance/reports/debtors.php" class="btn btn-outline-danger">
                 <i class="fas fa-exclamation-triangle me-1"></i>
-                Voir les débiteurs
+                Voir les dÃ©biteurs
             </a>
         </div>
         <div class="btn-group">
@@ -190,7 +192,7 @@ include '../../includes/header.php';
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4><?php echo $stats['nombre_debiteurs']; ?></h4>
-                        <p class="mb-0">Élèves débiteurs</p>
+                        <p class="mb-0">Ã‰lÃ¨ves dÃ©biteurs</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-users fa-2x"></i>
@@ -232,7 +234,7 @@ include '../../includes/header.php';
                         <div class="d-grid">
                             <a href="../finance/reports/debtors.php" class="btn btn-outline-danger">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                Liste des débiteurs
+                                Liste des dÃ©biteurs
                         </a>
                     </div>
                     </div>
@@ -283,7 +285,7 @@ include '../../includes/header.php';
                                             <?php else: ?>
                     <div class="text-center py-4">
                         <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Aucune dette enregistrée.</p>
+                        <p class="text-muted">Aucune dette enregistrÃ©e.</p>
                                     </div>
                                         <?php endif; ?>
                                     </div>
@@ -305,7 +307,7 @@ include '../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center py-4">
                         <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Aucune dette enregistrée.</p>
+                        <p class="text-muted">Aucune dette enregistrÃ©e.</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -313,7 +315,7 @@ include '../../includes/header.php';
         </div>
     </div>
 
-<!-- Tableaux détaillés -->
+<!-- Tableaux dÃ©taillÃ©s -->
 <div class="row mb-4">
     <!-- Dettes par niveau -->
     <div class="col-md-6">
@@ -331,7 +333,7 @@ include '../../includes/header.php';
                             <thead>
                                 <tr>
                                     <th>Niveau</th>
-                                    <th>Débiteurs</th>
+                                    <th>DÃ©biteurs</th>
                                     <th>Total dettes</th>
                                     <th>%</th>
                                 </tr>
@@ -365,7 +367,7 @@ include '../../includes/header.php';
                     </div>
                 <?php else: ?>
                     <div class="text-center py-3">
-                        <p class="text-muted">Aucune donnée disponible.</p>
+                        <p class="text-muted">Aucune donnÃ©e disponible.</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -388,7 +390,7 @@ include '../../includes/header.php';
                             <thead>
                                 <tr>
                                     <th>Classe</th>
-                                    <th>Débiteurs</th>
+                                    <th>DÃ©biteurs</th>
                                     <th>Total dettes</th>
                                 </tr>
                             </thead>
@@ -416,7 +418,7 @@ include '../../includes/header.php';
                     </div>
                 <?php else: ?>
                     <div class="text-center py-3">
-                        <p class="text-muted">Aucune donnée disponible.</p>
+                        <p class="text-muted">Aucune donnÃ©e disponible.</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -509,3 +511,5 @@ const typeChart = new Chart(typeCtx, {
 <?php endif; ?>
 
 <?php include '../../includes/footer.php'; ?>
+
+

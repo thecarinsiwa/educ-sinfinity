@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin') && !checkPermission('users_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermission('users', 'logs', 'read', '../../dashboard.php');
 
 $page_title = 'Historique des Actions Utilisateurs';
 
@@ -150,7 +148,7 @@ include '../../../includes/header.php';
                 <li><a class="dropdown-item" href="report.php?<?php echo http_build_query($_GET); ?>">
                     <i class="fas fa-file-pdf me-2"></i>Rapport PDF
                 </a></li>
-                <?php if (checkPermission('admin')): ?>
+                <?php if (checkPagePermission('admin')): ?>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="cleanup.php" 
                            onclick="return confirm('Nettoyer les anciens logs (plus de 6 mois) ?')">

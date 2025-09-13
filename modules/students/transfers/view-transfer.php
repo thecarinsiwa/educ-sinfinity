@@ -1,22 +1,22 @@
-<?php
+﻿<?php
 /**
- * Visualisation détaillée d'un transfert d'élève
+ * Visualisation dÃ©taillÃ©e d'un transfert d'Ã©lÃ¨ve
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
 
-$page_title = "Détail du transfert";
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
 
-// Récupérer l'ID du transfert
+$page_title = "DÃ©tail du transfert";
+
+// RÃ©cupÃ©rer l'ID du transfert
 $transfer_id = $_GET['id'] ?? null;
 
 if (!$transfer_id) {
@@ -24,7 +24,7 @@ if (!$transfer_id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations complètes du transfert
+// RÃ©cupÃ©rer les informations complÃ¨tes du transfert
 $transfer = $database->query(
     "SELECT t.*,
             e.numero_matricule, e.nom, e.prenom, e.date_naissance, e.lieu_naissance, e.sexe,
@@ -48,23 +48,23 @@ $transfer = $database->query(
 )->fetch();
 
 if (!$transfer) {
-    showMessage('error', 'Transfert non trouvé');
+    showMessage('error', 'Transfert non trouvÃ©');
     redirectTo('index.php');
 }
 
-// Récupérer les documents associés
+// RÃ©cupÃ©rer les documents associÃ©s
 $documents = $database->query(
     "SELECT * FROM transfer_documents WHERE transfer_id = ? ORDER BY obligatoire DESC, nom_document",
     [$transfer_id]
 )->fetchAll();
 
-// Récupérer les frais
+// RÃ©cupÃ©rer les frais
 $frais = $database->query(
     "SELECT * FROM transfer_fees WHERE transfer_id = ? ORDER BY type_frais",
     [$transfer_id]
 )->fetchAll();
 
-// Récupérer l'historique
+// RÃ©cupÃ©rer l'historique
 $historique = $database->query(
     "SELECT h.*, u.nom as user_nom, u.prenom as user_prenom
      FROM transfer_history h
@@ -74,14 +74,14 @@ $historique = $database->query(
     [$transfer_id]
 )->fetchAll();
 
-// Définir les labels pour les types de mouvement
+// DÃ©finir les labels pour les types de mouvement
 $type_labels = [
     'transfert_entrant' => 'Transfert entrant',
     'transfert_sortant' => 'Transfert sortant',
-    'sortie_definitive' => 'Sortie définitive'
+    'sortie_definitive' => 'Sortie dÃ©finitive'
 ];
 
-// Définir les couleurs pour les statuts
+// DÃ©finir les couleurs pour les statuts
 $status_colors = [
     'en_attente' => 'warning',
     'approuve' => 'success',
@@ -92,7 +92,7 @@ $status_colors = [
 include '../../../includes/header.php';
 ?>
 
-<!-- Styles CSS personnalisés -->
+<!-- Styles CSS personnalisÃ©s -->
 <style>
 .transfer-header {
     background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
@@ -205,7 +205,7 @@ include '../../../includes/header.php';
     <div class="container">
         <h1>
             <i class="fas fa-exchange-alt me-2"></i>
-            Détail du Transfert
+            DÃ©tail du Transfert
         </h1>
         <p class="lead mb-0">
             <?php echo $type_labels[$transfer['type_mouvement']] ?? $transfer['type_mouvement']; ?>
@@ -222,11 +222,11 @@ include '../../../includes/header.php';
                 <div>
                     <a href="index.php" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>
-                        Retour à la liste
+                        Retour Ã  la liste
                     </a>
                 </div>
                 <div class="btn-group">
-                    <?php if (checkPermission('students') && $transfer['statut'] === 'en_attente'): ?>
+                    <?php if (checkPagePermission('students') && $transfer['statut'] === 'en_attente'): ?>
                         <a href="process.php?id=<?php echo $transfer['id']; ?>" class="btn btn-primary">
                             <i class="fas fa-cog me-1"></i>
                             Traiter
@@ -251,18 +251,18 @@ include '../../../includes/header.php';
 
     <!-- Contenu principal -->
     <div class="row">
-        <!-- Informations de l'élève -->
+        <!-- Informations de l'Ã©lÃ¨ve -->
         <div class="col-lg-4">
             <div class="info-card">
                 <h5>
                     <i class="fas fa-user"></i>
-                    Informations de l'élève
+                    Informations de l'Ã©lÃ¨ve
                 </h5>
 
                 <div class="text-center mb-3">
                     <?php if ($transfer['photo']): ?>
                         <img src="../../../uploads/photos/<?php echo htmlspecialchars($transfer['photo']); ?>"
-                             alt="Photo de l'élève" class="student-photo">
+                             alt="Photo de l'Ã©lÃ¨ve" class="student-photo">
                     <?php else: ?>
                         <div class="student-photo d-flex align-items-center justify-content-center bg-light">
                             <i class="fas fa-user fa-3x text-muted"></i>
@@ -282,10 +282,10 @@ include '../../../includes/header.php';
                         </div>
                         <div class="col-6">
                             <small class="text-muted">Sexe</small>
-                            <div><?php echo $transfer['sexe'] === 'M' ? 'Masculin' : 'Féminin'; ?></div>
+                            <div><?php echo $transfer['sexe'] === 'M' ? 'Masculin' : 'FÃ©minin'; ?></div>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted">Âge</small>
+                            <small class="text-muted">Ã‚ge</small>
                             <div><?php echo calculateAge($transfer['date_naissance']); ?> ans</div>
                         </div>
                         <div class="col-12">
@@ -294,7 +294,7 @@ include '../../../includes/header.php';
                         </div>
                         <div class="col-12">
                             <small class="text-muted">Lieu de naissance</small>
-                            <div><?php echo htmlspecialchars($transfer['lieu_naissance'] ?? 'Non renseigné'); ?></div>
+                            <div><?php echo htmlspecialchars($transfer['lieu_naissance'] ?? 'Non renseignÃ©'); ?></div>
                         </div>
                     </div>
                 </div>
@@ -309,24 +309,24 @@ include '../../../includes/header.php';
 
                 <div class="row g-2">
                     <div class="col-12">
-                        <small class="text-muted">Nom du père</small>
-                        <div><?php echo htmlspecialchars($transfer['nom_pere'] ?? 'Non renseigné'); ?></div>
+                        <small class="text-muted">Nom du pÃ¨re</small>
+                        <div><?php echo htmlspecialchars($transfer['nom_pere'] ?? 'Non renseignÃ©'); ?></div>
                     </div>
                     <div class="col-12">
-                        <small class="text-muted">Profession du père</small>
-                        <div><?php echo htmlspecialchars($transfer['profession_pere'] ?? 'Non renseignée'); ?></div>
+                        <small class="text-muted">Profession du pÃ¨re</small>
+                        <div><?php echo htmlspecialchars($transfer['profession_pere'] ?? 'Non renseignÃ©e'); ?></div>
                     </div>
                     <div class="col-12">
-                        <small class="text-muted">Nom de la mère</small>
-                        <div><?php echo htmlspecialchars($transfer['nom_mere'] ?? 'Non renseigné'); ?></div>
+                        <small class="text-muted">Nom de la mÃ¨re</small>
+                        <div><?php echo htmlspecialchars($transfer['nom_mere'] ?? 'Non renseignÃ©'); ?></div>
                     </div>
                     <div class="col-12">
-                        <small class="text-muted">Profession de la mère</small>
-                        <div><?php echo htmlspecialchars($transfer['profession_mere'] ?? 'Non renseignée'); ?></div>
+                        <small class="text-muted">Profession de la mÃ¨re</small>
+                        <div><?php echo htmlspecialchars($transfer['profession_mere'] ?? 'Non renseignÃ©e'); ?></div>
                     </div>
                     <div class="col-12">
-                        <small class="text-muted">Téléphone parent</small>
-                        <div><?php echo htmlspecialchars($transfer['telephone_parent'] ?? 'Non renseigné'); ?></div>
+                        <small class="text-muted">TÃ©lÃ©phone parent</small>
+                        <div><?php echo htmlspecialchars($transfer['telephone_parent'] ?? 'Non renseignÃ©'); ?></div>
                     </div>
                     <?php if ($transfer['email_parent']): ?>
                     <div class="col-12">
@@ -338,13 +338,13 @@ include '../../../includes/header.php';
             </div>
         </div>
 
-        <!-- Détails du transfert -->
+        <!-- DÃ©tails du transfert -->
         <div class="col-lg-8">
             <!-- Informations générales du transfert -->
             <div class="info-card">
                 <h5>
                     <i class="fas fa-exchange-alt"></i>
-                    Détails du transfert
+                    DÃ©tails du transfert
                 </h5>
 
                 <div class="row g-3">
@@ -368,7 +368,7 @@ include '../../../includes/header.php';
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted">Date effective</small>
-                        <div><?php echo $transfer['date_effective'] ? formatDate($transfer['date_effective']) : 'Non définie'; ?></div>
+                        <div><?php echo $transfer['date_effective'] ? formatDate($transfer['date_effective']) : 'Non dÃ©finie'; ?></div>
                     </div>
                 </div>
             </div>
@@ -383,14 +383,14 @@ include '../../../includes/header.php';
                 <div class="row g-3">
                     <?php if ($transfer['ecole_origine']): ?>
                     <div class="col-md-6">
-                        <small class="text-muted">École d'origine</small>
+                        <small class="text-muted">Ã‰cole d'origine</small>
                         <div><?php echo htmlspecialchars($transfer['ecole_origine']); ?></div>
                     </div>
                     <?php endif; ?>
 
                     <?php if ($transfer['ecole_destination']): ?>
                     <div class="col-md-6">
-                        <small class="text-muted">École de destination</small>
+                        <small class="text-muted">Ã‰cole de destination</small>
                         <div><?php echo htmlspecialchars($transfer['ecole_destination']); ?></div>
                     </div>
                     <?php endif; ?>
@@ -411,7 +411,7 @@ include '../../../includes/header.php';
 
                     <?php if ($transfer['annee_scolaire']): ?>
                     <div class="col-12">
-                        <small class="text-muted">Année scolaire</small>
+                        <small class="text-muted">AnnÃ©e scolaire</small>
                         <div><?php echo htmlspecialchars($transfer['annee_scolaire']); ?></div>
                     </div>
                     <?php endif; ?>
@@ -428,7 +428,7 @@ include '../../../includes/header.php';
                 <div class="mb-3">
                     <small class="text-muted">Motif du transfert</small>
                     <div class="mt-1">
-                        <?php echo nl2br(htmlspecialchars($transfer['motif'] ?? 'Aucun motif spécifié')); ?>
+                        <?php echo nl2br(htmlspecialchars($transfer['motif'] ?? 'Aucun motif spÃ©cifiÃ©')); ?>
                     </div>
                 </div>
 
@@ -442,12 +442,12 @@ include '../../../includes/header.php';
                 <?php endif; ?>
             </div>
 
-            <!-- Informations financières -->
+            <!-- Informations financiÃ¨res -->
             <?php if ($transfer['frais_transfert'] > 0 || !empty($frais)): ?>
             <div class="info-card">
                 <h5>
                     <i class="fas fa-money-bill-wave"></i>
-                    Informations financières
+                    Informations financiÃ¨res
                 </h5>
 
                 <div class="row g-3">
@@ -456,20 +456,20 @@ include '../../../includes/header.php';
                         <div class="fw-bold"><?php echo formatMoney($transfer['frais_transfert']); ?></div>
                     </div>
                     <div class="col-md-6">
-                        <small class="text-muted">Frais payés</small>
+                        <small class="text-muted">Frais payÃ©s</small>
                         <div class="fw-bold text-success"><?php echo formatMoney($transfer['frais_payes'] ?? 0); ?></div>
                     </div>
                 </div>
 
                 <?php if (!empty($frais)): ?>
                 <div class="mt-3">
-                    <small class="text-muted">Détail des frais</small>
+                    <small class="text-muted">DÃ©tail des frais</small>
                     <div class="table-responsive mt-2">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
                                     <th>Type</th>
-                                    <th>Libellé</th>
+                                    <th>LibellÃ©</th>
                                     <th>Montant</th>
                                     <th>Statut</th>
                                 </tr>
@@ -482,7 +482,7 @@ include '../../../includes/header.php';
                                     <td><?php echo formatMoney($frais_item['montant']); ?></td>
                                     <td>
                                         <span class="badge bg-<?php echo $frais_item['paye'] ? 'success' : 'warning'; ?>">
-                                            <?php echo $frais_item['paye'] ? 'Payé' : 'En attente'; ?>
+                                            <?php echo $frais_item['paye'] ? 'PayÃ©' : 'En attente'; ?>
                                         </span>
                                     </td>
                                 </tr>
@@ -549,30 +549,30 @@ include '../../../includes/header.php';
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <small class="text-muted">Traité par</small>
+                        <small class="text-muted">TraitÃ© par</small>
                         <div>
                             <?php if ($transfer['traite_par_nom']): ?>
                                 <?php echo htmlspecialchars($transfer['traite_par_nom'] . ' ' . $transfer['traite_par_prenom']); ?>
                             <?php else: ?>
-                                <em class="text-muted">Non traité</em>
+                                <em class="text-muted">Non traitÃ©</em>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted">Date de traitement</small>
                         <div>
-                            <?php echo $transfer['date_traitement'] ? formatDate($transfer['date_traitement']) : 'Non traité'; ?>
+                            <?php echo $transfer['date_traitement'] ? formatDate($transfer['date_traitement']) : 'Non traitÃ©'; ?>
                         </div>
                     </div>
 
                     <?php if ($transfer['approuve_par_nom']): ?>
                     <div class="col-md-6">
-                        <small class="text-muted">Approuvé par</small>
+                        <small class="text-muted">ApprouvÃ© par</small>
                         <div><?php echo htmlspecialchars($transfer['approuve_par_nom'] . ' ' . $transfer['approuve_par_prenom']); ?></div>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted">Date d'approbation</small>
-                        <div><?php echo $transfer['date_approbation'] ? formatDate($transfer['date_approbation']) : 'Non approuvé'; ?></div>
+                        <div><?php echo $transfer['date_approbation'] ? formatDate($transfer['date_approbation']) : 'Non approuvÃ©'; ?></div>
                     </div>
                     <?php endif; ?>
 
@@ -580,9 +580,9 @@ include '../../../includes/header.php';
                     <div class="col-md-6">
                         <small class="text-muted">Certificat</small>
                         <div>
-                            <span class="badge bg-success">Généré</span>
+                            <span class="badge bg-success">GÃ©nÃ©rÃ©</span>
                             <?php if ($transfer['numero_certificat']): ?>
-                                <br><small>N° <?php echo htmlspecialchars($transfer['numero_certificat']); ?></small>
+                                <br><small>NÂ° <?php echo htmlspecialchars($transfer['numero_certificat']); ?></small>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -632,7 +632,7 @@ include '../../../includes/header.php';
 </div>
 
 <script>
-// Améliorer l'impression
+// AmÃ©liorer l'impression
 window.addEventListener('beforeprint', function() {
     // Masquer les boutons d'action lors de l'impression
     document.querySelectorAll('.btn-group, .btn-toolbar').forEach(function(element) {
@@ -641,7 +641,7 @@ window.addEventListener('beforeprint', function() {
 });
 
 window.addEventListener('afterprint', function() {
-    // Réafficher les boutons après l'impression
+    // RÃ©afficher les boutons aprÃ¨s l'impression
     document.querySelectorAll('.btn-group, .btn-toolbar').forEach(function(element) {
         element.style.display = '';
     });
@@ -672,3 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

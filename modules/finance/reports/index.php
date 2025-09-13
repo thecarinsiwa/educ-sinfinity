@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('finance', 'reports', 'read', '../../dashboard.php');
 
 $page_title = 'Rapports Financiers';
 
@@ -53,14 +51,15 @@ switch ($periode) {
 // Statistiques financières pour la période
 $stats = [];
 
-// Recettes par type
+// Recettes par type de frais
 $recettes_par_type = $database->query(
-    "SELECT type_paiement, SUM(montant) as total, COUNT(*) as nombre
-     FROM paiements 
-     WHERE status = 'valide' 
-     AND date_paiement BETWEEN ? AND ?
-     AND annee_scolaire_id = ?
-     GROUP BY type_paiement
+    "SELECT tf.nom as type_frais, SUM(p.montant) as total, COUNT(*) as nombre
+     FROM paiements p
+     JOIN type_frais tf ON p.type_frais_id = tf.id
+     WHERE p.status = 'valide' 
+     AND p.date_paiement BETWEEN ? AND ?
+     AND p.annee_scolaire_id = ?
+     GROUP BY tf.id, tf.nom
      ORDER BY total DESC",
     [$date_debut, $date_fin, $current_year['id'] ?? 0]
 )->fetchAll();
@@ -270,7 +269,7 @@ include '../../../includes/header.php';
                     <div class="mt-3">
                         <?php foreach ($recettes_par_type as $type): ?>
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span><?php echo ucfirst($type['type_paiement']); ?></span>
+                                <span><?php echo htmlspecialchars($type['type_frais']); ?></span>
                                 <div>
                                     <span class="badge bg-primary me-1"><?php echo $type['nombre']; ?></span>
                                     <strong><?php echo formatMoney($type['total']); ?></strong>
@@ -601,7 +600,7 @@ const typesCtx = document.getElementById('typesChart').getContext('2d');
 const typesChart = new Chart(typesCtx, {
     type: 'doughnut',
     data: {
-        labels: [<?php echo implode(',', array_map(function($t) { return "'" . ucfirst($t['type_paiement']) . "'"; }, $recettes_par_type)); ?>],
+        labels: [<?php echo implode(',', array_map(function($t) { return "'" . addslashes($t['type_frais']) . "'"; }, $recettes_par_type)); ?>],
         datasets: [{
             data: [<?php echo implode(',', array_column($recettes_par_type, 'total')); ?>],
             backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'],

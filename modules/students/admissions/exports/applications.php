@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module Admissions - Export des demandes d'admission
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,17 +7,16 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
 
 $page_title = 'Export des demandes d\'admission';
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year) {
@@ -70,7 +69,7 @@ if ($date_fin) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les données
+// RÃ©cupÃ©rer les donnÃ©es
 $demandes = $database->query(
     "SELECT 
         da.id,
@@ -132,7 +131,7 @@ foreach ($demandes as $demande) {
     }
 }
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT c.id, c.nom, c.niveau
      FROM classes c
@@ -141,7 +140,7 @@ $classes = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// Récupérer les périodes d'admission (utiliser la date de création comme période)
+// RÃ©cupÃ©rer les périodes d'admission (utiliser la date de création comme période)
 $periodes = $database->query(
     "SELECT DISTINCT DATE_FORMAT(created_at, '%Y-%m') as periode_admission 
      FROM demandes_admission 
@@ -152,41 +151,41 @@ $periodes = $database->query(
 
 // Traitement de l'export Excel
 if ($format === 'excel' && !empty($demandes)) {
-    // Définir les en-têtes pour le téléchargement
+    // DÃ©finir les en-tÃªtes pour le tÃ©lÃ©chargement
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="demandes_admission_' . date('Y-m-d_H-i-s') . '.csv"');
     
-    // Créer le fichier CSV
+    // CrÃ©er le fichier CSV
     $output = fopen('php://output', 'w');
     
-    // En-têtes CSV
+    // En-tÃªtes CSV
     fputcsv($output, [
-        'Numéro demande',
+        'NumÃ©ro demande',
         'Nom demandeur',
-        'Prénom demandeur',
+        'PrÃ©nom demandeur',
         'Sexe',
         'Date naissance',
         'Lieu naissance',
         'Adresse',
-        'Téléphone',
+        'TÃ©lÃ©phone',
         'Email',
         'Nom parent',
-        'Prénom parent',
-        'Téléphone parent',
+        'PrÃ©nom parent',
+        'TÃ©lÃ©phone parent',
         'Email parent',
         'Profession parent',
-        'Classe demandée',
+        'Classe demandÃ©e',
         'Niveau',
-        'Période admission',
+        'PÃ©riode admission',
         'Statut',
         'Motif refus',
         'Observation',
         'Date création',
         'Date modification',
-        'Traité par'
+        'TraitÃ© par'
     ]);
     
-    // Données
+    // DonnÃ©es
     foreach ($demandes as $demande) {
         fputcsv($output, [
             $demande['numero_demande'],
@@ -221,8 +220,8 @@ if ($format === 'excel' && !empty($demandes)) {
 
 // Traitement de l'export PDF
 if ($format === 'pdf' && !empty($demandes)) {
-    // Pour l'instant, on redirige vers une version HTML optimisée pour l'impression
-    // En production, vous pourriez utiliser une bibliothèque comme TCPDF ou FPDF
+    // Pour l'instant, on redirige vers une version HTML optimisÃ©e pour l'impression
+    // En production, vous pourriez utiliser une bibliothÃ¨que comme TCPDF ou FPDF
          header('Content-Type: text/html; charset=utf-8');
      include '../../../../includes/header.php';
      ?>
@@ -283,9 +282,9 @@ if ($format === 'pdf' && !empty($demandes)) {
                 <select class="form-select" id="status" name="status">
                     <option value="">Tous les statuts</option>
                     <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
-                    <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                    <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
-                    <option value="annulee" <?php echo $status_filter === 'annulee' ? 'selected' : ''; ?>>Annulée</option>
+                    <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                    <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
+                    <option value="annulee" <?php echo $status_filter === 'annulee' ? 'selected' : ''; ?>>AnnulÃ©e</option>
                 </select>
             </div>
             
@@ -296,7 +295,7 @@ if ($format === 'pdf' && !empty($demandes)) {
                     <option value="maternelle" <?php echo $niveau_filter === 'maternelle' ? 'selected' : ''; ?>>Maternelle</option>
                     <option value="primaire" <?php echo $niveau_filter === 'primaire' ? 'selected' : ''; ?>>Primaire</option>
                     <option value="secondaire" <?php echo $niveau_filter === 'secondaire' ? 'selected' : ''; ?>>Secondaire</option>
-                    <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>Supérieur</option>
+                    <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>SupÃ©rieur</option>
                 </select>
             </div>
             
@@ -313,7 +312,7 @@ if ($format === 'pdf' && !empty($demandes)) {
             </div>
             
             <div class="col-md-2">
-                <label for="periode" class="form-label">Période</label>
+                <label for="periode" class="form-label">PÃ©riode</label>
                 <select class="form-select" id="periode" name="periode">
                     <option value="">Toutes les périodes</option>
                     <?php foreach ($periodes as $p): ?>
@@ -325,7 +324,7 @@ if ($format === 'pdf' && !empty($demandes)) {
             </div>
             
             <div class="col-md-2">
-                <label for="date_debut" class="form-label">Date début</label>
+                <label for="date_debut" class="form-label">Date dÃ©but</label>
                 <input type="date" class="form-control" id="date_debut" name="date_debut" value="<?php echo $date_debut; ?>">
             </div>
             
@@ -341,14 +340,14 @@ if ($format === 'pdf' && !empty($demandes)) {
                 </button>
                 <a href="?" class="btn btn-outline-secondary">
                     <i class="fas fa-times me-1"></i>
-                    Réinitialiser
+                    RÃ©initialiser
                 </a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Résumé de l'export -->
+<!-- RÃ©sumÃ© de l'export -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-center">
@@ -370,7 +369,7 @@ if ($format === 'pdf' && !empty($demandes)) {
         <div class="card text-center">
             <div class="card-body">
                 <h3 class="text-success"><?php echo $stats_export['acceptees']; ?></h3>
-                <p class="card-text">Acceptées</p>
+                <p class="card-text">AcceptÃ©es</p>
             </div>
         </div>
     </div>
@@ -378,7 +377,7 @@ if ($format === 'pdf' && !empty($demandes)) {
         <div class="card text-center">
             <div class="card-body">
                 <h3 class="text-danger"><?php echo $stats_export['refusees']; ?></h3>
-                <p class="card-text">Refusées</p>
+                <p class="card-text">RefusÃ©es</p>
             </div>
         </div>
     </div>
@@ -389,14 +388,14 @@ if ($format === 'pdf' && !empty($demandes)) {
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Demandes d'admission (<?php echo count($demandes); ?> résultat<?php echo count($demandes) > 1 ? 's' : ''; ?>)
+            Demandes d'admission (<?php echo count($demandes); ?> rÃ©sultat<?php echo count($demandes) > 1 ? 's' : ''; ?>)
         </h5>
     </div>
     <div class="card-body">
         <?php if (empty($demandes)): ?>
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
-                Aucune demande d'admission trouvée avec les critères sélectionnés.
+                Aucune demande d'admission trouvÃ©e avec les critÃ¨res sÃ©lectionnÃ©s.
             </div>
         <?php else: ?>
             <div class="table-responsive">
@@ -404,11 +403,11 @@ if ($format === 'pdf' && !empty($demandes)) {
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Numéro</th>
+                            <th>NumÃ©ro</th>
                             <th>Demandeur</th>
                             <th>Parent</th>
-                            <th>Classe demandée</th>
-                            <th>Période</th>
+                            <th>Classe demandÃ©e</th>
+                            <th>PÃ©riode</th>
                             <th>Statut</th>
                             <th>Date création</th>
                             <th>Actions</th>
@@ -426,8 +425,8 @@ if ($format === 'pdf' && !empty($demandes)) {
                                         <strong><?php echo htmlspecialchars($demande['nom_demandeur'] . ' ' . $demande['prenom_demandeur']); ?></strong>
                                         <br>
                                         <small class="text-muted">
-                                            <?php echo htmlspecialchars($demande['sexe_demandeur']); ?> • 
-                                            <?php echo $demande['date_naissance_demandeur'] ? formatDate($demande['date_naissance_demandeur']) : 'Non spécifié'; ?>
+                                            <?php echo htmlspecialchars($demande['sexe_demandeur']); ?> â€¢ 
+                                            <?php echo $demande['date_naissance_demandeur'] ? formatDate($demande['date_naissance_demandeur']) : 'Non spÃ©cifiÃ©'; ?>
                                         </small>
                                     </div>
                                 </td>
@@ -442,15 +441,15 @@ if ($format === 'pdf' && !empty($demandes)) {
                                 </td>
                                 <td>
                                     <div>
-                                        <strong><?php echo htmlspecialchars($demande['classe_nom'] ?? 'Non spécifiée'); ?></strong>
+                                        <strong><?php echo htmlspecialchars($demande['classe_nom'] ?? 'Non spÃ©cifiÃ©e'); ?></strong>
                                         <br>
                                         <small class="text-muted">
-                                            <?php echo ucfirst($demande['niveau'] ?? 'Non spécifié'); ?>
+                                            <?php echo ucfirst($demande['niveau'] ?? 'Non spÃ©cifiÃ©'); ?>
                                         </small>
                                     </div>
                                 </td>
                                 <td>
-                                    <?php echo htmlspecialchars($demande['periode_admission'] ?? 'Non spécifiée'); ?>
+                                    <?php echo htmlspecialchars($demande['periode_admission'] ?? 'Non spÃ©cifiÃ©e'); ?>
                                 </td>
                                 <td>
                                     <?php
@@ -462,9 +461,9 @@ if ($format === 'pdf' && !empty($demandes)) {
                                     ];
                                     $status_labels = [
                                         'en_attente' => 'En attente',
-                                        'acceptee' => 'Acceptée',
-                                        'refusee' => 'Refusée',
-                                        'annulee' => 'Annulée'
+                                        'acceptee' => 'AcceptÃ©e',
+                                        'refusee' => 'RefusÃ©e',
+                                        'annulee' => 'AnnulÃ©e'
                                     ];
                                     $badge_class = $status_badges[$demande['status']] ?? 'secondary';
                                     $status_label = $status_labels[$demande['status']] ?? $demande['status'];
@@ -484,7 +483,7 @@ if ($format === 'pdf' && !empty($demandes)) {
                                 </td>
                                 <td class="no-print">
                                     <div class="btn-group btn-group-sm">
-                                        <a href="../applications/view.php?id=<?php echo $demande['id']; ?>" class="btn btn-outline-primary" title="Voir les détails">
+                                        <a href="../applications/view.php?id=<?php echo $demande['id']; ?>" class="btn btn-outline-primary" title="Voir les dÃ©tails">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php if ($demande['status'] === 'en_attente'): ?>
@@ -504,3 +503,7 @@ if ($format === 'pdf' && !empty($demandes)) {
 </div>
 
  <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

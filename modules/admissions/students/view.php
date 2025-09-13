@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admissions') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
+requirePagePermissionFromDB('admissions', 'students', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de l'élève
 $eleve_id = intval($_GET['id'] ?? 0);

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Modifier une candidature existante
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'edit', '../../../../dashboard.php');
 
 $candidature_id = intval($_GET['id'] ?? 0);
 
@@ -22,7 +21,7 @@ if (!$candidature_id) {
     redirectTo('index.php');
 }
 
-// Récupérer la candidature existante
+// RÃ©cupÃ©rer la candidature existante
 try {
     $candidature = $database->query(
         "SELECT da.*, c.nom as classe_demandee_nom
@@ -33,7 +32,7 @@ try {
     )->fetch();
 
     if (!$candidature) {
-        showMessage('error', 'Candidature non trouvée.');
+        showMessage('error', 'Candidature non trouvÃ©e.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
@@ -46,7 +45,7 @@ $page_title = 'Modifier Candidature - ' . $candidature['nom_eleve'] . ' ' . $can
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Récupérer les classes disponibles
+// RÃ©cupÃ©rer les classes disponibles
 try {
     $classes = $database->query(
         "SELECT id, nom, niveau, section FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
@@ -60,7 +59,7 @@ $errors = [];
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Récupérer et valider les données
+    // RÃ©cupÃ©rer et valider les donnÃ©es
     $nom_eleve = sanitizeInput($_POST['nom_eleve'] ?? '');
     $prenom_eleve = sanitizeInput($_POST['prenom_eleve'] ?? '');
     $date_naissance = $_POST['date_naissance'] ?? '';
@@ -86,31 +85,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $telephone_contact = sanitizeInput($_POST['telephone_contact'] ?? '');
     $relation_contact = sanitizeInput($_POST['relation_contact'] ?? '');
     
-    // École précédente
+    // Ã‰cole prÃ©cÃ©dente
     $ecole_precedente = sanitizeInput($_POST['ecole_precedente'] ?? '');
     $classe_precedente = sanitizeInput($_POST['classe_precedente'] ?? '');
     $annee_precedente = sanitizeInput($_POST['annee_precedente'] ?? '');
     $moyenne_precedente = floatval($_POST['moyenne_precedente'] ?? 0);
     
-    // Documents (conversion en entier pour la base de données)
+    // Documents (conversion en entier pour la base de donnÃ©es)
     $certificat_naissance = isset($_POST['certificat_naissance']) ? 1 : 0;
     $bulletin_precedent = isset($_POST['bulletin_precedent']) ? 1 : 0;
     $certificat_medical = isset($_POST['certificat_medical']) ? 1 : 0;
     $photo_identite = isset($_POST['photo_identite']) ? 1 : 0;
     $autres_documents = sanitizeInput($_POST['autres_documents'] ?? '');
     
-    // Informations supplémentaires
+    // Informations supplÃ©mentaires
     $motif_demande = sanitizeInput($_POST['motif_demande'] ?? '');
     $besoins_speciaux = sanitizeInput($_POST['besoins_speciaux'] ?? '');
     $allergies_medicales = sanitizeInput($_POST['allergies_medicales'] ?? '');
     $observations = sanitizeInput($_POST['observations'] ?? '');
     
     // Validation
-    if (empty($nom_eleve)) $errors[] = 'Le nom de l\'élève est obligatoire.';
-    if (empty($prenom_eleve)) $errors[] = 'Le prénom de l\'élève est obligatoire.';
+    if (empty($nom_eleve)) $errors[] = 'Le nom de l\'Ã©lÃ¨ve est obligatoire.';
+    if (empty($prenom_eleve)) $errors[] = 'Le prÃ©nom de l\'Ã©lÃ¨ve est obligatoire.';
     if (empty($date_naissance)) $errors[] = 'La date de naissance est obligatoire.';
     if (empty($sexe)) $errors[] = 'Le sexe est obligatoire.';
-    if (!$classe_demandee_id) $errors[] = 'La classe demandée est obligatoire.';
+    if (!$classe_demandee_id) $errors[] = 'La classe demandÃ©e est obligatoire.';
     if (empty($telephone_parent)) $errors[] = 'Le téléphone des parents est obligatoire.';
     
     // Validation de la date de naissance
@@ -128,12 +127,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validation de la moyenne
     if ($moyenne_precedente && ($moyenne_precedente < 0 || $moyenne_precedente > 20)) {
-        $errors[] = 'La moyenne précédente doit être entre 0 et 20.';
+        $errors[] = 'La moyenne prÃ©cÃ©dente doit Ãªtre entre 0 et 20.';
     }
     
     if (empty($errors)) {
         try {
-            // Mettre à jour la candidature
+            // Mettre Ã  jour la candidature
             $sql = "UPDATE demandes_admission SET 
                 nom_eleve = ?, prenom_eleve = ?, date_naissance = ?, lieu_naissance = ?, sexe = ?,
                 classe_demandee_id = ?, priorite = ?, adresse = ?, telephone = ?, email = ?,
@@ -156,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $observations, $candidature_id
             ]);
             
-            showMessage('success', 'Candidature modifiée avec succès.');
+            showMessage('success', 'Candidature modifiÃ©e avec succÃ¨s.');
             redirectTo("view.php?id=$candidature_id");
             
         } catch (Exception $e) {
@@ -164,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 } else {
-    // Pré-remplir le formulaire avec les données existantes
+    // PrÃ©-remplir le formulaire avec les donnÃ©es existantes
     $_POST = [
         'nom_eleve' => $candidature['nom_eleve'],
         'prenom_eleve' => $candidature['prenom_eleve'],
@@ -195,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'observations' => $candidature['observations']
     ];
     
-    // Gérer les checkboxes
+    // GÃ©rer les checkboxes
     if ($candidature['certificat_naissance']) $_POST['certificat_naissance'] = '1';
     if ($candidature['bulletin_precedent']) $_POST['bulletin_precedent'] = '1';
     if ($candidature['certificat_medical']) $_POST['certificat_medical'] = '1';
@@ -214,7 +213,7 @@ include '../../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="view.php?id=<?php echo $candidature_id; ?>" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour aux détails
+                Retour aux dÃ©tails
             </a>
         </div>
         <div class="btn-group me-2">
@@ -230,7 +229,7 @@ include '../../../../includes/header.php';
 <div class="alert alert-info mb-4">
     <div class="row">
         <div class="col-md-3">
-            <strong>Numéro :</strong> <?php echo htmlspecialchars($candidature['numero_demande']); ?>
+            <strong>NumÃ©ro :</strong> <?php echo htmlspecialchars($candidature['numero_demande']); ?>
         </div>
         <div class="col-md-3">
             <strong>Statut :</strong> 
@@ -249,17 +248,17 @@ include '../../../../includes/header.php';
             </span>
         </div>
         <div class="col-md-3">
-            <strong>Créée le :</strong> <?php echo formatDate($candidature['created_at']); ?>
+            <strong>CrÃ©Ã©e le :</strong> <?php echo formatDate($candidature['created_at']); ?>
         </div>
         <div class="col-md-3">
-            <strong>Modifiée le :</strong> <?php echo $candidature['updated_at'] ? formatDate($candidature['updated_at']) : 'Jamais'; ?>
+            <strong>ModifiÃ©e le :</strong> <?php echo $candidature['updated_at'] ? formatDate($candidature['updated_at']) : 'Jamais'; ?>
         </div>
     </div>
 </div>
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
-        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs détectées :</h6>
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs dÃ©tectÃ©es :</h6>
         <ul class="mb-0">
             <?php foreach ($errors as $error): ?>
                 <li><?php echo htmlspecialchars($error); ?></li>
@@ -280,21 +279,21 @@ include '../../../../includes/header.php';
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label for="nom_eleve" class="form-label">Nom de l'élève <span class="text-danger">*</span></label>
+                    <label for="nom_eleve" class="form-label">Nom de l'Ã©lÃ¨ve <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="nom_eleve" name="nom_eleve" 
                            value="<?php echo htmlspecialchars($_POST['nom_eleve'] ?? ''); ?>" required>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="prenom_eleve" class="form-label">Prénom de l'élève <span class="text-danger">*</span></label>
+                    <label for="prenom_eleve" class="form-label">PrÃ©nom de l'Ã©lÃ¨ve <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="prenom_eleve" name="prenom_eleve" 
                            value="<?php echo htmlspecialchars($_POST['prenom_eleve'] ?? ''); ?>" required>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="sexe" class="form-label">Sexe <span class="text-danger">*</span></label>
                     <select class="form-select" id="sexe" name="sexe" required>
-                        <option value="">Sélectionner...</option>
+                        <option value="">SÃ©lectionner...</option>
                         <option value="M" <?php echo ($_POST['sexe'] ?? '') === 'M' ? 'selected' : ''; ?>>Masculin</option>
-                        <option value="F" <?php echo ($_POST['sexe'] ?? '') === 'F' ? 'selected' : ''; ?>>Féminin</option>
+                        <option value="F" <?php echo ($_POST['sexe'] ?? '') === 'F' ? 'selected' : ''; ?>>FÃ©minin</option>
                     </select>
                 </div>
             </div>
@@ -310,9 +309,9 @@ include '../../../../includes/header.php';
                            value="<?php echo htmlspecialchars($_POST['lieu_naissance'] ?? ''); ?>">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="classe_demandee_id" class="form-label">Classe demandée <span class="text-danger">*</span></label>
+                    <label for="classe_demandee_id" class="form-label">Classe demandÃ©e <span class="text-danger">*</span></label>
                     <select class="form-select" id="classe_demandee_id" name="classe_demandee_id" required>
-                        <option value="">Sélectionner une classe...</option>
+                        <option value="">SÃ©lectionner une classe...</option>
                         <?php foreach ($classes as $classe): ?>
                             <option value="<?php echo $classe['id']; ?>" 
                                     <?php echo ($_POST['classe_demandee_id'] ?? '') == $classe['id'] ? 'selected' : ''; ?>>
@@ -324,11 +323,11 @@ include '../../../../includes/header.php';
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="priorite" class="form-label">Priorité</label>
+                    <label for="priorite" class="form-label">PrioritÃ©</label>
                     <select class="form-select" id="priorite" name="priorite">
                         <option value="normale" <?php echo ($_POST['priorite'] ?? 'normale') === 'normale' ? 'selected' : ''; ?>>Normale</option>
                         <option value="urgente" <?php echo ($_POST['priorite'] ?? '') === 'urgente' ? 'selected' : ''; ?>>Urgente</option>
-                        <option value="tres_urgente" <?php echo ($_POST['priorite'] ?? '') === 'tres_urgente' ? 'selected' : ''; ?>>Très urgente</option>
+                        <option value="tres_urgente" <?php echo ($_POST['priorite'] ?? '') === 'tres_urgente' ? 'selected' : ''; ?>>TrÃ¨s urgente</option>
                     </select>
                 </div>
             </div>
@@ -352,7 +351,7 @@ include '../../../../includes/header.php';
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="telephone" class="form-label">Téléphone de l'élève</label>
+                    <label for="telephone" class="form-label">TÃ©lÃ©phone de l'Ã©lÃ¨ve</label>
                     <input type="tel" class="form-control" id="telephone" name="telephone" 
                            value="<?php echo htmlspecialchars($_POST['telephone'] ?? ''); ?>">
                 </div>
@@ -376,31 +375,31 @@ include '../../../../includes/header.php';
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="nom_pere" class="form-label">Nom du père</label>
+                    <label for="nom_pere" class="form-label">Nom du pÃ¨re</label>
                     <input type="text" class="form-control" id="nom_pere" name="nom_pere" 
                            value="<?php echo htmlspecialchars($_POST['nom_pere'] ?? ''); ?>">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="profession_pere" class="form-label">Profession du père</label>
+                    <label for="profession_pere" class="form-label">Profession du pÃ¨re</label>
                     <input type="text" class="form-control" id="profession_pere" name="profession_pere" 
                            value="<?php echo htmlspecialchars($_POST['profession_pere'] ?? ''); ?>">
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="nom_mere" class="form-label">Nom de la mère</label>
+                    <label for="nom_mere" class="form-label">Nom de la mÃ¨re</label>
                     <input type="text" class="form-control" id="nom_mere" name="nom_mere" 
                            value="<?php echo htmlspecialchars($_POST['nom_mere'] ?? ''); ?>">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="profession_mere" class="form-label">Profession de la mère</label>
+                    <label for="profession_mere" class="form-label">Profession de la mÃ¨re</label>
                     <input type="text" class="form-control" id="profession_mere" name="profession_mere" 
                            value="<?php echo htmlspecialchars($_POST['profession_mere'] ?? ''); ?>">
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="telephone_parent" class="form-label">Téléphone des parents <span class="text-danger">*</span></label>
+                    <label for="telephone_parent" class="form-label">TÃ©lÃ©phone des parents <span class="text-danger">*</span></label>
                     <input type="tel" class="form-control" id="telephone_parent" name="telephone_parent" 
                            value="<?php echo htmlspecialchars($_POST['telephone_parent'] ?? ''); ?>" required>
                 </div>
@@ -413,7 +412,7 @@ include '../../../../includes/header.php';
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-phone me-2"></i>
-                Personne de Contact (si différente des parents)
+                Personne de Contact (si diffÃ©rente des parents)
             </h5>
         </div>
         <div class="card-body">
@@ -424,12 +423,12 @@ include '../../../../includes/header.php';
                            value="<?php echo htmlspecialchars($_POST['personne_contact'] ?? ''); ?>">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="telephone_contact" class="form-label">Téléphone</label>
+                    <label for="telephone_contact" class="form-label">TÃ©lÃ©phone</label>
                     <input type="tel" class="form-control" id="telephone_contact" name="telephone_contact" 
                            value="<?php echo htmlspecialchars($_POST['telephone_contact'] ?? ''); ?>">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="relation_contact" class="form-label">Relation avec l'élève</label>
+                    <label for="relation_contact" class="form-label">Relation avec l'Ã©lÃ¨ve</label>
                     <input type="text" class="form-control" id="relation_contact" name="relation_contact" 
                            value="<?php echo htmlspecialchars($_POST['relation_contact'] ?? ''); ?>" 
                            placeholder="Ex: Oncle, Tante, Tuteur...">
@@ -438,28 +437,28 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- École précédente -->
+    <!-- Ã‰cole prÃ©cÃ©dente -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-school me-2"></i>
-                École Précédente
+                Ã‰cole PrÃ©cÃ©dente
             </h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="ecole_precedente" class="form-label">Nom de l'école</label>
+                    <label for="ecole_precedente" class="form-label">Nom de l'Ã©cole</label>
                     <input type="text" class="form-control" id="ecole_precedente" name="ecole_precedente" 
                            value="<?php echo htmlspecialchars($_POST['ecole_precedente'] ?? ''); ?>">
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="classe_precedente" class="form-label">Dernière classe</label>
+                    <label for="classe_precedente" class="form-label">DerniÃ¨re classe</label>
                     <input type="text" class="form-control" id="classe_precedente" name="classe_precedente" 
                            value="<?php echo htmlspecialchars($_POST['classe_precedente'] ?? ''); ?>">
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="annee_precedente" class="form-label">Année scolaire</label>
+                    <label for="annee_precedente" class="form-label">AnnÃ©e scolaire</label>
                     <input type="text" class="form-control" id="annee_precedente" name="annee_precedente" 
                            value="<?php echo htmlspecialchars($_POST['annee_precedente'] ?? ''); ?>" 
                            placeholder="Ex: 2023-2024">
@@ -498,7 +497,7 @@ include '../../../../includes/header.php';
                         <input class="form-check-input" type="checkbox" id="bulletin_precedent" name="bulletin_precedent" 
                                <?php echo isset($_POST['bulletin_precedent']) ? 'checked' : ''; ?>>
                         <label class="form-check-label" for="bulletin_precedent">
-                            Bulletin de l'année précédente
+                            Bulletin de l'année prÃ©cÃ©dente
                         </label>
                     </div>
                 </div>
@@ -507,14 +506,14 @@ include '../../../../includes/header.php';
                         <input class="form-check-input" type="checkbox" id="certificat_medical" name="certificat_medical" 
                                <?php echo isset($_POST['certificat_medical']) ? 'checked' : ''; ?>>
                         <label class="form-check-label" for="certificat_medical">
-                            Certificat médical
+                            Certificat mÃ©dical
                         </label>
                     </div>
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" id="photo_identite" name="photo_identite" 
                                <?php echo isset($_POST['photo_identite']) ? 'checked' : ''; ?>>
                         <label class="form-check-label" for="photo_identite">
-                            Photo d'identité
+                            Photo d'identitÃ©
                         </label>
                     </div>
                 </div>
@@ -529,12 +528,12 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- Informations supplémentaires -->
+    <!-- Informations supplÃ©mentaires -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-info-circle me-2"></i>
-                Informations Supplémentaires
+                Informations SupplÃ©mentaires
             </h5>
         </div>
         <div class="card-body">
@@ -542,19 +541,19 @@ include '../../../../includes/header.php';
                 <div class="col-12 mb-3">
                     <label for="motif_demande" class="form-label">Motif de la demande d'admission</label>
                     <textarea class="form-control" id="motif_demande" name="motif_demande" rows="3" 
-                              placeholder="Expliquez pourquoi vous souhaitez inscrire votre enfant dans notre établissement..."><?php echo htmlspecialchars($_POST['motif_demande'] ?? ''); ?></textarea>
+                              placeholder="Expliquez pourquoi vous souhaitez inscrire votre enfant dans notre Ã©tablissement..."><?php echo htmlspecialchars($_POST['motif_demande'] ?? ''); ?></textarea>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="besoins_speciaux" class="form-label">Besoins spéciaux</label>
                     <textarea class="form-control" id="besoins_speciaux" name="besoins_speciaux" rows="3" 
-                              placeholder="Décrivez tout besoin spécial de l'élève..."><?php echo htmlspecialchars($_POST['besoins_speciaux'] ?? ''); ?></textarea>
+                              placeholder="DÃ©crivez tout besoin spécial de l'Ã©lÃ¨ve..."><?php echo htmlspecialchars($_POST['besoins_speciaux'] ?? ''); ?></textarea>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="allergies_medicales" class="form-label">Allergies médicales</label>
+                    <label for="allergies_medicales" class="form-label">Allergies mÃ©dicales</label>
                     <textarea class="form-control" id="allergies_medicales" name="allergies_medicales" rows="3" 
-                              placeholder="Mentionnez toute allergie ou condition médicale..."><?php echo htmlspecialchars($_POST['allergies_medicales'] ?? ''); ?></textarea>
+                              placeholder="Mentionnez toute allergie ou condition mÃ©dicale..."><?php echo htmlspecialchars($_POST['allergies_medicales'] ?? ''); ?></textarea>
                 </div>
             </div>
             <div class="row">
@@ -608,3 +607,7 @@ include '../../../../includes/header.php';
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

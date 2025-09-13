@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('students', 'list', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Élèves';
 
@@ -193,7 +191,7 @@ include '../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -419,7 +417,7 @@ include '../../includes/header.php';
                                                     <li><a class="dropdown-item" href="view.php?id=<?php echo $eleve['id']; ?>">
                                                         <i class="fas fa-eye me-2"></i>Voir le profil
                                                     </a></li>
-                                                    <?php if (checkPermission('students')): ?>
+                                                    <?php if (checkPagePermission('students')): ?>
                                                         <li><a class="dropdown-item" href="records/edit.php?id=<?php echo $eleve['id']; ?>">
                                                             <i class="fas fa-edit me-2"></i>Modifier
                                                         </a></li>
@@ -511,7 +509,7 @@ include '../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('students')): ?>
+                                                <?php if (checkPagePermission('students')): ?>
                                                     <a href="records/edit.php?id=<?php echo $eleve['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Modifier">
                                                         <i class="fas fa-edit"></i>
@@ -606,7 +604,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPermission('students')): ?>
+                    <?php if (checkPagePermission('students')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-user-plus me-2"></i>
                             Ajouter un élève

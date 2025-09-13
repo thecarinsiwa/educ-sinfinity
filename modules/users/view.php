@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin') && !checkPermission('users_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('list.php');
-}
+requirePagePermission('users', 'view', 'read', '../../dashboard.php');
 
 $user_id = (int)($_GET['id'] ?? 0);
 
@@ -34,7 +32,7 @@ if (!$user) {
 }
 
 // Vérifier les permissions (un utilisateur peut voir son propre profil)
-if (!checkPermission('admin') && $user_id != $_SESSION['user_id']) {
+if (!checkPagePermission('admin') && $user_id != $_SESSION['user_id']) {
     showMessage('error', 'Vous ne pouvez voir que votre propre profil.');
     redirectTo('profile/');
 }
@@ -99,7 +97,7 @@ include '../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (checkPermission('admin') || $user_id == $_SESSION['user_id']): ?>
+        <?php if (checkPagePermission('admin') || $user_id == $_SESSION['user_id']): ?>
             <div class="btn-group me-2">
                 <a href="edit.php?id=<?php echo $user_id; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -107,7 +105,7 @@ include '../../includes/header.php';
                 </a>
             </div>
         <?php endif; ?>
-        <?php if (checkPermission('admin') && $user_id != $_SESSION['user_id']): ?>
+        <?php if (checkPagePermission('admin') && $user_id != $_SESSION['user_id']): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-outline-warning dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-cog me-1"></i>

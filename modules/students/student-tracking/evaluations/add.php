@@ -1,26 +1,25 @@
-<?php
+﻿<?php
 /**
- * Ajout d'une nouvelle évaluation d'admission
+ * Ajout d'une nouvelle Ã©valuation d'admission
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
 
-$page_title = 'Ajouter une Évaluation';
+requirePagePermissionFromDB('students', 'tracking', 'create', '../../../../dashboard.php');
 
-// Récupérer l'ID de la demande si fourni
+$page_title = 'Ajouter une Ã‰valuation';
+
+// RÃ©cupÃ©rer l'ID de la demande si fourni
 $demande_id = isset($_GET['demande_id']) ? intval($_GET['demande_id']) : 0;
 
-// Récupérer les informations de la demande si spécifiée
+// RÃ©cupÃ©rer les informations de la demande si spÃ©cifiÃ©e
 $demande = null;
 if ($demande_id > 0) {
     try {
@@ -33,12 +32,12 @@ if ($demande_id > 0) {
         );
         $demande = $stmt->fetch();
     } catch (Exception $e) {
-        showMessage('error', 'Erreur lors de la récupération de la demande.');
+        showMessage('error', 'Erreur lors de la rÃ©cupÃ©ration de la demande.');
         redirectTo('index.php');
     }
 }
 
-// Récupérer les utilisateurs évaluateurs
+// RÃ©cupÃ©rer les utilisateurs Ã©valuateurs
 try {
     $evaluateurs = $database->query(
         "SELECT id, username, nom, prenom FROM users WHERE role IN ('enseignant', 'directeur', 'admin') AND status = 'actif'"
@@ -58,20 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $lieu = sanitizeInput($_POST['lieu']);
         $evaluateur_id = intval($_POST['evaluateur_id']);
         
-        // Validation des données
+        // Validation des donnÃ©es
         if (empty($demande_id) || empty($type_evaluation) || empty($date_evaluation) || empty($evaluateur_id)) {
-            showMessage('error', 'Tous les champs obligatoires doivent être remplis.');
+            showMessage('error', 'Tous les champs obligatoires doivent Ãªtre remplis.');
         } else {
-            // Vérifier que la demande n'a pas déjà une évaluation
+            // VÃ©rifier que la demande n'a pas dÃ©jÃ  une Ã©valuation
             $existing_evaluation = $database->query(
                 "SELECT id FROM evaluations_admission WHERE demande_admission_id = ?",
                 [$demande_id]
             )->fetch();
             
             if ($existing_evaluation) {
-                showMessage('error', 'Cette demande a déjà une évaluation programmée.');
+                showMessage('error', 'Cette demande a dÃ©jÃ  une Ã©valuation programmÃ©e.');
             } else {
-                // Insérer l'évaluation
+                // InsÃ©rer l'Ã©valuation
                 $database->execute(
                     "INSERT INTO evaluations_admission (demande_admission_id, type_evaluation, date_evaluation, 
                      heure_debut, heure_fin, lieu, evaluateur_id, created_at) 
@@ -79,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [$demande_id, $type_evaluation, $date_evaluation, $heure_debut, $heure_fin, $lieu, $evaluateur_id]
                 );
                 
-                // Mettre à jour le statut de la demande
+                // Mettre Ã  jour le statut de la demande
                 $database->execute(
                     "UPDATE demandes_admission SET status = 'en_cours_traitement', updated_at = NOW() WHERE id = ?",
                     [$demande_id]
@@ -89,10 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logUserAction(
                     'ajout_evaluation_admission', 
                     'students', 
-                    "Nouvelle évaluation programmée pour la demande d'admission ID: $demande_id"
+                    "Nouvelle Ã©valuation programmÃ©e pour la demande d'admission ID: $demande_id"
                 );
                 
-                showMessage('success', 'Évaluation programmée avec succès.');
+                showMessage('success', 'Ã‰valuation programmÃ©e avec succÃ¨s.');
                 redirectTo('index.php');
             }
         }
@@ -111,14 +110,14 @@ include '../../../../includes/header.php';
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="../../../../dashboard.php">Tableau de bord</a></li>
-                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Élèves</a></li>
-                        <li class="breadcrumb-item"><a href="index.php">Gestion des Évaluations</a></li>
-                        <li class="breadcrumb-item active">Ajouter une Évaluation</li>
+                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Ã‰lÃ¨ves</a></li>
+                        <li class="breadcrumb-item"><a href="index.php">Gestion des Ã‰valuations</a></li>
+                        <li class="breadcrumb-item active">Ajouter une Ã‰valuation</li>
                     </ol>
                 </div>
                 <h4 class="page-title">
                     <i class="mdi mdi-plus me-2"></i>
-                    Programmer une Évaluation
+                    Programmer une Ã‰valuation
                 </h4>
             </div>
         </div>
@@ -132,12 +131,12 @@ include '../../../../includes/header.php';
                 <div class="card-header">
                     <h4 class="header-title">
                         <i class="mdi mdi-calendar-plus me-2"></i>
-                        Informations de l'Évaluation
+                        Informations de l'Ã‰valuation
                     </h4>
                 </div>
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate>
-                        <!-- Sélection de la demande -->
+                        <!-- SÃ©lection de la demande -->
                         <div class="mb-3">
                             <label for="demande_id" class="form-label">Demande d'admission *</label>
                             <?php if ($demande): ?>
@@ -152,7 +151,7 @@ include '../../../../includes/header.php';
                                 </div>
                             <?php else: ?>
                                 <select class="form-select" id="demande_id" name="demande_id" required>
-                                    <option value="">Sélectionner une demande d'admission</option>
+                                    <option value="">SÃ©lectionner une demande d'admission</option>
                                     <?php
                                     try {
                                         $demandes_disponibles = $database->query(
@@ -176,12 +175,12 @@ include '../../../../includes/header.php';
                                     <?php 
                                         endforeach;
                                     } catch (Exception $e) {
-                                        // Gérer l'erreur silencieusement
+                                        // GÃ©rer l'erreur silencieusement
                                     }
                                     ?>
                                 </select>
                                 <div class="invalid-feedback">
-                                    Veuillez sélectionner une demande d'admission.
+                                    Veuillez sÃ©lectionner une demande d'admission.
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -189,25 +188,25 @@ include '../../../../includes/header.php';
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="type_evaluation" class="form-label">Type d'évaluation *</label>
+                                    <label for="type_evaluation" class="form-label">Type d'Ã©valuation *</label>
                                     <select class="form-select" id="type_evaluation" name="type_evaluation" required>
-                                        <option value="">Sélectionner un type</option>
-                                        <option value="test_ecrit">Test écrit</option>
+                                        <option value="">SÃ©lectionner un type</option>
+                                        <option value="test_ecrit">Test Ã©crit</option>
                                         <option value="entretien">Entretien</option>
-                                        <option value="examen_medical">Examen médical</option>
-                                        <option value="evaluation_psychologique">Évaluation psychologique</option>
+                                        <option value="examen_medical">Examen mÃ©dical</option>
+                                        <option value="evaluation_psychologique">Ã‰valuation psychologique</option>
                                         <option value="test_niveau">Test de niveau</option>
                                     </select>
                                     <div class="invalid-feedback">
-                                        Veuillez sélectionner un type d'évaluation.
+                                        Veuillez sÃ©lectionner un type d'Ã©valuation.
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="evaluateur_id" class="form-label">Évaluateur *</label>
+                                    <label for="evaluateur_id" class="form-label">Ã‰valuateur *</label>
                                     <select class="form-select" id="evaluateur_id" name="evaluateur_id" required>
-                                        <option value="">Sélectionner un évaluateur</option>
+                                        <option value="">SÃ©lectionner un Ã©valuateur</option>
                                         <?php foreach ($evaluateurs as $evaluateur): ?>
                                             <option value="<?php echo $evaluateur['id']; ?>">
                                                 <?php echo $evaluateur['prenom'] . ' ' . $evaluateur['nom']; ?>
@@ -215,7 +214,7 @@ include '../../../../includes/header.php';
                                         <?php endforeach; ?>
                                     </select>
                                     <div class="invalid-feedback">
-                                        Veuillez sélectionner un évaluateur.
+                                        Veuillez sÃ©lectionner un Ã©valuateur.
                                     </div>
                                 </div>
                             </div>
@@ -224,17 +223,17 @@ include '../../../../includes/header.php';
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="date_evaluation" class="form-label">Date d'évaluation *</label>
+                                    <label for="date_evaluation" class="form-label">Date d'Ã©valuation *</label>
                                     <input type="date" class="form-control" id="date_evaluation" name="date_evaluation" 
                                            value="<?php echo date('Y-m-d'); ?>" required>
                                     <div class="invalid-feedback">
-                                        Veuillez sélectionner une date d'évaluation.
+                                        Veuillez sÃ©lectionner une date d'Ã©valuation.
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="heure_debut" class="form-label">Heure de début</label>
+                                    <label for="heure_debut" class="form-label">Heure de dÃ©but</label>
                                     <input type="time" class="form-control" id="heure_debut" name="heure_debut">
                                 </div>
                             </div>
@@ -247,7 +246,7 @@ include '../../../../includes/header.php';
                         </div>
                         
                         <div class="mb-3">
-                            <label for="lieu" class="form-label">Lieu d'évaluation</label>
+                            <label for="lieu" class="form-label">Lieu d'Ã©valuation</label>
                             <input type="text" class="form-control" id="lieu" name="lieu" 
                                    placeholder="Salle, bureau, etc.">
                         </div>
@@ -259,7 +258,7 @@ include '../../../../includes/header.php';
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="mdi mdi-check me-1"></i>
-                                Programmer l'Évaluation
+                                Programmer l'Ã‰valuation
                             </button>
                         </div>
                     </form>
@@ -276,27 +275,27 @@ include '../../../../includes/header.php';
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h6>Types d'évaluation :</h6>
+                    <h6>Types d'Ã©valuation :</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <i class="mdi mdi-check-circle text-success me-2"></i>
-                            <strong>Test écrit :</strong> Évaluation des connaissances
+                            <strong>Test Ã©crit :</strong> Ã‰valuation des connaissances
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-check-circle text-success me-2"></i>
-                            <strong>Entretien :</strong> Évaluation comportementale
+                            <strong>Entretien :</strong> Ã‰valuation comportementale
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-check-circle text-success me-2"></i>
-                            <strong>Examen médical :</strong> Vérification de la santé
+                            <strong>Examen mÃ©dical :</strong> VÃ©rification de la santÃ©
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-check-circle text-success me-2"></i>
-                            <strong>Évaluation psychologique :</strong> Test de personnalité
+                            <strong>Ã‰valuation psychologique :</strong> Test de personnalitÃ©
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-check-circle text-success me-2"></i>
-                            <strong>Test de niveau :</strong> Évaluation des compétences
+                            <strong>Test de niveau :</strong> Ã‰valuation des compÃ©tences
                         </li>
                     </ul>
                     
@@ -306,15 +305,15 @@ include '../../../../includes/header.php';
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Planifiez les évaluations en fonction de la disponibilité des évaluateurs
+                            Planifiez les Ã©valuations en fonction de la disponibilitÃ© des Ã©valuateurs
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Prévoyez un délai suffisant entre les évaluations
+                            PrÃ©voyez un dÃ©lai suffisant entre les Ã©valuations
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Assurez-vous que le lieu est approprié pour le type d'évaluation
+                            Assurez-vous que le lieu est appropriÃ© pour le type d'Ã©valuation
                         </li>
                     </ul>
                 </div>
@@ -338,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, false);
     });
     
-    // Validation de la date d'évaluation
+    // Validation de la date d'Ã©valuation
     const dateEvaluationInput = document.getElementById('date_evaluation');
     if (dateEvaluationInput) {
         dateEvaluationInput.addEventListener('change', function() {
@@ -346,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
             
             if (selectedDate < today) {
-                alert('La date d\'évaluation ne peut pas être dans le passé.');
+                alert('La date d\'Ã©valuation ne peut pas Ãªtre dans le passÃ©.');
                 this.value = today.toISOString().split('T')[0];
             }
         });
@@ -360,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
         heureFinInput.addEventListener('change', function() {
             if (heureDebutInput.value && this.value) {
                 if (heureDebutInput.value >= this.value) {
-                    alert('L\'heure de fin doit être postérieure à l\'heure de début.');
+                    alert('L\'heure de fin doit Ãªtre postÃ©rieure Ã  l\'heure de dÃ©but.');
                     this.value = '';
                 }
             }
@@ -370,3 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

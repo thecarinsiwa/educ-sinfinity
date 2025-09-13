@@ -1,19 +1,18 @@
-<?php
+﻿<?php
 /**
- * Traitement avancé d'une candidature d'admission
+ * Traitement avancÃ© d'une candidature d'admission
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'edit', '../../../../dashboard.php');
 
 $candidature_id = intval($_GET['id'] ?? 0);
 
@@ -36,19 +35,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $frais_scolarite = floatval($_POST['frais_scolarite'] ?? 0);
                 $reduction_accordee = floatval($_POST['reduction_accordee'] ?? 0);
                 
-                // Vérifier que le statut est valide
+                // VÃ©rifier que le statut est valide
                 $valid_statuses = ['en_attente', 'acceptee', 'refusee', 'en_cours_traitement', 'inscrit'];
                 if (!in_array($new_status, $valid_statuses)) {
                     throw new Exception('Statut invalide.');
                 }
                 
-                // Préparer la date/heure d'entretien
+                // PrÃ©parer la date/heure d'entretien
                 $datetime_entretien = null;
                 if ($date_entretien && $heure_entretien) {
                     $datetime_entretien = $date_entretien . ' ' . $heure_entretien;
                 }
                 
-                // Mettre à jour la candidature
+                // Mettre Ã  jour la candidature
                 $database->execute(
                     "UPDATE demandes_admission 
                      SET status = ?, traite_par = ?, date_traitement = NOW(), updated_at = NOW(),
@@ -61,46 +60,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Messages de confirmation selon le statut
                 $status_messages = [
-                    'acceptee' => 'Candidature acceptée avec succès.',
-                    'refusee' => 'Candidature refusée.',
+                    'acceptee' => 'Candidature acceptÃ©e avec succÃ¨s.',
+                    'refusee' => 'Candidature refusÃ©e.',
                     'en_cours_traitement' => 'Candidature mise en cours de traitement.',
-                    'inscrit' => 'Candidat marqué comme inscrit.',
+                    'inscrit' => 'Candidat marquÃ© comme inscrit.',
                     'en_attente' => 'Candidature remise en attente.'
                 ];
                 
-                $message = $status_messages[$new_status] ?? 'Statut mis à jour avec succès.';
+                $message = $status_messages[$new_status] ?? 'Statut mis Ã  jour avec succÃ¨s.';
                 showMessage('success', $message);
                 
-                // Si acceptée, proposer de créer l'élève
+                // Si acceptÃ©e, proposer de crÃ©er l'Ã©lÃ¨ve
                 if ($new_status === 'acceptee') {
                     $_SESSION['create_student_from_application'] = $candidature_id;
-                    showMessage('info', 'Vous pouvez maintenant créer le dossier élève à partir de cette candidature.');
+                    showMessage('info', 'Vous pouvez maintenant crÃ©er le dossier Ã©lÃ¨ve Ã  partir de cette candidature.');
                 }
                 
                 break;
                 
             case 'create_student':
-                // Récupérer les données de la candidature
+                // RÃ©cupÃ©rer les donnÃ©es de la candidature
                 $candidature = $database->query(
                     "SELECT * FROM demandes_admission WHERE id = ? AND status = 'acceptee'",
                     [$candidature_id]
                 )->fetch();
                 
                 if (!$candidature) {
-                    throw new Exception('Candidature non trouvée ou non acceptée.');
+                    throw new Exception('Candidature non trouvÃ©e ou non acceptÃ©e.');
                 }
                 
-                // Vérifier si l'élève n'existe pas déjà
+                // VÃ©rifier si l'Ã©lÃ¨ve n'existe pas dÃ©jÃ 
                 $existing_student = $database->query(
                     "SELECT id FROM eleves WHERE nom = ? AND prenom = ? AND date_naissance = ?",
                     [$candidature['nom_eleve'], $candidature['prenom_eleve'], $candidature['date_naissance']]
                 )->fetch();
                 
                 if ($existing_student) {
-                    throw new Exception('Un élève avec ces informations existe déjà.');
+                    throw new Exception('Un Ã©lÃ¨ve avec ces informations existe dÃ©jÃ .');
                 }
                 
-                // Générer un numéro d'élève unique
+                // GÃ©nÃ©rer un numÃ©ro d'Ã©lÃ¨ve unique
                 $annee_courante = date('Y');
                 $last_student = $database->query(
                     "SELECT numero_eleve FROM eleves WHERE numero_eleve LIKE ? ORDER BY numero_eleve DESC LIMIT 1",
@@ -116,10 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $numero_eleve = $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
                 
-                // Générer le numéro de matricule
+                // GÃ©nÃ©rer le numÃ©ro de matricule
                 $numero_matricule = generateMatricule();
                 
-                // Créer l'élève
+                // CrÃ©er l'Ã©lÃ¨ve
                 $database->execute(
                     "INSERT INTO eleves (
                         numero_eleve, numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe,
@@ -141,13 +140,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $student_id = $database->lastInsertId();
                 
-                // Mettre à jour le statut de la candidature
+                // Mettre Ã  jour le statut de la candidature
                 $database->execute(
                     "UPDATE demandes_admission SET status = 'inscrit', eleve_cree_id = ? WHERE id = ?",
                     [$student_id, $candidature_id]
                 );
                 
-                showMessage('success', "Élève créé avec succès. Numéro d'élève : $numero_eleve");
+                showMessage('success', "Ã‰lÃ¨ve crÃ©Ã© avec succÃ¨s. NumÃ©ro d'Ã©lÃ¨ve : $numero_eleve");
                 unset($_SESSION['create_student_from_application']);
                 
                 break;
@@ -161,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les détails de la candidature
+// RÃ©cupÃ©rer les dÃ©tails de la candidature
 try {
     $candidature = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,
@@ -179,7 +178,7 @@ try {
     )->fetch();
 
     if (!$candidature) {
-        showMessage('error', 'Candidature non trouvée.');
+        showMessage('error', 'Candidature non trouvÃ©e.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
@@ -187,7 +186,7 @@ try {
     redirectTo('index.php');
 }
 
-// Récupérer les classes disponibles
+// RÃ©cupÃ©rer les classes disponibles
 try {
     $classes = $database->query("SELECT * FROM classes ORDER BY niveau, nom")->fetchAll();
 } catch (Exception $e) {
@@ -207,13 +206,13 @@ include '../../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="view.php?id=<?php echo $candidature_id; ?>" class="btn btn-outline-secondary">
                 <i class="fas fa-eye me-1"></i>
-                Voir les détails
+                Voir les dÃ©tails
             </a>
         </div>
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour à la liste
+                Retour Ã  la liste
             </a>
         </div>
     </div>
@@ -234,14 +233,14 @@ include '../../../../includes/header.php';
                     <div class="col-md-6">
                         <p><strong>Nom complet :</strong> <?php echo htmlspecialchars($candidature['nom_eleve'] . ' ' . $candidature['prenom_eleve']); ?></p>
                         <p><strong>Date de naissance :</strong> <?php echo formatDate($candidature['date_naissance']); ?></p>
-                        <p><strong>Sexe :</strong> <?php echo $candidature['sexe'] === 'M' ? 'Masculin' : 'Féminin'; ?></p>
-                        <p><strong>Classe demandée :</strong> <?php echo htmlspecialchars($candidature['classe_demandee'] . ' - ' . $candidature['niveau']); ?></p>
+                        <p><strong>Sexe :</strong> <?php echo $candidature['sexe'] === 'M' ? 'Masculin' : 'FÃ©minin'; ?></p>
+                        <p><strong>Classe demandÃ©e :</strong> <?php echo htmlspecialchars($candidature['classe_demandee'] . ' - ' . $candidature['niveau']); ?></p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Numéro de demande :</strong> <?php echo htmlspecialchars($candidature['numero_demande']); ?></p>
+                        <p><strong>NumÃ©ro de demande :</strong> <?php echo htmlspecialchars($candidature['numero_demande']); ?></p>
                         <p><strong>Date de demande :</strong> <?php echo formatDateTime($candidature['created_at']); ?></p>
                         <p><strong>Jours depuis demande :</strong> <?php echo $candidature['jours_depuis_demande']; ?> jours</p>
-                        <p><strong>Téléphone parent :</strong> <?php echo htmlspecialchars($candidature['telephone_parent']); ?></p>
+                        <p><strong>TÃ©lÃ©phone parent :</strong> <?php echo htmlspecialchars($candidature['telephone_parent']); ?></p>
                     </div>
                 </div>
             </div>
@@ -268,8 +267,8 @@ include '../../../../includes/header.php';
 
                 $status_names = [
                     'en_attente' => 'En attente',
-                    'acceptee' => 'Acceptée',
-                    'refusee' => 'Refusée',
+                    'acceptee' => 'AcceptÃ©e',
+                    'refusee' => 'RefusÃ©e',
                     'en_cours_traitement' => 'En cours de traitement',
                     'inscrit' => 'Inscrit'
                 ];
@@ -283,7 +282,7 @@ include '../../../../includes/header.php';
 
                 <?php if ($candidature['date_traitement']): ?>
                     <p class="mt-3 mb-0 small text-muted">
-                        Traité le <?php echo formatDateTime($candidature['date_traitement']); ?>
+                        TraitÃ© le <?php echo formatDateTime($candidature['date_traitement']); ?>
                         <?php if ($candidature['traite_par_nom']): ?>
                             <br>par <?php echo htmlspecialchars($candidature['traite_par_nom']); ?>
                         <?php endif; ?>
@@ -294,9 +293,9 @@ include '../../../../includes/header.php';
                     <div class="mt-3">
                         <a href="../../records/view.php?id=<?php echo $candidature['eleve_id']; ?>" class="btn btn-sm btn-primary">
                             <i class="fas fa-user-graduate me-1"></i>
-                            Voir le dossier élève
+                            Voir le dossier Ã©lÃ¨ve
                         </a>
-                        <p class="small text-muted mt-1">N° élève: <?php echo htmlspecialchars($candidature['numero_eleve']); ?></p>
+                        <p class="small text-muted mt-1">NÂ° Ã©lÃ¨ve: <?php echo htmlspecialchars($candidature['numero_eleve']); ?></p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -324,11 +323,11 @@ include '../../../../includes/header.php';
                             Nouveau Statut *
                         </label>
                         <select class="form-select" id="status" name="status" required>
-                            <option value="">-- Sélectionner un statut --</option>
+                            <option value="">-- SÃ©lectionner un statut --</option>
                             <option value="en_attente" <?php echo $candidature['status'] === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
                             <option value="en_cours_traitement" <?php echo $candidature['status'] === 'en_cours_traitement' ? 'selected' : ''; ?>>En cours de traitement</option>
-                            <option value="acceptee" <?php echo $candidature['status'] === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                            <option value="refusee" <?php echo $candidature['status'] === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
+                            <option value="acceptee" <?php echo $candidature['status'] === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                            <option value="refusee" <?php echo $candidature['status'] === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
                             <option value="inscrit" <?php echo $candidature['status'] === 'inscrit' ? 'selected' : ''; ?>>Inscrit</option>
                         </select>
                     </div>
@@ -338,12 +337,12 @@ include '../../../../includes/header.php';
                     <div class="mb-3">
                         <label for="priorite" class="form-label">
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            Priorité
+                            PrioritÃ©
                         </label>
                         <select class="form-select" id="priorite" name="priorite">
                             <option value="normale" <?php echo $candidature['priorite'] === 'normale' ? 'selected' : ''; ?>>Normale</option>
                             <option value="urgente" <?php echo $candidature['priorite'] === 'urgente' ? 'selected' : ''; ?>>Urgente</option>
-                            <option value="tres_urgente" <?php echo $candidature['priorite'] === 'tres_urgente' ? 'selected' : ''; ?>>Très urgente</option>
+                            <option value="tres_urgente" <?php echo $candidature['priorite'] === 'tres_urgente' ? 'selected' : ''; ?>>TrÃ¨s urgente</option>
                         </select>
                     </div>
                 </div>
@@ -378,7 +377,7 @@ include '../../../../includes/header.php';
                     <div class="mb-3">
                         <label for="frais_scolarite" class="form-label">
                             <i class="fas fa-money-bill me-1"></i>
-                            Frais de scolarité (FC)
+                            Frais de scolaritÃ© (FC)
                         </label>
                         <input type="number" class="form-control" id="frais_scolarite" name="frais_scolarite"
                                value="<?php echo $candidature['frais_scolarite'] ?? ''; ?>" min="0" step="1000">
@@ -389,7 +388,7 @@ include '../../../../includes/header.php';
                     <div class="mb-3">
                         <label for="reduction_accordee" class="form-label">
                             <i class="fas fa-percent me-1"></i>
-                            Réduction accordée (%)
+                            RÃ©duction accordÃ©e (%)
                         </label>
                         <input type="number" class="form-control" id="reduction_accordee" name="reduction_accordee"
                                value="<?php echo $candidature['reduction_accordee'] ?? ''; ?>" min="0" max="100" step="5">
@@ -424,20 +423,20 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Section création d'élève (si candidature acceptée) -->
+<!-- Section création d'Ã©lÃ¨ve (si candidature acceptÃ©e) -->
 <?php if ($candidature['status'] === 'acceptee' && !$candidature['eleve_id']): ?>
 <div class="card mt-4">
     <div class="card-header bg-success text-white">
         <h5 class="card-title mb-0">
             <i class="fas fa-user-plus me-2"></i>
-            Créer le Dossier Élève
+            CrÃ©er le Dossier Ã‰lÃ¨ve
         </h5>
     </div>
     <div class="card-body">
         <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i>
-            Cette candidature a été acceptée. Vous pouvez maintenant créer automatiquement le dossier élève
-            à partir des informations de la candidature.
+            Cette candidature a Ã©tÃ© acceptÃ©e. Vous pouvez maintenant crÃ©er automatiquement le dossier Ã©lÃ¨ve
+            Ã  partir des informations de la candidature.
         </div>
 
         <form method="POST" id="createStudentForm">
@@ -445,19 +444,19 @@ include '../../../../includes/header.php';
 
             <div class="row">
                 <div class="col-md-8">
-                    <h6>Informations qui seront transférées :</h6>
+                    <h6>Informations qui seront transfÃ©rÃ©es :</h6>
                     <ul class="list-unstyled">
-                        <li><i class="fas fa-check text-success me-2"></i>Nom et prénom</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Nom et prÃ©nom</li>
                         <li><i class="fas fa-check text-success me-2"></i>Date et lieu de naissance</li>
                         <li><i class="fas fa-check text-success me-2"></i>Informations des parents</li>
                         <li><i class="fas fa-check text-success me-2"></i>Contacts et adresse</li>
-                        <li><i class="fas fa-check text-success me-2"></i>Classe demandée</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Classe demandÃ©e</li>
                     </ul>
                 </div>
                 <div class="col-md-4 text-end">
-                    <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('Êtes-vous sûr de vouloir créer le dossier élève ? Cette action ne peut pas être annulée.')">
+                    <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir crÃ©er le dossier Ã©lÃ¨ve ? Cette action ne peut pas Ãªtre annulÃ©e.')">
                         <i class="fas fa-user-graduate me-2"></i>
-                        Créer l'Élève
+                        CrÃ©er l'Ã‰lÃ¨ve
                     </button>
                 </div>
             </div>
@@ -479,7 +478,7 @@ include '../../../../includes/header.php';
             <div class="timeline-item">
                 <div class="timeline-marker bg-primary"></div>
                 <div class="timeline-content">
-                    <h6 class="timeline-title">Candidature créée</h6>
+                    <h6 class="timeline-title">Candidature crÃ©Ã©e</h6>
                     <p class="timeline-text">
                         Le <?php echo formatDateTime($candidature['created_at']); ?>
                     </p>
@@ -490,7 +489,7 @@ include '../../../../includes/header.php';
             <div class="timeline-item">
                 <div class="timeline-marker bg-<?php echo $status_class; ?>"></div>
                 <div class="timeline-content">
-                    <h6 class="timeline-title">Statut mis à jour : <?php echo $status_name; ?></h6>
+                    <h6 class="timeline-title">Statut mis Ã  jour : <?php echo $status_name; ?></h6>
                     <p class="timeline-text">
                         Le <?php echo formatDateTime($candidature['date_traitement']); ?>
                         <?php if ($candidature['traite_par_nom']): ?>
@@ -511,7 +510,7 @@ include '../../../../includes/header.php';
             <div class="timeline-item">
                 <div class="timeline-marker bg-info"></div>
                 <div class="timeline-content">
-                    <h6 class="timeline-title">Entretien programmé</h6>
+                    <h6 class="timeline-title">Entretien programmÃ©</h6>
                     <p class="timeline-text">
                         Le <?php echo formatDateTime($candidature['date_entretien']); ?>
                     </p>
@@ -523,9 +522,9 @@ include '../../../../includes/header.php';
             <div class="timeline-item">
                 <div class="timeline-marker bg-success"></div>
                 <div class="timeline-content">
-                    <h6 class="timeline-title">Élève créé</h6>
+                    <h6 class="timeline-title">Ã‰lÃ¨ve crÃ©Ã©</h6>
                     <p class="timeline-text">
-                        Numéro d'élève : <?php echo htmlspecialchars($candidature['numero_eleve']); ?>
+                        NumÃ©ro d'Ã©lÃ¨ve : <?php echo htmlspecialchars($candidature['numero_eleve']); ?>
                     </p>
                 </div>
             </div>
@@ -614,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusSelect = document.getElementById('status');
     const financialSection = document.getElementById('financial-section');
 
-    // Afficher/masquer la section financière selon le statut
+    // Afficher/masquer la section financiÃ¨re selon le statut
     function toggleFinancialSection() {
         if (statusSelect.value === 'acceptee') {
             financialSection.style.display = 'block';
@@ -623,10 +622,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Vérifier au chargement de la page
+    // VÃ©rifier au chargement de la page
     toggleFinancialSection();
 
-    // Écouter les changements de statut
+    // Ã‰couter les changements de statut
     statusSelect.addEventListener('change', toggleFinancialSection);
 
     // Validation du formulaire
@@ -636,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!status) {
             e.preventDefault();
-            alert('Veuillez sélectionner un statut.');
+            alert('Veuillez sÃ©lectionner un statut.');
             statusSelect.focus();
             return;
         }
@@ -650,14 +649,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (!confirm('Êtes-vous sûr de vouloir refuser cette candidature ? Cette action peut être modifiée ultérieurement.')) {
+            if (!confirm('ÃŠtes-vous sÃ»r de vouloir refuser cette candidature ? Cette action peut Ãªtre modifiÃ©e ultÃ©rieurement.')) {
                 e.preventDefault();
                 return;
             }
         }
 
         if (status === 'acceptee') {
-            if (!confirm('Êtes-vous sûr de vouloir accepter cette candidature ? Vous pourrez ensuite créer le dossier élève.')) {
+            if (!confirm('ÃŠtes-vous sÃ»r de vouloir accepter cette candidature ? Vous pourrez ensuite crÃ©er le dossier Ã©lÃ¨ve.')) {
                 e.preventDefault();
                 return;
             }
@@ -677,10 +676,14 @@ function printPage() {
     window.print();
 }
 
-// Fonction pour exporter en PDF (nécessite une implémentation côté serveur)
+// Fonction pour exporter en PDF (nÃ©cessite une implÃ©mentation côté serveur)
 function exportToPDF() {
     window.location.href = 'export-pdf.php?id=<?php echo $candidature_id; ?>';
 }
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('finance', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion Financière';
 
@@ -122,7 +120,7 @@ include '../../includes/header.php';
                 </button>
             </div>
         <?php endif; ?>
-        <?php if (checkPermission('finance')): ?>
+        <?php if (checkPagePermission('finance')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -440,7 +438,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-money-bill fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun paiement récent</p>
-                        <?php if (checkPermission('finance')): ?>
+                        <?php if (checkPagePermission('finance')): ?>
                             <a href="payments/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Enregistrer un paiement
@@ -454,7 +452,7 @@ include '../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('finance')): ?>
+<?php if (checkPagePermission('finance')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">

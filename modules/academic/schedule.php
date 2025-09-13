@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('academic') && !checkPermission('academic_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('academic', 'schedule', 'read', '../../dashboard.php', 'index');
 
 // Récupérer l'ID de l'enseignant
 $teacher_id = (int)($_GET['teacher'] ?? 0);
@@ -122,7 +120,7 @@ include '../../includes/header.php';
             <i class="fas fa-arrow-left me-1"></i>
             Retour au module académique
         </a>
-        <?php if (checkPermission('academic')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'schedule', 'read')): ?>
             <a href="schedule/add.php?teacher_id=<?php echo $teacher_id; ?>" class="btn btn-primary ms-2">
                 <i class="fas fa-plus me-1"></i>
                 Ajouter un cours
@@ -271,7 +269,7 @@ include '../../includes/header.php';
                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Aucun cours programmé</h5>
                         <p class="text-muted">Cet enseignant n'a pas encore d'emploi du temps pour cette année scolaire.</p>
-                        <?php if (checkPermission('academic')): ?>
+                        <?php if (hasPagePermissionFromDB('academic', 'schedule', 'read')): ?>
                             <a href="schedule/add.php?teacher_id=<?php echo $teacher_id; ?>" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Créer le premier cours
@@ -436,3 +434,4 @@ function getCoursColor($matiere_id) {
 
 include '../../includes/footer.php';
 ?>
+

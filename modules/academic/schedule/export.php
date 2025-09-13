@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin') && !checkPermission('academic')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('academic', 'schedule', 'read', '../../../dashboard.php', 'export');
 
 // Récupérer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();

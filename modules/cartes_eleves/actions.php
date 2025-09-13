@@ -7,14 +7,10 @@
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 requireLogin();
 
-// Vérifier les permissions
-if (!hasPermission('cartes_eleves', 'manage')) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Permissions insuffisantes']);
-    exit;
-}
+requirePagePermissionFromDB('cartes_eleves', 'actions', 'edit', '../dashboard.php');
 
 $action = $_POST['action'] ?? '';
 

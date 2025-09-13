@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Affichage direct du certificat de transfert
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,14 +7,14 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
 
-// Récupérer l'ID du transfert
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
+
+// RÃ©cupÃ©rer l'ID du transfert
 $transfer_id = $_GET['id'] ?? null;
 
 if (!$transfer_id) {
@@ -22,7 +22,7 @@ if (!$transfer_id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations du transfert
+// RÃ©cupÃ©rer les informations du transfert
 $transfer = $database->query(
     "SELECT t.*, e.numero_matricule, e.nom, e.prenom, e.date_naissance, e.lieu_naissance, e.sexe, e.adresse,
             e.nom_pere, e.nom_mere, e.profession_pere, e.profession_mere,
@@ -44,17 +44,17 @@ $transfer = $database->query(
 )->fetch();
 
 if (!$transfer) {
-    showMessage('error', 'Transfert non trouvé');
+    showMessage('error', 'Transfert non trouvÃ©');
     redirectTo('index.php');
 }
 
-// Vérifier que le transfert est complété
+// VÃ©rifier que le transfert est complÃ©tÃ©
 if ($transfer['statut'] !== 'complete') {
-    showMessage('error', 'Le transfert doit être complété pour afficher le certificat');
+    showMessage('error', 'Le transfert doit Ãªtre complÃ©tÃ© pour afficher le certificat');
     redirectTo("view-transfer.php?id=$transfer_id");
 }
 
-// Générer un numéro de certificat s'il n'existe pas
+// GÃ©nÃ©rer un numÃ©ro de certificat s'il n'existe pas
 if (!$transfer['numero_certificat']) {
     $numero_certificat = 'CERT' . date('Y') . str_pad($transfer_id, 6, '0', STR_PAD_LEFT);
     
@@ -68,20 +68,20 @@ if (!$transfer['numero_certificat']) {
     
     // Enregistrer l'historique
     $database->query(
-        "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Certificat généré automatiquement', ?)",
+        "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Certificat gÃ©nÃ©rÃ© automatiquement', ?)",
         [$transfer_id, $transfer['statut'], $transfer['statut'], $_SESSION['user_id']]
     );
     
     // Logger l'action
-    logUserAction('generate_certificate', 'transfers', "Certificat généré automatiquement pour le transfert ID: $transfer_id", $transfer_id);
+    logUserAction('generate_certificate', 'transfers', "Certificat gÃ©nÃ©rÃ© automatiquement pour le transfert ID: $transfer_id", $transfer_id);
 }
 
-// Fonction de génération du certificat HTML
+// Fonction de gÃ©nÃ©ration du certificat HTML
 function generateCertificateHTML($transfer) {
     $type_labels = [
         'transfert_entrant' => 'CERTIFICAT DE TRANSFERT ENTRANT',
         'transfert_sortant' => 'CERTIFICAT DE TRANSFERT SORTANT',
-        'sortie_definitive' => 'CERTIFICAT DE FIN DE SCOLARITÉ'
+        'sortie_definitive' => 'CERTIFICAT DE FIN DE SCOLARITÃ‰'
     ];
     
     $certificate_title = $type_labels[$transfer['type_mouvement']] ?? 'CERTIFICAT';
@@ -374,30 +374,30 @@ function generateCertificateHTML($transfer) {
     </head>
     <body>
         <div class='certificate'>
-            <div class='watermark'>ÉCOLE SINFINITY</div>
+            <div class='watermark'>Ã‰COLE SINFINITY</div>
             <div class='certificate-content'>
                 <div class='header'>
                     <div class='logo'>ES</div>
-                    <div class='school-name'>ÉCOLE SINFINITY</div>
+                    <div class='school-name'>Ã‰COLE SINFINITY</div>
                     <div class='school-address'>
                         Kinshasa, République Démocratique du Congo<br>
-                        Tél: +243 XXX XXX XXX | Email: contact@ecolesinfinity.cd
+                        TÃ©l: +243 XXX XXX XXX | Email: contact@ecolesinfinity.cd
                     </div>
                     <div class='certificate-title'>$certificate_title</div>
                 </div>
 
                 <div class='certificate-number'>
-                    N° " . htmlspecialchars($transfer['numero_certificat']) . "
+                    NÂ° " . htmlspecialchars($transfer['numero_certificat']) . "
                 </div>
 
                 <div class='content'>
                     <p style='font-size: 1.3rem; margin-bottom: 1.5cm; text-align: center; font-weight: bold;'>
-                        Le Directeur de l'École Sinfinity certifie par la présente que :
+                        Le Directeur de l'Ã‰cole Sinfinity certifie par la présente que :
                     </p>
 
                     <div class='student-info'>
                     <div class='info-row'>
-                        <div class='info-label'>Nom et Prénom :</div>
+                        <div class='info-label'>Nom et PrÃ©nom :</div>
                         <div class='info-value'>" . htmlspecialchars($transfer['nom'] . ' ' . $transfer['prenom']) . "</div>
                     </div>
                     <div class='info-row'>
@@ -410,24 +410,24 @@ function generateCertificateHTML($transfer) {
                     </div>
                     <div class='info-row'>
                         <div class='info-label'>Lieu de naissance :</div>
-                        <div class='info-value'>" . htmlspecialchars($transfer['lieu_naissance'] ?: 'Non spécifié') . "</div>
+                        <div class='info-value'>" . htmlspecialchars($transfer['lieu_naissance'] ?: 'Non spÃ©cifiÃ©') . "</div>
                     </div>
                     <div class='info-row'>
                         <div class='info-label'>Sexe :</div>
-                        <div class='info-value'>" . ($transfer['sexe'] === 'M' ? 'Masculin' : 'Féminin') . "</div>
+                        <div class='info-value'>" . ($transfer['sexe'] === 'M' ? 'Masculin' : 'FÃ©minin') . "</div>
                     </div>
                     <div class='info-row'>
-                        <div class='info-label'>Nom du père :</div>
-                        <div class='info-value'>" . htmlspecialchars($transfer['nom_pere'] ?: 'Non spécifié') . "</div>
+                        <div class='info-label'>Nom du pÃ¨re :</div>
+                        <div class='info-value'>" . htmlspecialchars($transfer['nom_pere'] ?: 'Non spÃ©cifiÃ©') . "</div>
                     </div>
                     <div class='info-row'>
-                        <div class='info-label'>Nom de la mère :</div>
-                        <div class='info-value'>" . htmlspecialchars($transfer['nom_mere'] ?: 'Non spécifié') . "</div>
+                        <div class='info-label'>Nom de la mÃ¨re :</div>
+                        <div class='info-value'>" . htmlspecialchars($transfer['nom_mere'] ?: 'Non spÃ©cifiÃ©') . "</div>
                     </div>";
 
     if ($transfer['type_mouvement'] === 'transfert_entrant') {
         $html .= "<div class='info-row'>
-                <div class='info-label'>École d'origine :</div>
+                <div class='info-label'>Ã‰cole d'origine :</div>
                 <div class='info-value'>" . htmlspecialchars($transfer['ecole_origine']) . "</div>
               </div>
               <div class='info-row'>
@@ -436,44 +436,44 @@ function generateCertificateHTML($transfer) {
               </div>";
         
         $html .= "</div>
-              <p>A été admis(e) par transfert dans notre établissement en date du " . date('d/m/Y', strtotime($transfer['date_effective'])) . " 
+              <p>A Ã©tÃ© admis(e) par transfert dans notre Ã©tablissement en date du " . date('d/m/Y', strtotime($transfer['date_effective'])) . " 
               pour poursuivre ses études en " . htmlspecialchars(($transfer['classe_destination_niveau'] ?? '') . ' - ' . ($transfer['classe_destination_nom'] ?? '')) . ".</p>";
     
     } elseif ($transfer['type_mouvement'] === 'transfert_sortant') {
         $html .= "<div class='info-row'>
-                <div class='info-label'>Classe fréquentée :</div>
+                <div class='info-label'>Classe frÃ©quentÃ©e :</div>
                 <div class='info-value'>" . htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')) . "</div>
               </div>
               <div class='info-row'>
-                <div class='info-label'>École de destination :</div>
+                <div class='info-label'>Ã‰cole de destination :</div>
                 <div class='info-value'>" . htmlspecialchars($transfer['ecole_destination']) . "</div>
               </div>";
         
         $html .= "</div>
-              <p>A fréquenté notre établissement en " . htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')) . " 
-              et a quitté l'école en date du " . date('d/m/Y', strtotime($transfer['date_effective'])) . " 
-              pour poursuivre ses études à " . htmlspecialchars($transfer['ecole_destination']) . ".</p>";
+              <p>A frÃ©quentÃ© notre Ã©tablissement en " . htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')) . " 
+              et a quittÃ© l'Ã©cole en date du " . date('d/m/Y', strtotime($transfer['date_effective'])) . " 
+              pour poursuivre ses études Ã  " . htmlspecialchars($transfer['ecole_destination']) . ".</p>";
     
     } else { // sortie_definitive
         $html .= "<div class='info-row'>
-                <div class='info-label'>Dernière classe :</div>
+                <div class='info-label'>DerniÃ¨re classe :</div>
                 <div class='info-value'>" . htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')) . "</div>
               </div>";
         
         $html .= "</div>
-              <p>A terminé sa scolarité dans notre établissement en " . htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')) . " 
+              <p>A terminÃ© sa scolaritÃ© dans notre Ã©tablissement en " . htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')) . " 
               en date du " . date('d/m/Y', strtotime($transfer['date_effective'])) . ".</p>";
     }
     
     $html .= "<p style='font-size: 1.2rem; margin-top: 1.5cm; text-align: center; font-style: italic;'>
-                        Ce certificat est délivré pour servir et valoir ce que de droit.
+                        Ce certificat est dÃ©livrÃ© pour servir et valoir ce que de droit.
                     </p>
                 </div>
 
                 <div class='signatures'>
                     <div class='signature-block'>
                         <div class='signature-line'></div>
-                        <div class='signature-label'>Le Secrétaire</div>
+                        <div class='signature-label'>Le SecrÃ©taire</div>
                     </div>
                     <div class='signature-block'>
                         <div class='signature-line'></div>
@@ -482,12 +482,12 @@ function generateCertificateHTML($transfer) {
                 </div>
 
                 <div class='seal'>
-                    SCEAU<br>DE<br>L'ÉCOLE
+                    SCEAU<br>DE<br>L'Ã‰COLE
                 </div>
 
                 <div class='footer'>
-                    Fait à Kinshasa, le " . date('d/m/Y') . "<br>
-                    <strong>École Sinfinity - Certificat N° " . htmlspecialchars($transfer['numero_certificat']) . "</strong>
+                    Fait Ã  Kinshasa, le " . date('d/m/Y') . "<br>
+                    <strong>Ã‰cole Sinfinity - Certificat NÂ° " . htmlspecialchars($transfer['numero_certificat']) . "</strong>
                 </div>
             </div>
         </div>
@@ -508,9 +508,9 @@ function generateCertificateHTML($transfer) {
         </div>
 
         <script>
-            // Auto-focus sur la page pour une meilleure expérience d'impression
+            // Auto-focus sur la page pour une meilleure expÃ©rience d'impression
             window.onload = function() {
-                // Ajouter un délai pour permettre le chargement complet
+                // Ajouter un dÃ©lai pour permettre le chargement complet
                 setTimeout(function() {
                     window.focus();
                 }, 500);
@@ -523,3 +523,7 @@ function generateCertificateHTML($transfer) {
 // Afficher le certificat
 echo generateCertificateHTML($transfer);
 ?>
+
+
+
+

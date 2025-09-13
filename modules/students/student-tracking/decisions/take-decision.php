@@ -1,31 +1,30 @@
-<?php
+﻿<?php
 /**
- * Prendre une décision d'admission
+ * Prendre une dÃ©cision d'admission
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
 
-$page_title = 'Prendre une Décision';
+requirePagePermissionFromDB('students', 'tracking', 'edit', '../../../../dashboard.php');
 
-// Récupérer l'ID de la demande
+$page_title = 'Prendre une DÃ©cision';
+
+// RÃ©cupÃ©rer l'ID de la demande
 $demande_id = isset($_GET['demande_id']) ? intval($_GET['demande_id']) : 0;
 
 if ($demande_id <= 0) {
-    showMessage('error', 'Paramètre invalide.');
+    showMessage('error', 'ParamÃ¨tre invalide.');
     redirectTo('index.php');
 }
 
-// Récupérer les informations de la demande
+// RÃ©cupÃ©rer les informations de la demande
 try {
     $stmt = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau,
@@ -41,16 +40,16 @@ try {
     );
     $demande = $stmt->fetch();
 } catch (Exception $e) {
-    showMessage('error', 'Erreur lors de la récupération de la demande.');
+    showMessage('error', 'Erreur lors de la rÃ©cupÃ©ration de la demande.');
     redirectTo('index.php');
 }
 
 if (!$demande) {
-    showMessage('error', 'Demande non trouvée.');
+    showMessage('error', 'Demande non trouvÃ©e.');
     redirectTo('index.php');
 }
 
-// Vérifier que la demande n'a pas déjà une décision
+// VÃ©rifier que la demande n'a pas dÃ©jÃ  une dÃ©cision
 try {
     $existing_decision = $database->query(
         "SELECT id FROM decisions_admission WHERE demande_admission_id = ?",
@@ -58,11 +57,11 @@ try {
     )->fetch();
     
     if ($existing_decision) {
-        showMessage('error', 'Cette demande a déjà une décision.');
+        showMessage('error', 'Cette demande a dÃ©jÃ  une dÃ©cision.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
-    // Continuer si pas de décision existante
+    // Continuer si pas de dÃ©cision existante
 }
 
 // Traitement du formulaire
@@ -77,11 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $reduction_finale = floatval($_POST['reduction_finale']);
         $commentaire = sanitizeInput($_POST['commentaire']);
         
-        // Validation des données
+        // Validation des donnÃ©es
         if (empty($decision) || empty($motif_decision)) {
-            showMessage('error', 'Les champs obligatoires doivent être remplis.');
+            showMessage('error', 'Les champs obligatoires doivent Ãªtre remplis.');
         } else {
-            // Insérer la décision
+            // InsÃ©rer la dÃ©cision
             $database->execute(
                 "INSERT INTO decisions_admission (demande_admission_id, decision, date_decision, 
                  decideur_id, motif_decision, conditions_speciales, date_limite_reponse,
@@ -92,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  $reduction_finale, $commentaire]
             );
             
-            // Mettre à jour le statut de la demande
+            // Mettre Ã  jour le statut de la demande
             $new_status = '';
             switch ($decision) {
                 case 'acceptee':
@@ -120,10 +119,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logUserAction(
                 'decision_admission', 
                 'students', 
-                "Décision d'admission prise pour la demande ID: $demande_id - Statut: $decision"
+                "DÃ©cision d'admission prise pour la demande ID: $demande_id - Statut: $decision"
             );
             
-            showMessage('success', 'Décision enregistrée avec succès.');
+            showMessage('success', 'DÃ©cision enregistrÃ©e avec succÃ¨s.');
             redirectTo('index.php');
         }
     } catch (Exception $e) {
@@ -141,14 +140,14 @@ include '../../../../includes/header.php';
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="../../../../dashboard.php">Tableau de bord</a></li>
-                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Élèves</a></li>
-                        <li class="breadcrumb-item"><a href="index.php">Gestion des Décisions</a></li>
-                        <li class="breadcrumb-item active">Prendre une Décision</li>
+                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Ã‰lÃ¨ves</a></li>
+                        <li class="breadcrumb-item"><a href="index.php">Gestion des DÃ©cisions</a></li>
+                        <li class="breadcrumb-item active">Prendre une DÃ©cision</li>
                     </ol>
                 </div>
                 <h4 class="page-title">
                     <i class="mdi mdi-gavel me-2"></i>
-                    Prendre une Décision d'Admission
+                    Prendre une DÃ©cision d'Admission
                 </h4>
             </div>
         </div>
@@ -162,7 +161,7 @@ include '../../../../includes/header.php';
                 <div class="card-header">
                     <h4 class="header-title">
                         <i class="mdi mdi-account-check me-2"></i>
-                        Décision pour <?php echo $demande['prenom_eleve'] . ' ' . $demande['nom_eleve']; ?>
+                        DÃ©cision pour <?php echo $demande['prenom_eleve'] . ' ' . $demande['nom_eleve']; ?>
                     </h4>
                 </div>
                 <div class="card-body">
@@ -172,11 +171,11 @@ include '../../../../includes/header.php';
                             <h6 class="text-muted">Informations de la Demande</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>Numéro :</strong></td>
+                                    <td><strong>NumÃ©ro :</strong></td>
                                     <td><span class="badge bg-light text-dark"><?php echo $demande['numero_demande']; ?></span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Classe demandée :</strong></td>
+                                    <td><strong>Classe demandÃ©e :</strong></td>
                                     <td><?php echo $demande['classe_demandee']; ?> (<?php echo $demande['niveau']; ?>)</td>
                                 </tr>
                                 <tr>
@@ -186,7 +185,7 @@ include '../../../../includes/header.php';
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-muted">Résultats de l'Évaluation</h6>
+                            <h6 class="text-muted">RÃ©sultats de l'Ã‰valuation</h6>
                             <?php if ($demande['note_evaluation']): ?>
                                 <table class="table table-borderless">
                                     <tr>
@@ -203,7 +202,7 @@ include '../../../../includes/header.php';
                                             <?php if ($demande['recommandation']): ?>
                                                 <span class="badge bg-warning"><?php echo ucfirst($demande['recommandation']); ?></span>
                                             <?php else: ?>
-                                                <span class="badge bg-secondary">Non spécifiée</span>
+                                                <span class="badge bg-secondary">Non spÃ©cifiÃ©e</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -211,33 +210,33 @@ include '../../../../includes/header.php';
                             <?php else: ?>
                                 <div class="alert alert-warning">
                                     <i class="mdi mdi-alert-outline me-2"></i>
-                                    Aucune évaluation disponible
+                                    Aucune Ã©valuation disponible
                                 </div>
                             <?php endif; ?>
                         </div>
                     </div>
 
-                    <!-- Formulaire de décision -->
+                    <!-- Formulaire de dÃ©cision -->
                     <form method="POST" class="needs-validation" novalidate>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="decision" class="form-label">Décision *</label>
+                                    <label for="decision" class="form-label">DÃ©cision *</label>
                                     <select class="form-select" id="decision" name="decision" required>
-                                        <option value="">Sélectionner une décision</option>
-                                        <option value="acceptee">Acceptée</option>
-                                        <option value="refusee">Refusée</option>
+                                        <option value="">SÃ©lectionner une dÃ©cision</option>
+                                        <option value="acceptee">AcceptÃ©e</option>
+                                        <option value="refusee">RefusÃ©e</option>
                                         <option value="acceptee_conditionnelle">Acceptation conditionnelle</option>
                                         <option value="mise_en_liste_attente">Mise en liste d'attente</option>
                                     </select>
                                     <div class="invalid-feedback">
-                                        Veuillez sélectionner une décision.
+                                        Veuillez sÃ©lectionner une dÃ©cision.
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="date_limite_reponse" class="form-label">Date limite de réponse</label>
+                                    <label for="date_limite_reponse" class="form-label">Date limite de rÃ©ponse</label>
                                     <input type="date" class="form-control" id="date_limite_reponse" name="date_limite_reponse"
                                            value="<?php echo date('Y-m-d', strtotime('+7 days')); ?>">
                                 </div>
@@ -245,18 +244,18 @@ include '../../../../includes/header.php';
                         </div>
                         
                         <div class="mb-3">
-                            <label for="motif_decision" class="form-label">Motif de la décision *</label>
+                            <label for="motif_decision" class="form-label">Motif de la dÃ©cision *</label>
                             <textarea class="form-control" id="motif_decision" name="motif_decision" rows="3" 
-                                      placeholder="Expliquez les raisons de cette décision..." required></textarea>
+                                      placeholder="Expliquez les raisons de cette dÃ©cision..." required></textarea>
                             <div class="invalid-feedback">
-                                Veuillez expliquer le motif de la décision.
+                                Veuillez expliquer le motif de la dÃ©cision.
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="conditions_speciales" class="form-label">Conditions spéciales</label>
                             <textarea class="form-control" id="conditions_speciales" name="conditions_speciales" rows="2" 
-                                      placeholder="Conditions particulières si acceptation conditionnelle..."></textarea>
+                                      placeholder="Conditions particuliÃ¨res si acceptation conditionnelle..."></textarea>
                         </div>
                         
                         <div class="row">
@@ -269,14 +268,14 @@ include '../../../../includes/header.php';
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="frais_scolarite_final" class="form-label">Frais de scolarité (FC)</label>
+                                    <label for="frais_scolarite_final" class="form-label">Frais de scolaritÃ© (FC)</label>
                                     <input type="number" class="form-control" id="frais_scolarite_final" name="frais_scolarite_final" 
                                            min="0" step="100" value="<?php echo $demande['frais_scolarite'] ?? 0; ?>">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="reduction_finale" class="form-label">Réduction accordée (%)</label>
+                                    <label for="reduction_finale" class="form-label">RÃ©duction accordÃ©e (%)</label>
                                     <input type="number" class="form-control" id="reduction_finale" name="reduction_finale" 
                                            min="0" max="100" step="0.1" value="<?php echo $demande['reduction_accordee'] ?? 0; ?>">
                                 </div>
@@ -286,7 +285,7 @@ include '../../../../includes/header.php';
                         <div class="mb-3">
                             <label for="commentaire" class="form-label">Commentaire additionnel</label>
                             <textarea class="form-control" id="commentaire" name="commentaire" rows="3" 
-                                      placeholder="Observations supplémentaires..."></textarea>
+                                      placeholder="Observations supplÃ©mentaires..."></textarea>
                         </div>
                         
                         <div class="d-flex justify-content-between">
@@ -296,7 +295,7 @@ include '../../../../includes/header.php';
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="mdi mdi-check me-1"></i>
-                                Enregistrer la Décision
+                                Enregistrer la DÃ©cision
                             </button>
                         </div>
                     </form>
@@ -309,19 +308,19 @@ include '../../../../includes/header.php';
                 <div class="card-header">
                     <h5 class="header-title">
                         <i class="mdi mdi-information-outline me-2"></i>
-                        Guide des Décisions
+                        Guide des DÃ©cisions
                     </h5>
                 </div>
                 <div class="card-body">
-                    <h6>Types de décisions :</h6>
+                    <h6>Types de dÃ©cisions :</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <i class="mdi mdi-check-circle text-success me-2"></i>
-                            <strong>Acceptée :</strong> L'élève est admis sans conditions
+                            <strong>AcceptÃ©e :</strong> L'Ã©lÃ¨ve est admis sans conditions
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-close-circle text-danger me-2"></i>
-                            <strong>Refusée :</strong> L'élève n'est pas admis
+                            <strong>RefusÃ©e :</strong> L'Ã©lÃ¨ve n'est pas admis
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-alert-circle text-warning me-2"></i>
@@ -335,29 +334,29 @@ include '../../../../includes/header.php';
                     
                     <hr>
                     
-                    <h6>Critères de décision :</h6>
+                    <h6>CritÃ¨res de dÃ©cision :</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Résultats de l'évaluation
+                            RÃ©sultats de l'Ã©valuation
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Disponibilité des places
+                            DisponibilitÃ© des places
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Profil de l'élève
+                            Profil de l'Ã©lÃ¨ve
                         </li>
                         <li class="mb-2">
                             <i class="mdi mdi-lightbulb text-warning me-2"></i>
-                            Capacité d'accueil
+                            CapacitÃ© d'accueil
                         </li>
                     </ul>
                     
                     <div class="alert alert-info mt-3">
                         <i class="mdi mdi-information-outline me-2"></i>
-                        <strong>Note :</strong> Toute décision sera enregistrée dans l'historique et pourra être consultée ultérieurement.
+                        <strong>Note :</strong> Toute dÃ©cision sera enregistrÃ©e dans l'historique et pourra Ãªtre consultÃ©e ultÃ©rieurement.
                     </div>
                 </div>
             </div>
@@ -380,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, false);
     });
     
-    // Gestion dynamique des champs selon la décision
+    // Gestion dynamique des champs selon la dÃ©cision
     const decisionSelect = document.getElementById('decision');
     const conditionsField = document.getElementById('conditions_speciales');
     const fraisFields = document.querySelectorAll('#frais_inscription_final, #frais_scolarite_final, #reduction_finale');
@@ -410,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Déclencher l'événement au chargement
+        // DÃ©clencher l'événement au chargement
         decisionSelect.dispatchEvent(new Event('change'));
     }
     
@@ -422,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
             
             if (selectedDate <= today) {
-                alert('La date limite de réponse doit être dans le futur.');
+                alert('La date limite de rÃ©ponse doit Ãªtre dans le futur.');
                 this.value = '';
             }
         });
@@ -431,3 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

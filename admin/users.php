@@ -7,10 +7,11 @@
 require_once '../config/config.php';
 require_once '../config/database.php';
 require_once '../includes/functions.php';
+require_once '../includes/permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin')) {
+if (!checkUserPermission('users', 'read') && !checkPermission('admin')) {
     showMessage('error', 'Accès refusé à ce module.');
     redirectTo('../dashboard.php');
 }
@@ -23,9 +24,10 @@ $edit_user = null;
 
 if ($edit_user_id) {
     $edit_user = $database->query(
-        "SELECT u.*, p.matricule, p.fonction 
+        "SELECT u.*, p.matricule, p.fonction, r.nom as role_nom
          FROM users u 
          LEFT JOIN personnel p ON u.id = p.user_id 
+         LEFT JOIN roles r ON u.role_id = r.id
          WHERE u.id = ?", 
         [$edit_user_id]
     )->fetch();
@@ -66,13 +68,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('Ce nom d\'utilisateur existe déjà');
                 }
                 
+                // Récupérer l'ID du rôle
+                $role_stmt = $database->query("SELECT id FROM roles WHERE nom = ?", [$role]);
+                $role_data = $role_stmt->fetch();
+                
+                if (!$role_data) {
+                    throw new Exception('Rôle invalide');
+                }
+                
                 // Créer l'utilisateur
                 $password_hash = hashPassword($password);
                 
                 $database->execute(
-                    "INSERT INTO users (username, password, nom, prenom, email, role, status) 
+                    "INSERT INTO users (username, password, nom, prenom, email, role_id, status) 
                      VALUES (?, ?, ?, ?, ?, ?, 'actif')",
-                    [$username, $password_hash, $nom, $prenom, $email, $role]
+                    [$username, $password_hash, $nom, $prenom, $email, $role_data['id']]
                 );
                 
                 $user_id = $database->lastInsertId();
@@ -119,10 +129,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('Ce nom d\'utilisateur existe déjà');
                 }
                 
+                // Récupérer l'ID du rôle
+                $role_stmt = $database->query("SELECT id FROM roles WHERE nom = ?", [$role]);
+                $role_data = $role_stmt->fetch();
+                
+                if (!$role_data) {
+                    throw new Exception('Rôle invalide');
+                }
+                
                 // Mettre à jour l'utilisateur
                 $database->execute(
-                    "UPDATE users SET username = ?, nom = ?, prenom = ?, email = ?, role = ?, status = ? WHERE id = ?",
-                    [$username, $nom, $prenom, $email, $role, $status, $user_id]
+                    "UPDATE users SET username = ?, nom = ?, prenom = ?, email = ?, role_id = ?, status = ? WHERE id = ?",
+                    [$username, $nom, $prenom, $email, $role_data['id'], $status, $user_id]
                 );
                 
                 // Enregistrer l'action
@@ -269,11 +287,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Récupérer la liste des utilisateurs
 $users = $database->query(
-    "SELECT u.*, p.matricule, p.fonction,
+    "SELECT u.*, p.matricule, p.fonction, r.nom as role_nom,
             (SELECT COUNT(*) FROM user_actions_log WHERE user_id = u.id) as nb_actions,
             (SELECT MAX(created_at) FROM user_actions_log WHERE user_id = u.id) as derniere_action
      FROM users u
      LEFT JOIN personnel p ON u.id = p.user_id
+     LEFT JOIN roles r ON u.role_id = r.id
      ORDER BY u.created_at DESC"
 )->fetchAll();
 
@@ -312,6 +331,10 @@ include '../includes/header.php';
                     <i class="fas fa-plus me-1"></i>
                     Nouvel utilisateur
                 </button>
+                <a href="roles.php" class="btn btn-outline-primary">
+                    <i class="fas fa-user-tag me-1"></i>
+                    Gérer les rôles
+                </a>
             </div>
             <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
@@ -319,6 +342,9 @@ include '../includes/header.php';
                     Outils
                 </button>
                 <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="roles.php">
+                        <i class="fas fa-user-tag me-2"></i>Gérer les rôles
+                    </a></li>
                     <li><a class="dropdown-item" href="../modules/admin/pending-users.php">
                         <i class="fas fa-user-clock me-2"></i>Comptes en attente
                     </a></li>
@@ -408,12 +434,13 @@ include '../includes/header.php';
                                 <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
                                 <select class="form-select" id="role" name="role" required>
                                     <option value="">Sélectionner un rôle...</option>
-                                    <option value="admin" <?php echo $edit_user['role'] === 'admin' ? 'selected' : ''; ?>>Administrateur</option>
-                                    <option value="directeur" <?php echo $edit_user['role'] === 'directeur' ? 'selected' : ''; ?>>Directeur</option>
-                                    <option value="enseignant" <?php echo $edit_user['role'] === 'enseignant' ? 'selected' : ''; ?>>Enseignant</option>
-                                    <option value="secretaire" <?php echo $edit_user['role'] === 'secretaire' ? 'selected' : ''; ?>>Secrétaire</option>
-                                    <option value="comptable" <?php echo $edit_user['role'] === 'comptable' ? 'selected' : ''; ?>>Comptable</option>
-                                    <option value="surveillant" <?php echo $edit_user['role'] === 'surveillant' ? 'selected' : ''; ?>>Surveillant</option>
+                                    <?php
+                                    $roles = $database->query("SELECT * FROM roles WHERE actif = 1 ORDER BY nom")->fetchAll();
+                                    foreach ($roles as $role): ?>
+                                        <option value="<?php echo $role['nom']; ?>" <?php echo $edit_user['role_nom'] === $role['nom'] ? 'selected' : ''; ?>>
+                                            <?php echo ucfirst($role['nom']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -612,10 +639,10 @@ include '../includes/header.php';
                                             'comptable' => 'success',
                                             'surveillant' => 'secondary'
                                         ];
-                                        $color = $role_colors[$user['role']] ?? 'secondary';
+                                        $color = $role_colors[$user['role_nom']] ?? 'secondary';
                                         ?>
                                         <span class="badge bg-<?php echo $color; ?>">
-                                            <?php echo ucfirst($user['role']); ?>
+                                            <?php echo ucfirst($user['role_nom']); ?>
                                         </span>
                                     </td>
                                     <td>
@@ -736,12 +763,13 @@ include '../includes/header.php';
                             <label for="new_role" class="form-label">Rôle <span class="text-danger">*</span></label>
                             <select class="form-select" id="new_role" name="role" required>
                                 <option value="">Sélectionner...</option>
-                                <option value="admin">Administrateur</option>
-                                <option value="directeur">Directeur</option>
-                                <option value="enseignant">Enseignant</option>
-                                <option value="secretaire">Secrétaire</option>
-                                <option value="comptable">Comptable</option>
-                                <option value="surveillant">Surveillant</option>
+                                <?php
+                                $roles = $database->query("SELECT * FROM roles WHERE actif = 1 ORDER BY nom")->fetchAll();
+                                foreach ($roles as $role): ?>
+                                    <option value="<?php echo $role['nom']; ?>">
+                                        <?php echo ucfirst($role['nom']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>

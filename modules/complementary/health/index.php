@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('health') && !checkPermission('health_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'health', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de la Santé Scolaire';
 
@@ -129,7 +128,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('health')): ?>
+        <?php if (checkPagePermission('health')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -391,7 +390,7 @@ include '../../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('health')): ?>
+                                                <?php if (checkPagePermission('health')): ?>
                                                     <a href="consultations/edit.php?id=<?php echo $consultation['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Modifier">
                                                         <i class="fas fa-edit"></i>
@@ -408,7 +407,7 @@ include '../../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-stethoscope fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucune consultation récente</p>
-                        <?php if (checkPermission('health')): ?>
+                        <?php if (checkPagePermission('health')): ?>
                             <a href="consultations/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Nouvelle consultation
@@ -559,7 +558,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('health')): ?>
+<?php if (checkPagePermission('health')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -621,3 +620,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

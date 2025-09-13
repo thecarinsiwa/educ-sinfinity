@@ -7,19 +7,17 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin') && !checkPermission('users_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('index.php');
-}
+requirePagePermission('users', 'list', 'read', '../../dashboard.php');
 
 $page_title = 'Liste des Utilisateurs';
 
 // Paramètres de recherche et filtrage
 $search = sanitizeInput($_GET['search'] ?? '');
-$role_filter = sanitizeInput($_GET['role'] ?? '');
+$role_filter = (int)($_GET['role'] ?? 0);
 $status_filter = sanitizeInput($_GET['status'] ?? '');
 
 // Construction de la requête avec filtres
@@ -33,7 +31,7 @@ if ($search) {
 }
 
 if ($role_filter) {
-    $where_conditions[] = "u.role = ?";
+    $where_conditions[] = "u.role_id = ?";
     $params[] = $role_filter;
 }
 
@@ -50,10 +48,11 @@ $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
 $users = $database->query(
-    "SELECT u.*, 
+    "SELECT u.*, r.nom as role_nom, r.description as role_description,
             (SELECT COUNT(*) FROM user_actions_log WHERE user_id = u.id) as nb_actions,
             (SELECT COUNT(*) FROM user_sessions WHERE user_id = u.id AND last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)) as sessions_actives
      FROM users u
+     LEFT JOIN roles r ON u.role_id = r.id
      WHERE $where_clause
      ORDER BY u.created_at DESC
      LIMIT $per_page OFFSET $offset",
@@ -69,7 +68,7 @@ $total_records = $total_stmt->fetch()['total'];
 $total_pages = ceil($total_records / $per_page);
 
 // Récupérer les rôles pour le filtre
-$roles = $database->query("SELECT DISTINCT role FROM users ORDER BY role")->fetchAll();
+$roles = $database->query("SELECT id, nom FROM roles WHERE actif = 1 ORDER BY nom")->fetchAll();
 
 include '../../includes/header.php';
 ?>
@@ -86,7 +85,7 @@ include '../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('admin')): ?>
+        <?php if (checkPagePermission('admin')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -106,7 +105,7 @@ include '../../includes/header.php';
                 <li><a class="dropdown-item" href="exports/users-report.php?<?php echo http_build_query($_GET); ?>">
                     <i class="fas fa-file-pdf me-2"></i>Rapport PDF
                 </a></li>
-                <?php if (checkPermission('admin')): ?>
+                <?php if (checkPagePermission('admin')): ?>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="bulk-actions.php">
                         <i class="fas fa-tasks me-2"></i>Actions en masse
@@ -132,9 +131,9 @@ include '../../includes/header.php';
                 <select class="form-select" id="role" name="role">
                     <option value="">Tous les rôles</option>
                     <?php foreach ($roles as $role): ?>
-                        <option value="<?php echo $role['role']; ?>" 
-                                <?php echo $role_filter === $role['role'] ? 'selected' : ''; ?>>
-                            <?php echo ucfirst($role['role']); ?>
+                        <option value="<?php echo $role['id']; ?>" 
+                                <?php echo $role_filter === $role['id'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($role['nom']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -234,13 +233,17 @@ include '../../includes/header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <span class="badge bg-<?php 
-                                            echo $user['role'] === 'admin' ? 'danger' : 
-                                                ($user['role'] === 'directeur' ? 'warning' : 
-                                                ($user['role'] === 'enseignant' ? 'primary' : 'info')); 
-                                        ?>">
-                                            <?php echo ucfirst($user['role']); ?>
-                                        </span>
+                                        <?php if ($user['role_nom']): ?>
+                                            <span class="badge bg-<?php 
+                                                echo $user['role_nom'] === 'admin' ? 'danger' : 
+                                                    ($user['role_nom'] === 'directeur' ? 'warning' : 
+                                                    ($user['role_nom'] === 'enseignant' ? 'primary' : 'info')); 
+                                            ?>" title="<?php echo htmlspecialchars($user['role_description']); ?>">
+                                                <?php echo htmlspecialchars($user['role_nom']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Aucun rôle</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <span class="badge bg-<?php echo $user['status'] === 'actif' ? 'success' : 'secondary'; ?>">
@@ -272,7 +275,7 @@ include '../../includes/header.php';
                                                class="btn btn-outline-info" title="Voir profil">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPermission('admin') || $user['id'] == $_SESSION['user_id']): ?>
+                                            <?php if (checkPagePermission('admin') || $user['id'] == $_SESSION['user_id']): ?>
                                                 <a href="edit.php?id=<?php echo $user['id']; ?>" 
                                                    class="btn btn-outline-primary" title="Modifier">
                                                     <i class="fas fa-edit"></i>
@@ -284,7 +287,7 @@ include '../../includes/header.php';
                                                 <i class="fas fa-history"></i>
                                                 <span class="badge bg-secondary"><?php echo $user['nb_actions']; ?></span>
                                             </button>
-                                            <?php if (checkPermission('admin') && $user['id'] != $_SESSION['user_id']): ?>
+                                            <?php if (checkPagePermission('admin') && $user['id'] != $_SESSION['user_id']): ?>
                                                 <div class="btn-group btn-group-sm">
                                                     <button type="button" class="btn btn-outline-warning dropdown-toggle" 
                                                             data-bs-toggle="dropdown" title="Actions">
@@ -372,7 +375,7 @@ include '../../includes/header.php';
                                                class="btn btn-outline-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPermission('admin') || $user['id'] == $_SESSION['user_id']): ?>
+                                            <?php if (checkPagePermission('admin') || $user['id'] == $_SESSION['user_id']): ?>
                                                 <a href="edit.php?id=<?php echo $user['id']; ?>" 
                                                    class="btn btn-outline-primary">
                                                     <i class="fas fa-edit"></i>
@@ -434,7 +437,7 @@ include '../../includes/header.php';
                         Effacer les filtres
                     </a>
                 <?php endif; ?>
-                <?php if (checkPermission('admin')): ?>
+                <?php if (checkPagePermission('admin')): ?>
                     <a href="add.php" class="btn btn-primary ms-2">
                         <i class="fas fa-plus me-1"></i>
                         Créer le premier utilisateur

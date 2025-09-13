@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../dashboard.php');
 
 $page_title = 'Inscriptions et Admissions';
 
@@ -202,23 +201,17 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (hasPagePermission('students', 'admissions', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="new-application.php">
-                        <i class="fas fa-file-alt me-2"></i>Nouvelle demande
-                    </a></li>
-                    <li><a class="dropdown-item" href="direct-enrollment.php">
-                        <i class="fas fa-user-check me-2"></i>Inscription directe
-                    </a></li>
+                    <li><?php echo generatePermissionLink('new-application.php', 'dropdown-item', 'Nouvelle demande', 'fas fa-file-alt me-2', 'students', 'admissions', 'create'); ?></li>
+                    <li><?php echo generatePermissionLink('direct-enrollment.php', 'dropdown-item', 'Inscription directe', 'fas fa-user-check me-2', 'students', 'admissions', 'create'); ?></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="bulk-import.php">
-                        <i class="fas fa-file-import me-2"></i>Import en masse
-                    </a></li>
+                    <li><?php echo generatePermissionLink('bulk-import.php', 'dropdown-item', 'Import en masse', 'fas fa-file-import me-2', 'students', 'admissions', 'create'); ?></li>
                 </ul>
             </div>
         <?php endif; ?>
@@ -472,11 +465,8 @@ include '../../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('students') && $demande['status'] === 'en_attente'): ?>
-                                                    <a href="applications/process.php?id=<?php echo $demande['id']; ?>" 
-                                                       class="btn btn-outline-primary" title="Traiter">
-                                                        <i class="fas fa-cog"></i>
-                                                    </a>
+                                                <?php if ($demande['status'] === 'en_attente'): ?>
+                                                    <?php echo generatePermissionLink('applications/process.php?id=' . $demande['id'], 'btn btn-outline-primary', 'Traiter', 'fas fa-cog', 'students', 'admissions', 'update'); ?>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
@@ -489,7 +479,7 @@ include '../../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucune demande récente</p>
-                        <?php if (checkPermission('students')): ?>
+                        <?php if (checkPagePermission('students')): ?>
                             <a href="new-application.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Nouvelle demande
@@ -635,7 +625,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('students')): ?>
+<?php if (hasPagePermission('students', 'admissions', 'read')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -649,10 +639,7 @@ include '../../../includes/header.php';
                 <div class="row">
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="new-application.php" class="btn btn-outline-primary">
-                                <i class="fas fa-file-alt me-2"></i>
-                                Nouvelle demande
-                            </a>
+                            <?php echo generatePermissionLink('new-application.php', 'btn btn-outline-primary', 'Nouvelle demande', 'fas fa-file-alt me-2', 'students', 'admissions', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
@@ -665,18 +652,12 @@ include '../../../includes/header.php';
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="direct-enrollment.php" class="btn btn-outline-success">
-                                <i class="fas fa-user-check me-2"></i>
-                                Inscription directe
-                            </a>
+                            <?php echo generatePermissionLink('direct-enrollment.php', 'btn btn-outline-success', 'Inscription directe', 'fas fa-user-check me-2', 'students', 'admissions', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="reports/admission-stats.php" class="btn btn-outline-info">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                Statistiques
-                            </a>
+                            <?php echo generatePermissionLink('reports/admission-stats.php', 'btn btn-outline-info', 'Statistiques', 'fas fa-chart-bar me-2', 'students', 'admissions', 'read'); ?>
                         </div>
                     </div>
                 </div>
@@ -697,3 +678,5 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+
+

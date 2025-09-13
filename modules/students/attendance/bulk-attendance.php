@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Saisie en masse des absences et retards
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,16 +7,16 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
 
 $page_title = "Saisie en masse des absences";
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement du formulaire
@@ -37,17 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         if (empty($attendance_data)) {
-            throw new Exception('Aucune donnée de présence saisie');
+            throw new Exception('Aucune donnÃ©e de présence saisie');
         }
         
-        // Vérifier que la classe existe
+        // VÃ©rifier que la classe existe
         $classe = $database->query(
             "SELECT * FROM classes WHERE id = ? AND annee_scolaire_id = ?",
             [$classe_id, $current_year['id'] ?? 0]
         )->fetch();
         
         if (!$classe) {
-            throw new Exception('Classe non trouvée');
+            throw new Exception('Classe non trouvÃ©e');
         }
         
         // Combiner date et heure
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     continue;
                 }
                 
-                // Vérifier que l'élève existe et est inscrit dans cette classe
+                // VÃ©rifier que l'Ã©lÃ¨ve existe et est inscrit dans cette classe
                 $eleve = $database->query(
                     "SELECT e.*, i.classe_id
                      FROM eleves e
@@ -81,28 +81,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 )->fetch();
                 
                 if (!$eleve) {
-                    $errors[] = "Élève ID $eleve_id non trouvé dans cette classe";
+                    $errors[] = "Ã‰lÃ¨ve ID $eleve_id non trouvÃ© dans cette classe";
                     continue;
                 }
                 
-                // Vérifier qu'il n'y a pas déjà un enregistrement pour cette date
+                // VÃ©rifier qu'il n'y a pas dÃ©jÃ  un enregistrement pour cette date
                 $existing = $database->query(
                     "SELECT id FROM absences WHERE eleve_id = ? AND DATE(date_absence) = ?",
                     [$eleve_id, $date_saisie]
                 )->fetch();
                 
                 if ($existing) {
-                    $errors[] = "Enregistrement déjà existant pour {$eleve['nom']} {$eleve['prenom']} à cette date";
+                    $errors[] = "Enregistrement dÃ©jÃ  existant pour {$eleve['nom']} {$eleve['prenom']} Ã  cette date";
                     continue;
                 }
                 
-                // Déterminer le type d'absence
+                // DÃ©terminer le type d'absence
                 $type_absence = $status;
                 if ($status === 'retard' && $duree_retard <= 0) {
-                    $duree_retard = 15; // Durée par défaut
+                    $duree_retard = 15; // DurÃ©e par dÃ©faut
                 }
                 
-                // Insérer l'enregistrement
+                // InsÃ©rer l'enregistrement
                 $database->execute(
                     "INSERT INTO absences (eleve_id, classe_id, type_absence, date_absence, motif, duree_retard, created_at) 
                      VALUES (?, ?, ?, ?, ?, ?, NOW())",
@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $database->commit();
             
-            $message = "Saisie terminée : $created_count enregistrement(s) créé(s)";
+            $message = "Saisie terminÃ©e : $created_count enregistrement(s) crÃ©Ã©(s)";
             if (!empty($errors)) {
                 $message .= ". Erreurs : " . count($errors);
             }
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les classes
+// RÃ©cupÃ©rer les classes
 $classes = $database->query(
     "SELECT * FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
@@ -164,7 +164,7 @@ include '../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour à la liste
+                Retour Ã  la liste
             </a>
         </div>
         <div class="btn-group">
@@ -195,7 +195,7 @@ include '../../../includes/header.php';
                     <div class="mb-3">
                         <label for="classe_select" class="form-label">Classe <span class="text-danger">*</span></label>
                         <select class="form-select" id="classe_select" required>
-                            <option value="">Sélectionner une classe</option>
+                            <option value="">SÃ©lectionner une classe</option>
                             <?php foreach ($classes as $class): ?>
                                 <option value="<?php echo $class['id']; ?>">
                                     <?php echo htmlspecialchars($class['niveau'] . ' - ' . $class['nom']); ?>
@@ -235,20 +235,20 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <ol class="small">
-                    <li>Sélectionnez la classe et la date/heure</li>
+                    <li>SÃ©lectionnez la classe et la date/heure</li>
                     <li>Cliquez sur "Charger les élèves"</li>
                     <li>Marquez les absents et retardataires</li>
-                    <li>Ajoutez les motifs si nécessaire</li>
+                    <li>Ajoutez les motifs si nÃ©cessaire</li>
                     <li>Cliquez sur "Enregistrer la saisie"</li>
                 </ol>
                 
                 <div class="mt-3">
-                    <h6>Légende :</h6>
+                    <h6>LÃ©gende :</h6>
                     <div class="d-flex flex-wrap gap-2">
-                        <span class="badge bg-success">Présent</span>
+                        <span class="badge bg-success">PrÃ©sent</span>
                         <span class="badge bg-danger">Absent</span>
                         <span class="badge bg-warning">Retard</span>
-                        <span class="badge bg-info">Justifié</span>
+                        <span class="badge bg-info">JustifiÃ©</span>
                     </div>
                 </div>
             </div>
@@ -276,7 +276,7 @@ include '../../../includes/header.php';
                 <div id="studentsContainer">
                     <div class="text-center py-5">
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Sélectionnez une classe et cliquez sur "Charger les élèves" pour commencer.</p>
+                        <p class="text-muted">SÃ©lectionnez une classe et cliquez sur "Charger les élèves" pour commencer.</p>
                     </div>
                 </div>
                 
@@ -295,7 +295,7 @@ include '../../../includes/header.php';
                             <div>
                                 <button type="button" class="btn btn-secondary me-2" onclick="resetForm()">
                                     <i class="fas fa-undo me-1"></i>
-                                    Réinitialiser
+                                    RÃ©initialiser
                                 </button>
                                 <button type="submit" class="btn btn-success">
                                     <i class="fas fa-save me-1"></i>
@@ -356,7 +356,7 @@ include '../../../includes/header.php';
 <script>
 let studentsData = [];
 
-// Charger les élèves de la classe sélectionnée
+// Charger les élèves de la classe sÃ©lectionnÃ©e
 function loadStudents() {
     const classeId = document.getElementById('classe_select').value;
     const dateSaisie = document.getElementById('date_saisie').value;
@@ -378,14 +378,14 @@ function loadStudents() {
                 studentsData = data.students;
                 displayStudents();
                 
-                // Mettre à jour les champs cachés
+                // Mettre Ã  jour les champs cachÃ©s
                 document.getElementById('bulk_classe_id').value = classeId;
                 document.getElementById('bulk_date_saisie').value = dateSaisie;
                 document.getElementById('bulk_heure_saisie').value = heureSaisie;
                 
                 document.getElementById('bulkActions').style.display = 'block';
             } else {
-                container.innerHTML = '<div class="alert alert-warning">Aucun élève trouvé dans cette classe.</div>';
+                container.innerHTML = '<div class="alert alert-warning">Aucun Ã©lÃ¨ve trouvÃ© dans cette classe.</div>';
             }
         })
         .catch(error => {
@@ -416,7 +416,7 @@ function displayStudents() {
                             <div>
                                 <h6 class="mb-0">${student.nom} ${student.prenom}</h6>
                                 <small class="text-muted">${student.numero_matricule}</small>
-                                ${hasExisting ? '<br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Déjà enregistré</small>' : ''}
+                                ${hasExisting ? '<br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> DÃ©jÃ  enregistrÃ©</small>' : ''}
                             </div>
                         </div>
                     </div>
@@ -426,7 +426,7 @@ function displayStudents() {
                             <button type="button" class="btn btn-sm btn-outline-success" 
                                     onclick="setStatus(${student.id}, 'present')" 
                                     id="btn_present_${student.id}">
-                                <i class="fas fa-check"></i> Présent
+                                <i class="fas fa-check"></i> PrÃ©sent
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger" 
                                     onclick="setStatus(${student.id}, 'absence')" 
@@ -448,7 +448,7 @@ function displayStudents() {
                                    id="motif_input_${student.id}">
                             <div class="retard-duration mt-2" id="duration_${student.id}" style="display: none;">
                                 <input type="number" class="form-control form-control-sm" 
-                                       placeholder="Durée (min)" min="1" max="480" 
+                                       placeholder="DurÃ©e (min)" min="1" max="480" 
                                        id="duration_input_${student.id}" value="15">
                             </div>
                         </div>
@@ -460,7 +460,7 @@ function displayStudents() {
     
     container.innerHTML = html;
     
-    // Marquer tous comme présents par défaut
+    // Marquer tous comme présents par dÃ©faut
     studentsData.forEach(student => {
         setStatus(student.id, 'present', false);
     });
@@ -468,22 +468,22 @@ function displayStudents() {
     updateSummary();
 }
 
-// Définir le statut d'un élève
+// DÃ©finir le statut d'un Ã©lÃ¨ve
 function setStatus(studentId, status, updateSummary = true) {
     const studentRow = document.getElementById(`student_${studentId}`);
     const motifDiv = document.getElementById(`motif_${studentId}`);
     const durationDiv = document.getElementById(`duration_${studentId}`);
     
-    // Réinitialiser les classes
+    // RÃ©initialiser les classes
     studentRow.className = 'student-row';
     
-    // Réinitialiser les boutons
+    // RÃ©initialiser les boutons
     ['present', 'absence', 'retard'].forEach(s => {
         const btn = document.getElementById(`btn_${s}_${studentId}`);
         btn.className = `btn btn-sm btn-outline-${s === 'present' ? 'success' : s === 'absence' ? 'danger' : 'warning'}`;
     });
     
-    // Activer le bouton sélectionné
+    // Activer le bouton sÃ©lectionnÃ©
     const activeBtn = document.getElementById(`btn_${status}_${studentId}`);
     activeBtn.className = `btn btn-sm btn-${status === 'present' ? 'success' : status === 'absence' ? 'danger' : 'warning'}`;
     
@@ -503,7 +503,7 @@ function setStatus(studentId, status, updateSummary = true) {
         }
     }
     
-    // Mettre à jour les données
+    // Mettre Ã  jour les donnÃ©es
     const studentIndex = studentsData.findIndex(s => s.id == studentId);
     if (studentIndex !== -1) {
         studentsData[studentIndex].status = status;
@@ -515,7 +515,7 @@ function setStatus(studentId, status, updateSummary = true) {
     }
 }
 
-// Marquer tous les élèves avec le même statut
+// Marquer tous les élèves avec le mÃªme statut
 function markAll(status) {
     studentsData.forEach(student => {
         setStatus(student.id, status, false);
@@ -524,18 +524,18 @@ function markAll(status) {
     generateAttendanceData();
 }
 
-// Mettre à jour le résumé
+// Mettre Ã  jour le rÃ©sumÃ©
 function updateSummary() {
     const present = studentsData.filter(s => s.status === 'present').length;
     const absent = studentsData.filter(s => s.status === 'absence').length;
     const retard = studentsData.filter(s => s.status === 'retard').length;
     const total = studentsData.length;
     
-    const summaryText = `Total: ${total} | Présents: ${present} | Absents: ${absent} | Retards: ${retard}`;
+    const summaryText = `Total: ${total} | PrÃ©sents: ${present} | Absents: ${absent} | Retards: ${retard}`;
     document.getElementById('summaryText').textContent = summaryText;
 }
 
-// Générer les données d'attendance pour le formulaire
+// GÃ©nÃ©rer les donnÃ©es d'attendance pour le formulaire
 function generateAttendanceData() {
     const container = document.getElementById('attendanceData');
     let html = '';
@@ -556,12 +556,12 @@ function generateAttendanceData() {
     container.innerHTML = html;
 }
 
-// Réinitialiser le formulaire
+// RÃ©initialiser le formulaire
 function resetForm() {
     document.getElementById('studentsContainer').innerHTML = `
         <div class="text-center py-5">
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Sélectionnez une classe et cliquez sur "Charger les élèves" pour commencer.</p>
+            <p class="text-muted">SÃ©lectionnez une classe et cliquez sur "Charger les élèves" pour commencer.</p>
         </div>
     `;
     document.getElementById('bulkActions').style.display = 'none';
@@ -578,7 +578,7 @@ document.getElementById('bulkForm').addEventListener('submit', function(e) {
     const incidents = studentsData.filter(s => s.status !== 'present').length;
     
     if (incidents === 0) {
-        if (!confirm('Aucun incident à enregistrer (tous les élèves sont présents). Continuer ?')) {
+        if (!confirm('Aucun incident Ã  enregistrer (tous les élèves sont présents). Continuer ?')) {
             e.preventDefault();
             return false;
         }
@@ -590,7 +590,7 @@ document.getElementById('bulkForm').addEventListener('submit', function(e) {
     }
 });
 
-// Mise à jour automatique des données lors de la saisie des motifs
+// Mise Ã  jour automatique des donnÃ©es lors de la saisie des motifs
 document.addEventListener('input', function(e) {
     if (e.target.id.startsWith('motif_input_') || e.target.id.startsWith('duration_input_')) {
         generateAttendanceData();
@@ -599,3 +599,7 @@ document.addEventListener('input', function(e) {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

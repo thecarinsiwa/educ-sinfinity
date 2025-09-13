@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Paiements';
 
@@ -36,11 +34,13 @@ $sql = "SELECT p.*,
                e.nom, e.prenom, e.numero_matricule,
                c.nom as classe_nom, c.niveau,
                u.username as enregistre_par,
-               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom,
+               tf.nom as type_frais
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
+        JOIN type_frais tf ON p.type_frais_id = tf.id
         LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN devises d ON p.devise_id = d.id
         WHERE p.annee_scolaire_id = ?";
@@ -68,7 +68,7 @@ if ($classe_filter) {
 // }
 
 if (!empty($type_filter)) {
-    $sql .= " AND p.type_paiement = ?";
+    $sql .= " AND tf.nom = ?";
     $params[] = $type_filter;
 }
 
@@ -125,7 +125,7 @@ include '../../../includes/header.php';
                 </button>
             </div>
         <?php endif; ?>
-        <?php if (checkPermission('finance')): ?>
+        <?php if (checkPagePermission('finance')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -352,10 +352,10 @@ include '../../../includes/header.php';
                                         'examen' => 'warning',
                                         'autre' => 'secondary'
                                     ];
-                                    $color = $type_colors[$paiement['type_paiement']] ?? 'secondary';
+                                    $color = 'primary'; // Couleur par défaut
                                     ?>
                                     <span class="badge bg-<?php echo $color; ?>">
-                                        <?php echo ucfirst($paiement['type_paiement']); ?>
+                                        <?php echo htmlspecialchars($paiement['type_frais']); ?>
                                     </span>
                                 </td>
                                 <td>
@@ -414,7 +414,7 @@ include '../../../includes/header.php';
                                            target="_blank">
                                             <i class="fas fa-receipt"></i>
                                         </a>
-                                        <?php if (checkPermission('finance') && $paiement['status'] !== 'annule'): ?>
+                                        <?php if (checkPagePermission('finance') && $paiement['status'] !== 'annule'): ?>
                                             <a href="edit.php?id=<?php echo $paiement['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
@@ -452,7 +452,7 @@ include '../../../includes/header.php';
                         Aucun paiement n'a encore été enregistré.
                     <?php endif; ?>
                 </p>
-                <?php if (checkPermission('finance')): ?>
+                <?php if (checkPagePermission('finance')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Enregistrer le premier paiement

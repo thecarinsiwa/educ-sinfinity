@@ -7,11 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 requireLogin();
-if (!checkPermission('academic') && !checkPermission('academic_view')) {
-    redirectTo('../../login.php');
-}
+
+// Vérifier l'accès à cette page
+requirePagePermissionFromDB('academic', 'schedule', 'read', '../../../dashboard.php', 'class');
 
 $page_title = "Emploi du temps de la classe";
 

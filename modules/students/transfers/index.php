@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module Gestion des Transferts et Sorties - Page principale
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Transferts et Sorties';
 
@@ -39,7 +38,7 @@ try {
     $stats['demandes_attente'] = 0;
 }
 
-// Transferts approuvés
+// Transferts approuvÃ©s
 try {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM transferts_sorties
@@ -51,7 +50,7 @@ try {
     $stats['transferts_approuves'] = 0;
 }
 
-// Sorties définitives
+// Sorties dÃ©finitives
 try {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM transferts_sorties
@@ -63,7 +62,7 @@ try {
     $stats['sorties_definitives'] = 0;
 }
 
-// Demandes rejetées
+// Demandes rejetÃ©es
 try {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM transferts_sorties
@@ -75,7 +74,7 @@ try {
     $stats['demandes_rejetees'] = 0;
 }
 
-// Construction de la requête avec filtres
+// Construction de la requÃªte avec filtres
 $where_conditions = ["ts.annee_scolaire_id = ?"];
 $params = [$current_year['id'] ?? 0];
 
@@ -215,7 +214,7 @@ include '../../../includes/header.php';
             Table manquante détectée
         </h4>
         <p>La table <code>transferts_sorties</code> n'existe pas dans la base de données.</p>
-        <p>Cette table est nécessaire pour la gestion des transferts et sorties d'élèves.</p>
+        <p>Cette table est nÃ©cessaire pour la gestion des transferts et sorties d'élèves.</p>
         <hr>
         <p class="mb-0">
             <a href="../../../fix-students-tables.php" class="btn btn-warning me-2">
@@ -243,23 +242,17 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (hasPagePermission('students', 'transfers', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="new-transfer.php">
-                        <i class="fas fa-exchange-alt me-2"></i>Demande de transfert
-                    </a></li>
-                    <li><a class="dropdown-item" href="new-exit.php">
-                        <i class="fas fa-sign-out-alt me-2"></i>Sortie définitive
-                    </a></li>
+                    <li><?php echo generatePermissionLink('new-transfer.php', 'dropdown-item', 'Demande de transfert', 'fas fa-exchange-alt me-2', 'students', 'transfers', 'create'); ?></li>
+                    <li><?php echo generatePermissionLink('new-exit.php', 'dropdown-item', 'Sortie définitive', 'fas fa-sign-out-alt me-2', 'students', 'transfers', 'create'); ?></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="bulk-process.php">
-                        <i class="fas fa-tasks me-2"></i>Traitement en masse
-                    </a></li>
+                    <li><?php echo generatePermissionLink('bulk-process.php', 'dropdown-item', 'Traitement en masse', 'fas fa-tasks me-2', 'students', 'transfers', 'create'); ?></li>
                 </ul>
             </div>
         <?php endif; ?>
@@ -336,7 +329,7 @@ include '../../../includes/header.php';
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4><?php echo $stats['demandes_rejetees']; ?></h4>
-                        <p class="mb-0">Rejetées</p>
+                            <p class="mb-0">Rejetées</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-times-circle fa-2x"></i>
@@ -515,7 +508,7 @@ include '../../../includes/header.php';
                                         </td>
                                         <td>
                                             <span class="badge bg-<?php echo $demande['type_mouvement'] === 'transfert' ? 'info' : 'secondary'; ?>">
-                                                <?php echo $demande['type_mouvement'] === 'transfert' ? 'Transfert' : 'Sortie définitive'; ?>
+                                                <?php echo $demande['type_mouvement'] === 'transfert' ? 'Transfert' : 'Sortie dÃ©finitive'; ?>
                                             </span>
                                         </td>
                                         <td>
@@ -523,7 +516,7 @@ include '../../../includes/header.php';
                                                 <small><?php echo htmlspecialchars(substr($demande['motif'], 0, 50)); ?>
                                                 <?php echo strlen($demande['motif']) > 50 ? '...' : ''; ?></small>
                                             <?php else: ?>
-                                                <span class="text-muted">Non spécifié</span>
+                                                <span class="text-muted">Non spÃ©cifiÃ©</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -545,11 +538,8 @@ include '../../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('students') && $demande['status'] === 'en_attente'): ?>
-                                                    <a href="process.php?id=<?php echo $demande['id']; ?>" 
-                                                       class="btn btn-outline-primary" title="Traiter">
-                                                        <i class="fas fa-cog"></i>
-                                                    </a>
+                                                <?php if ($demande['status'] === 'en_attente'): ?>
+                                                    <?php echo generatePermissionLink('process.php?id=' . $demande['id'], 'btn btn-outline-primary', 'Traiter', 'fas fa-cog', 'students', 'transfers', 'update'); ?>
                                                 <?php endif; ?>
                                                 <?php if ($demande['status'] === 'approuve'): ?>
                                                     <a href="certificate.php?id=<?php echo $demande['id']; ?>" 
@@ -575,7 +565,7 @@ include '../../../includes/header.php';
                                 Aucune demande de transfert ou sortie n'a été enregistrée.
                             <?php endif; ?>
                         </p>
-                        <?php if (checkPermission('students')): ?>
+                        <?php if (checkPagePermission('students')): ?>
                             <a href="new-transfer.php" class="btn btn-primary me-2">
                                 <i class="fas fa-plus me-1"></i>
                                 Nouvelle demande
@@ -594,7 +584,7 @@ include '../../../includes/header.php';
     </div>
     
     <div class="col-lg-4">
-        <!-- Demandes nécessitant attention -->
+        <!-- Demandes nÃ©cessitant attention -->
         <?php if (!empty($demandes_attention)): ?>
         <div class="card mb-4">
             <div class="card-header bg-warning text-dark">
@@ -686,7 +676,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('students')): ?>
+<?php if (hasPagePermission('students', 'transfers', 'read')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -700,18 +690,12 @@ include '../../../includes/header.php';
                 <div class="row">
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="new-transfer.php" class="btn btn-outline-info">
-                                <i class="fas fa-exchange-alt me-2"></i>
-                                Nouveau transfert
-                            </a>
+                            <?php echo generatePermissionLink('new-transfer.php', 'btn btn-outline-info', 'Nouveau transfert', 'fas fa-exchange-alt me-2', 'students', 'transfers', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="new-exit.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-sign-out-alt me-2"></i>
-                                Sortie définitive
-                            </a>
+                            <?php echo generatePermissionLink('new-exit.php', 'btn btn-outline-secondary', 'Sortie définitive', 'fas fa-sign-out-alt me-2', 'students', 'transfers', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
@@ -724,10 +708,7 @@ include '../../../includes/header.php';
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="certificates/generate.php" class="btn btn-outline-success">
-                                <i class="fas fa-certificate me-2"></i>
-                                Générer certificats
-                            </a>
+                            <?php echo generatePermissionLink('certificates/generate.php', 'btn btn-outline-success', 'Générer certificats', 'fas fa-certificate me-2', 'students', 'transfers', 'create'); ?>
                         </div>
                     </div>
                 </div>
@@ -748,3 +729,7 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

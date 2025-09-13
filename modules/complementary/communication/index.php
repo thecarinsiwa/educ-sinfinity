@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('communication') && !checkPermission('communication_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'communication', 'read', '../../../dashboard.php');
 
 $page_title = 'Communication';
 
@@ -83,7 +82,7 @@ $notifications_recentes = $database->query(
 
 // Statistiques globales (pour les administrateurs)
 $stats_globales = [];
-if (checkPermission('communication')) {
+if (checkPagePermission('communication')) {
     $stmt = $database->query("SELECT COUNT(*) as total FROM messages WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
     $stats_globales['messages_mois'] = $stmt->fetch()['total'];
     
@@ -115,7 +114,7 @@ include '../../../includes/header.php';
                 <li><a class="dropdown-item" href="messages/compose.php">
                     <i class="fas fa-envelope me-2"></i>Nouveau message
                 </a></li>
-                <?php if (checkPermission('communication')): ?>
+                <?php if (checkPagePermission('communication')): ?>
                     <li><a class="dropdown-item" href="announcements/add.php">
                         <i class="fas fa-bullhorn me-2"></i>Nouvelle annonce
                     </a></li>
@@ -137,7 +136,7 @@ include '../../../includes/header.php';
                 <li><a class="dropdown-item" href="settings/signatures.php">
                     <i class="fas fa-signature me-2"></i>Signatures
                 </a></li>
-                <?php if (checkPermission('communication')): ?>
+                <?php if (checkPagePermission('communication')): ?>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="settings/templates.php">
                         <i class="fas fa-file-alt me-2"></i>Modèles
@@ -467,7 +466,7 @@ include '../../../includes/header.php';
         </div>
         
         <!-- Statistiques globales (pour admin) -->
-        <?php if (checkPermission('communication') && !empty($stats_globales)): ?>
+        <?php if (checkPagePermission('communication') && !empty($stats_globales)): ?>
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -512,7 +511,7 @@ include '../../../includes/header.php';
                             </a>
                         </div>
                     </div>
-                    <?php if (checkPermission('communication')): ?>
+                    <?php if (checkPagePermission('communication')): ?>
                         <div class="col-md-3 mb-2">
                             <div class="d-grid">
                                 <a href="announcements/add.php" class="btn btn-outline-success">
@@ -555,3 +554,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

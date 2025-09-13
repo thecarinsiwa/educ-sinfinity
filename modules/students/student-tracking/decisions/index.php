@@ -1,24 +1,23 @@
-<?php
+﻿<?php
 /**
- * Module de Gestion des Décisions d'Admission
+ * Module de Gestion des DÃ©cisions d'Admission
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
 
-$page_title = 'Gestion des Décisions';
+requirePagePermissionFromDB('students', 'tracking', 'read', '../../../../dashboard.php');
+
+$page_title = 'Gestion des DÃ©cisions';
 
 // Traitement des actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('students')) {
     try {
         $action = $_POST['action'] ?? '';
         
@@ -34,11 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                 $reduction_finale = floatval($_POST['reduction_finale']);
                 $commentaire = sanitizeInput($_POST['commentaire']);
                 
-                // Validation des données
+                // Validation des donnÃ©es
                 if (empty($demande_id) || empty($decision) || empty($motif_decision)) {
-                    showMessage('error', 'Les champs obligatoires doivent être remplis.');
+                    showMessage('error', 'Les champs obligatoires doivent Ãªtre remplis.');
                 } else {
-                    // Insérer la décision
+                    // InsÃ©rer la dÃ©cision
                     $database->execute(
                         "INSERT INTO decisions_admission (demande_admission_id, decision, date_decision, 
                          decideur_id, motif_decision, conditions_speciales, date_limite_reponse,
@@ -49,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                          $reduction_finale, $commentaire]
                     );
                     
-                    // Mettre à jour le statut de la demande
+                    // Mettre Ã  jour le statut de la demande
                     $new_status = '';
                     switch ($decision) {
                         case 'acceptee':
@@ -77,10 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                     logUserAction(
                         'decision_admission', 
                         'students', 
-                        "Décision d'admission prise pour la demande ID: $demande_id - Statut: $decision"
+                        "DÃ©cision d'admission prise pour la demande ID: $demande_id - Statut: $decision"
                     );
                     
-                    showMessage('success', 'Décision enregistrée avec succès.');
+                    showMessage('success', 'DÃ©cision enregistrÃ©e avec succÃ¨s.');
                 }
                 break;
                 
@@ -97,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                             [intval($demande_id), $bulk_decision, $_SESSION['user_id'], $bulk_motif]
                         );
                         
-                        // Mettre à jour le statut
+                        // Mettre Ã  jour le statut
                         $new_status = '';
                         switch ($bulk_decision) {
                             case 'acceptee':
@@ -122,14 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                         }
                     }
                     
-                    showMessage('success', count($demandes) . ' décisions prises en lot.');
+                    showMessage('success', count($demandes) . ' dÃ©cisions prises en lot.');
                 } else {
-                    showMessage('error', 'Tous les champs sont obligatoires pour la décision en lot.');
+                    showMessage('error', 'Tous les champs sont obligatoires pour la dÃ©cision en lot.');
                 }
                 break;
         }
     } catch (Exception $e) {
-        showMessage('error', 'Erreur lors de l\'opération : ' . $e->getMessage());
+        showMessage('error', 'Erreur lors de l\'opÃ©ration : ' . $e->getMessage());
     }
 }
 
@@ -142,7 +141,7 @@ $status_filter = $_GET['status'] ?? '';
 $decision_filter = $_GET['decision'] ?? '';
 $search = trim($_GET['search'] ?? '');
 
-// Construction de la requête
+// Construction de la requÃªte
 $where_conditions = ["1=1"];
 $params = [];
 
@@ -166,17 +165,17 @@ if ($search) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les demandes avec leurs décisions
+// RÃ©cupÃ©rer les demandes avec leurs dÃ©cisions
 try {
     $demandes = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau,
                 d.decision, d.date_decision, d.motif_decision, d.conditions_speciales,
                 u.username as decideur_nom,
                 CASE 
-                    WHEN da.status = 'en_attente' THEN 'Évaluation en attente'
+                    WHEN da.status = 'en_attente' THEN 'Ã‰valuation en attente'
                     WHEN da.status = 'en_cours_traitement' THEN 'En cours de traitement'
-                    WHEN da.status = 'acceptee' THEN 'Acceptée'
-                    WHEN da.status = 'refusee' THEN 'Refusée'
+                    WHEN da.status = 'acceptee' THEN 'AcceptÃ©e'
+                    WHEN da.status = 'refusee' THEN 'RefusÃ©e'
                     WHEN da.status = 'inscrit' THEN 'Inscrit'
                     ELSE da.status
                 END as status_lisible
@@ -193,7 +192,7 @@ try {
     $demandes = [];
 }
 
-// Récupérer les demandes évaluées en attente de décision
+// RÃ©cupÃ©rer les demandes Ã©valuÃ©es en attente de dÃ©cision
 try {
     $demandes_attente_decision = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau,
@@ -225,13 +224,13 @@ include '../../../../includes/header.php';
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="../../../../dashboard.php">Tableau de bord</a></li>
-                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Élèves</a></li>
-                        <li class="breadcrumb-item active">Gestion des Décisions</li>
+                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Ã‰lÃ¨ves</a></li>
+                        <li class="breadcrumb-item active">Gestion des DÃ©cisions</li>
                     </ol>
                 </div>
                 <h4 class="page-title">
                     <i class="mdi mdi-gavel me-2"></i>
-                    Gestion des Décisions d'Admission
+                    Gestion des DÃ©cisions d'Admission
                 </h4>
             </div>
         </div>
@@ -249,7 +248,7 @@ include '../../../../includes/header.php';
                             <label for="search" class="form-label">Recherche</label>
                             <input type="text" class="form-control" id="search" name="search" 
                                    value="<?php echo htmlspecialchars($search); ?>" 
-                                   placeholder="Nom, prénom ou numéro...">
+                                   placeholder="Nom, prÃ©nom ou numÃ©ro...">
                         </div>
                         <div class="col-md-3">
                             <label for="status_filter" class="form-label">Statut</label>
@@ -257,16 +256,16 @@ include '../../../../includes/header.php';
                                 <option value="">Tous</option>
                                 <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
                                 <option value="en_cours_traitement" <?php echo $status_filter === 'en_cours_traitement' ? 'selected' : ''; ?>>En cours</option>
-                                <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                                <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
+                                <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                                <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label for="decision_filter" class="form-label">Décision</label>
+                            <label for="decision_filter" class="form-label">DÃ©cision</label>
                             <select class="form-select" id="decision_filter" name="decision_filter">
                                 <option value="">Toutes</option>
-                                <option value="acceptee" <?php echo $decision_filter === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                                <option value="refusee" <?php echo $decision_filter === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
+                                <option value="acceptee" <?php echo $decision_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                                <option value="refusee" <?php echo $decision_filter === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
                                 <option value="acceptee_conditionnelle" <?php echo $decision_filter === 'acceptee_conditionnelle' ? 'selected' : ''; ?>>Acceptation conditionnelle</option>
                                 <option value="mise_en_liste_attente" <?php echo $decision_filter === 'mise_en_liste_attente' ? 'selected' : ''; ?>>Liste d'attente</option>
                             </select>
@@ -288,13 +287,13 @@ include '../../../../includes/header.php';
     </div>
 
     <div class="row">
-        <!-- Demandes en attente de décision -->
+        <!-- Demandes en attente de dÃ©cision -->
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
                     <h5 class="header-title">
                         <i class="mdi mdi-clock-outline me-2"></i>
-                        Demandes en Attente de Décision
+                        Demandes en Attente de DÃ©cision
                     </h5>
                 </div>
                 <div class="card-body">
@@ -331,20 +330,20 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-3">
                             <i class="mdi mdi-check-circle text-success" style="font-size: 32px;"></i>
-                            <p class="text-success mt-2">Toutes les demandes ont une décision !</p>
+                            <p class="text-success mt-2">Toutes les demandes ont une dÃ©cision !</p>
                         </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Liste des demandes avec décisions -->
+        <!-- Liste des demandes avec dÃ©cisions -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
                     <h4 class="header-title">
                         <i class="mdi mdi-format-list-bulleted me-2"></i>
-                        Demandes et Décisions
+                        Demandes et DÃ©cisions
                     </h4>
                 </div>
                 <div class="card-body">
@@ -353,11 +352,11 @@ include '../../../../includes/header.php';
                             <table class="table table-centered table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Élève</th>
+                                        <th>Ã‰lÃ¨ve</th>
                                         <th>Classe</th>
                                         <th>Statut</th>
-                                        <th>Décision</th>
-                                        <th>Date Décision</th>
+                                        <th>DÃ©cision</th>
+                                        <th>Date DÃ©cision</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -468,7 +467,7 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-4">
                             <i class="mdi mdi-information-outline text-muted" style="font-size: 48px;"></i>
-                            <p class="text-muted mt-2">Aucune demande trouvée</p>
+                            <p class="text-muted mt-2">Aucune demande trouvÃ©e</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -478,3 +477,7 @@ include '../../../../includes/header.php';
 </div>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

@@ -1,22 +1,21 @@
-<?php
+﻿<?php
 /**
- * Module d'évaluation des candidatures
+ * Module d'Ã©valuation des candidatures
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
 
 // Traitement des actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('students')) {
     try {
         $action = $_POST['action'] ?? '';
         
@@ -27,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                 $commentaire_evaluation = trim($_POST['commentaire_evaluation']);
                 $recommandation = $_POST['recommandation'] ?? '';
                 
-                // Mettre à jour l'évaluation
+                // Mettre Ã  jour l'Ã©valuation
                 $database->execute(
                     "UPDATE demandes_admission 
                      SET note_evaluation = ?, commentaire_evaluation = ?, recommandation = ?,
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                     [$note_evaluation, $commentaire_evaluation, $recommandation, $_SESSION['user_id'], $candidature_id]
                 );
                 
-                showMessage('success', 'Évaluation enregistrée avec succès.');
+                showMessage('success', 'Ã‰valuation enregistrÃ©e avec succÃ¨s.');
                 break;
                 
             case 'bulk_evaluate':
@@ -52,11 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                     );
                 }
                 
-                showMessage('success', count($candidatures) . ' candidatures évaluées.');
+                showMessage('success', count($candidatures) . ' candidatures Ã©valuÃ©es.');
                 break;
         }
     } catch (Exception $e) {
-        showMessage('error', 'Erreur lors de l\'évaluation : ' . $e->getMessage());
+        showMessage('error', 'Erreur lors de l\'Ã©valuation : ' . $e->getMessage());
     }
 }
 
@@ -69,7 +68,7 @@ $status_filter = $_GET['status'] ?? '';
 $recommandation_filter = $_GET['recommandation'] ?? '';
 $search = trim($_GET['search'] ?? '');
 
-// Construction de la requête
+// Construction de la requÃªte
 $where_conditions = ["1=1"];
 $params = [];
 
@@ -93,14 +92,14 @@ if ($search) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les candidatures à évaluer
+// RÃ©cupÃ©rer les candidatures Ã  Ã©valuer
 try {
     $candidatures = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,
                 u.username as evalue_par_nom,
                 DATEDIFF(NOW(), da.created_at) as jours_depuis_demande,
                 CASE 
-                    WHEN da.note_evaluation IS NOT NULL THEN 'Évaluée'
+                    WHEN da.note_evaluation IS NOT NULL THEN 'Ã‰valuÃ©e'
                     ELSE 'En attente'
                 END as statut_evaluation
          FROM demandes_admission da
@@ -130,7 +129,7 @@ try {
     showMessage('error', 'Erreur lors du chargement : ' . $e->getMessage());
 }
 
-// Statistiques d'évaluation
+// Statistiques d'Ã©valuation
 try {
     $stats = $database->query(
         "SELECT 
@@ -153,14 +152,14 @@ try {
 
 $total_pages = ceil($total_candidatures / $per_page);
 
-$page_title = "Évaluation des Candidatures";
+$page_title = "Ã‰valuation des Candidatures";
 include '../../../../includes/header.php';
 ?>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-clipboard-check me-2"></i>
-        Évaluation des Candidatures
+        Ã‰valuation des Candidatures
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -169,11 +168,11 @@ include '../../../../includes/header.php';
                 Retour aux Admissions
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkEvaluationModal">
                     <i class="fas fa-tasks me-1"></i>
-                    Évaluation en lot
+                    Ã‰valuation en lot
                 </button>
             </div>
         <?php endif; ?>
@@ -196,7 +195,7 @@ include '../../../../includes/header.php';
             <div class="card-body">
                 <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
                 <h5 class="card-title"><?php echo number_format($stats['evaluees']); ?></h5>
-                <p class="card-text text-muted">Évaluées</p>
+                <p class="card-text text-muted">Ã‰valuÃ©es</p>
             </div>
         </div>
     </div>
@@ -205,7 +204,7 @@ include '../../../../includes/header.php';
             <div class="card-body">
                 <i class="fas fa-thumbs-up fa-2x text-info mb-2"></i>
                 <h5 class="card-title"><?php echo number_format($stats['recommandees_accepter']); ?></h5>
-                <p class="card-text text-muted">Recommandées</p>
+                <p class="card-text text-muted">RecommandÃ©es</p>
             </div>
         </div>
     </div>
@@ -230,8 +229,8 @@ include '../../../../includes/header.php';
                     <option value="">Tous les statuts</option>
                     <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
                     <option value="en_cours_traitement" <?php echo $status_filter === 'en_cours_traitement' ? 'selected' : ''; ?>>En cours</option>
-                    <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                    <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
+                    <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                    <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -247,7 +246,7 @@ include '../../../../includes/header.php';
                 <label for="search" class="form-label">Recherche</label>
                 <input type="text" class="form-control" id="search" name="search" 
                        value="<?php echo htmlspecialchars($search); ?>" 
-                       placeholder="Nom, prénom ou numéro...">
+                       placeholder="Nom, prÃ©nom ou numÃ©ro...">
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
@@ -265,15 +264,15 @@ include '../../../../includes/header.php';
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Candidatures à évaluer (<?php echo number_format($total_candidatures); ?>)
+            Candidatures Ã  Ã©valuer (<?php echo number_format($total_candidatures); ?>)
         </h5>
     </div>
     <div class="card-body">
         <?php if (empty($candidatures)): ?>
             <div class="text-center py-4">
                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune candidature trouvée</h5>
-                <p class="text-muted">Aucune candidature ne correspond aux critères sélectionnés.</p>
+                <h5 class="text-muted">Aucune candidature trouvÃ©e</h5>
+                <p class="text-muted">Aucune candidature ne correspond aux critÃ¨res sÃ©lectionnÃ©s.</p>
             </div>
         <?php else: ?>
             <form method="POST" id="bulkForm">
@@ -283,16 +282,16 @@ include '../../../../includes/header.php';
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
-                                <?php if (checkPermission('students')): ?>
+                                <?php if (checkPagePermission('students')): ?>
                                     <th width="40">
                                         <input type="checkbox" id="selectAll" class="form-check-input">
                                     </th>
                                 <?php endif; ?>
                                 <th>Candidat</th>
-                                <th>Classe demandée</th>
-                                <th>Priorité</th>
+                                <th>Classe demandÃ©e</th>
+                                <th>PrioritÃ©</th>
                                 <th>Statut</th>
-                                <th>Évaluation</th>
+                                <th>Ã‰valuation</th>
                                 <th>Note</th>
                                 <th>Recommandation</th>
                                 <th>Actions</th>
@@ -301,7 +300,7 @@ include '../../../../includes/header.php';
                         <tbody>
                             <?php foreach ($candidatures as $candidature): ?>
                                 <tr>
-                                    <?php if (checkPermission('students')): ?>
+                                    <?php if (checkPagePermission('students')): ?>
                                         <td>
                                             <input type="checkbox" name="candidatures[]"
                                                    value="<?php echo $candidature['id']; ?>"
@@ -328,7 +327,7 @@ include '../../../../includes/header.php';
                                         $priorite_names = [
                                             'normale' => 'Normale',
                                             'urgente' => 'Urgente',
-                                            'tres_urgente' => 'Très urgente'
+                                            'tres_urgente' => 'TrÃ¨s urgente'
                                         ];
                                         $priorite_class = $priorite_classes[$candidature['priorite']] ?? 'secondary';
                                         $priorite_name = $priorite_names[$candidature['priorite']] ?? $candidature['priorite'];
@@ -347,8 +346,8 @@ include '../../../../includes/header.php';
                                         ];
                                         $status_names = [
                                             'en_attente' => 'En attente',
-                                            'acceptee' => 'Acceptée',
-                                            'refusee' => 'Refusée',
+                                            'acceptee' => 'AcceptÃ©e',
+                                            'refusee' => 'RefusÃ©e',
                                             'en_cours_traitement' => 'En cours'
                                         ];
                                         $status_class = $status_classes[$candidature['status']] ?? 'secondary';
@@ -360,7 +359,7 @@ include '../../../../includes/header.php';
                                     </td>
                                     <td>
                                         <?php if ($candidature['note_evaluation']): ?>
-                                            <span class="badge bg-success">Évaluée</span>
+                                            <span class="badge bg-success">Ã‰valuÃ©e</span>
                                             <?php if ($candidature['date_evaluation']): ?>
                                                 <br><small class="text-muted"><?php echo formatDate($candidature['date_evaluation']); ?></small>
                                             <?php endif; ?>
@@ -401,13 +400,13 @@ include '../../../../includes/header.php';
                                     <td>
                                         <div class="btn-group btn-group-sm">
                                             <a href="../applications/view.php?id=<?php echo $candidature['id']; ?>"
-                                               class="btn btn-outline-info" title="Voir les détails">
+                                               class="btn btn-outline-info" title="Voir les dÃ©tails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPermission('students')): ?>
+                                            <?php if (checkPagePermission('students')): ?>
                                                 <button type="button" class="btn btn-outline-primary"
                                                         onclick="openEvaluationModal(<?php echo $candidature['id']; ?>)"
-                                                        title="Évaluer">
+                                                        title="Ã‰valuer">
                                                     <i class="fas fa-clipboard-check"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -454,14 +453,14 @@ include '../../../../includes/header.php';
 </nav>
 <?php endif; ?>
 
-<!-- Modal d'évaluation individuelle -->
+<!-- Modal d'Ã©valuation individuelle -->
 <div class="modal fade" id="evaluationModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-clipboard-check me-2"></i>
-                    Évaluation de la candidature
+                    Ã‰valuation de la candidature
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -475,7 +474,7 @@ include '../../../../includes/header.php';
                             <div class="mb-3">
                                 <label for="note_evaluation" class="form-label">
                                     <i class="fas fa-star me-1"></i>
-                                    Note d'évaluation (/20) *
+                                    Note d'Ã©valuation (/20) *
                                 </label>
                                 <input type="number" class="form-control" id="note_evaluation"
                                        name="note_evaluation" min="0" max="20" step="0.5" required>
@@ -488,7 +487,7 @@ include '../../../../includes/header.php';
                                     Recommandation *
                                 </label>
                                 <select class="form-select" id="recommandation" name="recommandation" required>
-                                    <option value="">-- Sélectionner --</option>
+                                    <option value="">-- SÃ©lectionner --</option>
                                     <option value="accepter">Accepter</option>
                                     <option value="refuser">Refuser</option>
                                     <option value="attendre">Attendre</option>
@@ -500,7 +499,7 @@ include '../../../../includes/header.php';
                     <div class="mb-3">
                         <label for="commentaire_evaluation" class="form-label">
                             <i class="fas fa-comment me-1"></i>
-                            Commentaire d'évaluation
+                            Commentaire d'Ã©valuation
                         </label>
                         <textarea class="form-control" id="commentaire_evaluation"
                                   name="commentaire_evaluation" rows="4"
@@ -509,11 +508,11 @@ include '../../../../includes/header.php';
 
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Critères d'évaluation suggérés :</strong>
+                        <strong>CritÃ¨res d'Ã©valuation suggÃ©rÃ©s :</strong>
                         <ul class="mb-0 mt-2">
-                            <li>Dossier scolaire précédent (0-5 points)</li>
+                            <li>Dossier scolaire prÃ©cÃ©dent (0-5 points)</li>
                             <li>Motivation et projet scolaire (0-5 points)</li>
-                            <li>Capacité d'adaptation (0-5 points)</li>
+                            <li>CapacitÃ© d'adaptation (0-5 points)</li>
                             <li>Situation familiale et sociale (0-5 points)</li>
                         </ul>
                     </div>
@@ -526,7 +525,7 @@ include '../../../../includes/header.php';
                     </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i>
-                        Enregistrer l'évaluation
+                        Enregistrer l'Ã©valuation
                     </button>
                 </div>
             </form>
@@ -534,21 +533,21 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Modal d'évaluation en lot -->
+<!-- Modal d'Ã©valuation en lot -->
 <div class="modal fade" id="bulkEvaluationModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-tasks me-2"></i>
-                    Évaluation en lot
+                    Ã‰valuation en lot
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    Sélectionnez d'abord les candidatures à évaluer dans la liste, puis choisissez une recommandation commune.
+                    SÃ©lectionnez d'abord les candidatures Ã  Ã©valuer dans la liste, puis choisissez une recommandation commune.
                 </div>
 
                 <div class="mb-3">
@@ -557,7 +556,7 @@ include '../../../../includes/header.php';
                         Recommandation commune *
                     </label>
                     <select class="form-select" id="bulk_recommandation" name="bulk_recommandation" required>
-                        <option value="">-- Sélectionner --</option>
+                        <option value="">-- SÃ©lectionner --</option>
                         <option value="accepter">Accepter toutes</option>
                         <option value="refuser">Refuser toutes</option>
                         <option value="attendre">Mettre en attente</option>
@@ -565,7 +564,7 @@ include '../../../../includes/header.php';
                 </div>
 
                 <div id="selectedCount" class="text-muted">
-                    Aucune candidature sélectionnée
+                    Aucune candidature sÃ©lectionnÃ©e
                 </div>
             </div>
             <div class="modal-footer">
@@ -584,7 +583,7 @@ include '../../../../includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestion de la sélection multiple
+    // Gestion de la sÃ©lection multiple
     const selectAllCheckbox = document.getElementById('selectAll');
     const candidatureCheckboxes = document.querySelectorAll('.candidature-checkbox');
 
@@ -606,8 +605,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const countElement = document.getElementById('selectedCount');
         if (countElement) {
             countElement.textContent = selectedCount > 0
-                ? `${selectedCount} candidature(s) sélectionnée(s)`
-                : 'Aucune candidature sélectionnée';
+                ? `${selectedCount} candidature(s) sÃ©lectionnÃ©e(s)`
+                : 'Aucune candidature sÃ©lectionnÃ©e';
         }
     }
 
@@ -627,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function openEvaluationModal(candidatureId) {
     document.getElementById('modal_candidature_id').value = candidatureId;
 
-    // Charger les données existantes si disponibles
+    // Charger les donnÃ©es existantes si disponibles
     fetch(`get-evaluation.php?id=${candidatureId}`)
         .then(response => response.json())
         .then(data => {
@@ -647,7 +646,7 @@ function submitBulkEvaluation() {
     const recommandation = document.getElementById('bulk_recommandation').value;
 
     if (selectedCheckboxes.length === 0) {
-        alert('Veuillez sélectionner au moins une candidature.');
+        alert('Veuillez sÃ©lectionner au moins une candidature.');
         return;
     }
 
@@ -656,8 +655,8 @@ function submitBulkEvaluation() {
         return;
     }
 
-    if (confirm(`Êtes-vous sûr de vouloir appliquer la recommandation "${recommandation}" à ${selectedCheckboxes.length} candidature(s) ?`)) {
-        // Créer un formulaire dynamique
+    if (confirm(`ÃŠtes-vous sÃ»r de vouloir appliquer la recommandation "${recommandation}" Ã  ${selectedCheckboxes.length} candidature(s) ?`)) {
+        // CrÃ©er un formulaire dynamique
         const form = document.createElement('form');
         form.method = 'POST';
         form.style.display = 'none';
@@ -676,7 +675,7 @@ function submitBulkEvaluation() {
         recInput.value = recommandation;
         form.appendChild(recInput);
 
-        // Candidatures sélectionnées
+        // Candidatures sÃ©lectionnÃ©es
         selectedCheckboxes.forEach(checkbox => {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -692,3 +691,7 @@ function submitBulkEvaluation() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

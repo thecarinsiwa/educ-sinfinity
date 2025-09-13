@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
 
 // Récupérer les paramètres
 $format = sanitizeInput($_GET['format'] ?? 'pdf');

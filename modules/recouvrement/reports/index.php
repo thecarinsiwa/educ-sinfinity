@@ -1,33 +1,31 @@
-<?php
+﻿<?php
 /**
  * Module Recouvrement - Rapports
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('recouvrement_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('recouvrement', 'reports', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports de recouvrement';
 
-// Obtenir l'année scolaire actuelle
+// Obtenir l'annÃ©e scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Paramètres de filtre
+// ParamÃ¨tres de filtre
 $period = $_GET['period'] ?? 'month';
 $niveau_filter = $_GET['niveau'] ?? '';
 $classe_filter = $_GET['classe'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 
-// Définir les dates selon la période
+// DÃ©finir les dates selon la pÃ©riode
 switch ($period) {
     case 'week':
         $date_from = $date_from ?: date('Y-m-d', strtotime('-7 days'));
@@ -63,7 +61,7 @@ if ($classe_filter) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Statistiques générales
+// Statistiques gÃ©nÃ©rales
 $general_stats = $database->query(
     "SELECT 
         COUNT(DISTINCT e.id) as total_eleves,
@@ -77,8 +75,9 @@ $general_stats = $database->query(
      JOIN inscriptions i ON e.id = i.eleve_id
      JOIN classes c ON i.classe_id = c.id
      JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
      LEFT JOIN paiements p ON e.id = p.eleve_id 
-         AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+         AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
          AND p.annee_scolaire_id = fs.annee_scolaire_id
          AND p.date_paiement BETWEEN ? AND ?
      JOIN (
@@ -88,8 +87,9 @@ $general_stats = $database->query(
          FROM eleves e
          JOIN inscriptions i ON e.id = i.eleve_id
          JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
          LEFT JOIN paiements p2 ON e.id = p2.eleve_id 
-             AND fs.type_frais COLLATE utf8mb4_unicode_ci = p2.type_paiement COLLATE utf8mb4_unicode_ci
+             AND tf.nom COLLATE utf8mb4_unicode_ci = p2.type_paiement COLLATE utf8mb4_unicode_ci
              AND p2.annee_scolaire_id = fs.annee_scolaire_id
          WHERE $where_clause AND fs.annee_scolaire_id = ?
          GROUP BY e.id
@@ -118,8 +118,9 @@ $dettes_par_niveau = $database->query(
          JOIN inscriptions i ON e.id = i.eleve_id
          JOIN classes c ON i.classe_id = c.id
          JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
          LEFT JOIN paiements p ON e.id = p.eleve_id 
-             AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+             AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
              AND p.annee_scolaire_id = fs.annee_scolaire_id
          WHERE $where_clause AND fs.annee_scolaire_id = ?
          GROUP BY e.id
@@ -150,8 +151,9 @@ $dettes_par_classe = $database->query(
          JOIN inscriptions i ON e.id = i.eleve_id
          JOIN classes c ON i.classe_id = c.id
          JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
          LEFT JOIN paiements p ON e.id = p.eleve_id 
-             AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+             AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
              AND p.annee_scolaire_id = fs.annee_scolaire_id
          WHERE $where_clause AND fs.annee_scolaire_id = ?
          GROUP BY e.id
@@ -163,7 +165,7 @@ $dettes_par_classe = $database->query(
     array_merge($params, [$current_year['id']])
 )->fetchAll();
 
-// Évolution des paiements
+// Ã‰volution des paiements
 $evolution_paiements = $database->query(
     "SELECT 
         DATE_FORMAT(p.date_paiement, '%Y-%m') as mois,
@@ -179,7 +181,7 @@ $evolution_paiements = $database->query(
     [$current_year['id'], $date_from, $date_to]
 )->fetchAll();
 
-// Top des débiteurs
+// Top des dÃ©biteurs
 $top_debiteurs = $database->query(
     "SELECT 
         e.nom,
@@ -199,8 +201,9 @@ $top_debiteurs = $database->query(
          JOIN inscriptions i ON e.id = i.eleve_id
          JOIN classes c ON i.classe_id = c.id
          JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
          LEFT JOIN paiements p ON e.id = p.eleve_id 
-             AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+             AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
              AND p.annee_scolaire_id = fs.annee_scolaire_id
          WHERE $where_clause AND fs.annee_scolaire_id = ?
          GROUP BY e.id
@@ -212,13 +215,13 @@ $top_debiteurs = $database->query(
     array_merge($params, [$current_year['id']])
 )->fetchAll();
 
-// Récupérer les niveaux pour le filtre
+// RÃ©cupÃ©rer les niveaux pour le filtre
 $niveaux = $database->query(
     "SELECT DISTINCT niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau",
     [$current_year['id']]
 )->fetchAll();
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id']]
@@ -253,12 +256,12 @@ include '../../../includes/header.php';
     <div class="card-body">
         <form method="GET" class="row g-3">
             <div class="col-md-2">
-                <label for="period" class="form-label">Période</label>
+                <label for="period" class="form-label">PÃ©riode</label>
                 <select class="form-select" id="period" name="period" onchange="toggleCustomDates()">
                     <option value="week" <?php echo $period === 'week' ? 'selected' : ''; ?>>Cette semaine</option>
                     <option value="month" <?php echo $period === 'month' ? 'selected' : ''; ?>>Ce mois</option>
-                    <option value="year" <?php echo $period === 'year' ? 'selected' : ''; ?>>Cette année</option>
-                    <option value="custom" <?php echo $period === 'custom' ? 'selected' : ''; ?>>Personnalisée</option>
+                    <option value="year" <?php echo $period === 'year' ? 'selected' : ''; ?>>Cette annÃ©e</option>
+                    <option value="custom" <?php echo $period === 'custom' ? 'selected' : ''; ?>>PersonnalisÃ©e</option>
                 </select>
             </div>
             
@@ -306,13 +309,13 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Statistiques générales -->
+<!-- Statistiques gÃ©nÃ©rales -->
 <div class="row mb-4">
     <div class="col-md-2">
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-primary"><?php echo number_format($general_stats['total_eleves']); ?></h4>
-                <p class="card-text">Total élèves</p>
+                <p class="card-text">Total Ã©lÃ¨ves</p>
             </div>
         </div>
     </div>
@@ -320,7 +323,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-danger"><?php echo number_format($general_stats['nombre_debiteurs']); ?></h4>
-                <p class="card-text">Débiteurs</p>
+                <p class="card-text">DÃ©biteurs</p>
             </div>
         </div>
     </div>
@@ -365,7 +368,7 @@ include '../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-pie me-2"></i>
-                    Répartition des dettes par niveau
+                    RÃ©partition des dettes par niveau
                 </h5>
             </div>
             <div class="card-body">
@@ -379,7 +382,7 @@ include '../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-line me-2"></i>
-                    Évolution des paiements
+                    Ã‰volution des paiements
                 </h5>
             </div>
             <div class="card-body">
@@ -403,9 +406,9 @@ include '../../../includes/header.php';
                 <thead>
                     <tr>
                         <th>Niveau</th>
-                        <th>Total élèves</th>
-                        <th>Débiteurs</th>
-                        <th>% Débiteurs</th>
+                        <th>Total Ã©lÃ¨ves</th>
+                        <th>DÃ©biteurs</th>
+                        <th>% DÃ©biteurs</th>
                         <th>Total dettes</th>
                         <th>Dette moyenne</th>
                         <th>Actions</th>
@@ -452,12 +455,12 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Top des débiteurs -->
+<!-- Top des dÃ©biteurs -->
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-exclamation-triangle me-2"></i>
-            Top 10 des plus gros débiteurs
+            Top 10 des plus gros dÃ©biteurs
         </h5>
     </div>
     <div class="card-body">
@@ -466,7 +469,7 @@ include '../../../includes/header.php';
                 <thead>
                     <tr>
                         <th>Rang</th>
-                        <th>Élève</th>
+                        <th>Ã‰lÃ¨ve</th>
                         <th>Classe</th>
                         <th>Dette</th>
                         <th>Jours d'inscription</th>
@@ -512,7 +515,7 @@ include '../../../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Afficher/masquer les champs de dates personnalisées
+// Afficher/masquer les champs de dates personnalisÃ©es
 function toggleCustomDates() {
     const period = document.getElementById('period').value;
     const dateFromCol = document.getElementById('date-from-col');
@@ -565,7 +568,7 @@ new Chart(ctx1, {
     }
 });
 
-// Graphique d'évolution des paiements
+// Graphique d'Ã©volution des paiements
 const evolutionData = <?php echo json_encode(array_reverse($evolution_paiements)); ?>;
 const ctx2 = document.getElementById('evolutionPaiementsChart').getContext('2d');
 
@@ -639,3 +642,5 @@ function ucfirst(string) {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+

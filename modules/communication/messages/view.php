@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('communication')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('communication', 'messages', 'read', '../../../dashboard.php');
 
 $message_id = intval($_GET['id'] ?? 0);
 
@@ -86,7 +84,7 @@ try {
         $can_view = true; // Message public ou pour le personnel
     }
     
-    if (!$can_view && !checkPermission('admin')) {
+    if (!$can_view && !hasPagePermissionFromDB('admin', 'users', 'read')) {
         showMessage('error', 'Vous n\'avez pas l\'autorisation de voir ce message.');
         redirectTo('index.php');
     }

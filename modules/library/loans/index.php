@@ -7,16 +7,14 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('library') && !checkPermission('library_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('library', 'loans', 'read', '../../dashboard.php');
 
 // Traitement des actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('library')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('library')) {
     try {
         $action = $_POST['action'] ?? '';
         
@@ -236,7 +234,7 @@ include '../../../includes/header.php';
                 Retour à la bibliothèque
             </a>
         </div>
-        <?php if (checkPermission('library')): ?>
+        <?php if (checkPagePermission('library')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -383,7 +381,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun emprunt trouvé</h5>
                 <p class="text-muted">Aucun emprunt ne correspond aux critères sélectionnés.</p>
-                <?php if (checkPermission('library')): ?>
+                <?php if (checkPagePermission('library')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Créer le premier emprunt
@@ -502,7 +500,7 @@ include '../../../includes/header.php';
                                            class="btn btn-outline-info" title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('library') && $emprunt['status'] === 'en_cours'): ?>
+                                        <?php if (checkPagePermission('library') && $emprunt['status'] === 'en_cours'): ?>
                                             <button type="button" class="btn btn-outline-success"
                                                     onclick="returnBook(<?php echo $emprunt['id']; ?>)"
                                                     title="Retourner le livre">

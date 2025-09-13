@@ -19,9 +19,127 @@ function isLoggedIn() {
  */
 function requireLogin() {
     if (!isLoggedIn()) {
-        redirectTo('../auth/login.php');
+        // Déterminer le chemin correct selon le répertoire courant
+        $current_dir = dirname($_SERVER['PHP_SELF']);
+        if (strpos($current_dir, '/admin') !== false) {
+            // Si on est dans le dossier admin, rediriger vers ../auth/login.php
+            redirectTo('../auth/login.php');
+        } else {
+            // Sinon, rediriger vers auth/login.php
+            redirectTo('auth/login.php');
+        }
     }
 }
+
+/**
+ * Vérifier la session et rediriger si nécessaire (version robuste)
+ * Cette fonction doit être appelée au tout début de chaque page
+ */
+function checkSessionAndRedirect() {
+    // Vérifier si la session est démarrée
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Vérifier si l'utilisateur est connecté
+    if (!isLoggedIn()) {
+        // Déterminer le chemin de redirection
+        $current_dir = dirname($_SERVER['PHP_SELF']);
+        $login_url = (strpos($current_dir, '/admin') !== false) ? '../auth/login.php' : 'auth/login.php';
+        
+        // Si les headers n'ont pas encore été envoyés, utiliser la redirection HTTP
+        if (!headers_sent()) {
+            header("Location: " . $login_url);
+            exit;
+        } else {
+            // Sinon, utiliser JavaScript pour la redirection
+            echo "<!DOCTYPE html><html><head><title>Redirection...</title></head><body>";
+            echo "<script>window.location.href = '" . htmlspecialchars($login_url, ENT_QUOTES) . "';</script>";
+            echo "<noscript><meta http-equiv='refresh' content='0;url=" . htmlspecialchars($login_url, ENT_QUOTES) . "'></noscript>";
+            echo "<p>Redirection en cours... <a href='" . htmlspecialchars($login_url, ENT_QUOTES) . "'>Cliquez ici si la redirection ne fonctionne pas</a></p>";
+            echo "</body></html>";
+            exit;
+        }
+    }
+}
+
+
+/**
+ * Vérifier l'accès à un module pour la sidebar
+ * Utilise l'ancien système de rôles
+ * 
+ * @param string $module_key Clé du module
+ * @return bool True si l'utilisateur peut accéder au module
+ */
+function checkModuleAccess($module_key) {
+    if (!isLoggedIn()) {
+        return false;
+    }
+    
+    // Essayer d'abord le nouveau système basé sur la table roles
+    global $database;
+    
+    if (isset($database) && isset($_SESSION['user_id'])) {
+        try {
+            // Récupérer les permissions du rôle de l'utilisateur
+            $stmt = $database->query(
+                "SELECT r.permissions 
+                 FROM users u 
+                 JOIN roles r ON u.role_id = r.id 
+                 WHERE u.id = ? AND r.actif = 1",
+                [$_SESSION['user_id']]
+            );
+            $result = $stmt->fetch();
+            
+            if ($result && $result['permissions']) {
+                $permissions = json_decode($result['permissions'], true);
+                
+                // Vérifier si l'utilisateur a des permissions pour ce module
+                if (is_array($permissions) && isset($permissions[$module_key])) {
+                    $module_permissions = $permissions[$module_key];
+                    if (is_array($module_permissions) && !empty($module_permissions)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Erreur dans checkModuleAccess (nouveau système): " . $e->getMessage());
+        }
+    }
+    
+    // Fallback vers l'ancien système
+    return checkPermission($module_key);
+}
+
+/**
+ * Vérifier les permissions de compatibilité pour la sidebar
+ * 
+ * @param string $module_key Clé du module
+ * @return bool True si l'utilisateur peut accéder au module
+ */
+function checkSidebarPermissionCompat($module_key) {
+    return checkModuleAccess($module_key);
+}
+
+/**
+ * Obtenir l'URL correcte pour un élément de menu
+ * Cette fonction est définie dans sidebar-url-fixer.php avec une implémentation plus complète
+ * 
+ * @param string $url URL de base
+ * @param string $module_key Clé du module
+ * @param string $submenu_key Clé du sous-menu
+ * @return string URL corrigée
+ */
+// Fonction définie dans sidebar-url-fixer.php - pas de redéclaration ici
+
+/**
+ * Obtenir l'URL par défaut d'un module
+ * Cette fonction est définie dans sidebar-url-fixer.php avec une implémentation plus complète
+ * 
+ * @param string $module_key Clé du module
+ * @return string URL par défaut du module
+ */
+// Fonction définie dans sidebar-url-fixer.php - pas de redéclaration ici
 
 /**
  * Obtenir les informations de l'utilisateur connecté
@@ -48,9 +166,10 @@ function getCurrentUser($database = null) {
     
     try {
         $stmt = $database->query(
-            "SELECT u.*, p.nom, p.prenom, p.fonction 
+            "SELECT u.*, p.nom, p.prenom, p.fonction, r.nom as role_nom, r.description as role_description
              FROM users u 
              LEFT JOIN personnel p ON u.id = p.user_id 
+             LEFT JOIN roles r ON u.role_id = r.id
              WHERE u.id = ?", 
             [$_SESSION['user_id']]
         );
@@ -60,6 +179,45 @@ function getCurrentUser($database = null) {
         error_log("Erreur getCurrentUser: " . $e->getMessage());
         return null;
     }
+}
+
+/**
+ * Mettre à jour les informations de session de l'utilisateur
+ * Utile après modification du rôle ou des permissions
+ */
+function refreshUserSession() {
+    global $database;
+    
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    }
+    
+    try {
+        // Récupérer les informations mises à jour de l'utilisateur
+        $stmt = $database->query(
+            "SELECT u.*, r.nom as role_nom, r.actif as role_actif
+             FROM users u 
+             LEFT JOIN roles r ON u.role_id = r.id 
+             WHERE u.id = ?",
+            [$_SESSION['user_id']]
+        );
+        $user = $stmt->fetch();
+        
+        if ($user) {
+            // Mettre à jour les informations de session
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['user_role'] = $user['role_nom'] ?? 'user';
+            $_SESSION['user_role_id'] = $user['role_id'];
+            $_SESSION['user_full_name'] = $user['nom'] . ' ' . $user['prenom'];
+            $_SESSION['last_activity'] = time();
+            
+            return true;
+        }
+    } catch (Exception $e) {
+        error_log("Erreur refreshUserSession: " . $e->getMessage());
+    }
+    
+    return false;
 }
 
 /**
@@ -79,9 +237,17 @@ function authenticateUser($username, $password) {
     $password_hash = sha1($password);
 
     if ($user && ($user['password'] === $password_hash || password_verify($password, $user['password']))) {
+        // Récupérer le rôle depuis la table roles
+        $role_stmt = $database->query(
+            "SELECT r.nom FROM roles r WHERE r.id = ? AND r.actif = 1",
+            [$user['role_id']]
+        );
+        $role = $role_stmt->fetch();
+        
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
-        $_SESSION['user_role'] = $user['role'];
+        $_SESSION['user_role'] = $role ? $role['nom'] : 'user';
+        $_SESSION['user_role_id'] = $user['role_id'];
         $_SESSION['user_full_name'] = $user['nom'] . ' ' . $user['prenom'];
         $_SESSION['last_activity'] = time();
 
@@ -394,6 +560,22 @@ function formatDateTime($datetime, $format = 'd/m/Y H:i') {
 }
 
 /**
+ * Formater une date pour l'affichage
+ */
+function formatDate($date, $format = 'd/m/Y') {
+    if (empty($date) || $date === '0000-00-00') {
+        return '-';
+    }
+
+    try {
+        $dateObj = new DateTime($date);
+        return $dateObj->format($format);
+    } catch (Exception $e) {
+        return $date; // Retourner la valeur originale en cas d'erreur
+    }
+}
+
+/**
  * Formater une heure pour l'affichage
  */
 function formatTime($time, $format = 'H:i') {
@@ -408,6 +590,24 @@ function formatTime($time, $format = 'H:i') {
         return $time; // Retourner la valeur originale en cas d'erreur
     }
 }
+
+/**
+ * Formater un montant d'argent pour l'affichage
+ */
+function formatMoney($amount, $currency = 'FC', $decimals = 0) {
+    if ($amount === null || $amount === '') {
+        return '0 ' . $currency;
+    }
+    
+    // Convertir en nombre
+    $amount = floatval($amount);
+    
+    // Formater avec des espaces comme séparateurs de milliers
+    $formatted = number_format($amount, $decimals, ',', ' ');
+    
+    return $formatted . ' ' . $currency;
+}
+
 
 /**
  * Calculer le temps écoulé depuis une date
@@ -750,13 +950,22 @@ function hasPermission($module, $action = 'view', $database = null) {
         return false;
     }
     
+    // Récupérer le rôle de l'utilisateur
+    global $database;
+    $stmt = $database->query("SELECT * FROM roles WHERE id = ?", [$user['role_id']]);
+    $role = $stmt->fetch();
+    
+    if (!$role) {
+        return false;
+    }
+    
     // L'administrateur a toutes les permissions
-    if ($user['role'] === 'admin') {
+    if ($role['nom'] === 'admin' || in_array('all', json_decode($role['permissions'], true) ?: [])) {
         return true;
     }
     
     // Vérifier les permissions basées sur le rôle
-    $permissions = ROLES[$user['role']]['permissions'] ?? [];
+    $permissions = json_decode($role['permissions'], true) ?: [];
     
     // Permission spécifique pour le module
     $specific_permission = $module . '_' . $action;
@@ -775,5 +984,284 @@ function hasPermission($module, $action = 'view', $database = null) {
     }
     
     return false;
+}
+
+/**
+ * Accorder des permissions d'accès à des pages pour un rôle spécifique
+ * Utilise les données de la base de données de la table 'roles'
+ * 
+ * @param string $role_nom Nom du rôle dans la base de données
+ * @param string $module Nom du module (ex: 'academic', 'students', 'finance')
+ * @param array $pages Liste des pages avec leurs permissions
+ * @return bool True si succès, False si erreur
+ */
+function grantPagePermissions($role_nom, $module, $pages) {
+    global $database;
+    
+    try {
+        // Vérifier que le rôle existe
+        $role = $database->query(
+            "SELECT id, nom, permissions FROM roles WHERE nom = ? AND actif = 1",
+            [$role_nom]
+        )->fetch();
+        
+        if (!$role) {
+            error_log("Erreur: Le rôle '$role_nom' n'existe pas ou est inactif");
+            return false;
+        }
+        
+        // Décoder les permissions existantes
+        $existing_permissions = [];
+        if ($role['permissions']) {
+            $decoded = json_decode($role['permissions'], true);
+            if ($decoded) {
+                $existing_permissions = $decoded;
+            }
+        }
+        
+        // Ajouter ou mettre à jour les permissions du module
+        if (!isset($existing_permissions[$module])) {
+            $existing_permissions[$module] = [
+                'name' => ucfirst($module),
+                'pages' => []
+            ];
+        }
+        
+        // Traiter chaque page
+        foreach ($pages as $page_name => $page_data) {
+            if (is_array($page_data) && isset($page_data['permissions'])) {
+                // Page avec permissions directes
+                $existing_permissions[$module]['pages'][$page_name] = [
+                    'name' => $page_data['name'] ?? ucfirst($page_name),
+                    'permissions' => array_unique($page_data['permissions'])
+                ];
+            } elseif (is_array($page_data) && isset($page_data['pages'])) {
+                // Page avec sous-pages
+                $existing_permissions[$module]['pages'][$page_name] = [
+                    'name' => $page_data['name'] ?? ucfirst($page_name),
+                    'pages' => []
+                ];
+                
+                foreach ($page_data['pages'] as $subpage_name => $subpage_data) {
+                    if (isset($subpage_data['permissions'])) {
+                        $existing_permissions[$module]['pages'][$page_name]['pages'][$subpage_name] = [
+                            'name' => $subpage_data['name'] ?? ucfirst($subpage_name),
+                            'permissions' => array_unique($subpage_data['permissions'])
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Encoder et sauvegarder
+        $permissions_json = json_encode($existing_permissions, JSON_UNESCAPED_UNICODE);
+        
+        $result = $database->execute(
+            "UPDATE roles SET permissions = ?, date_modification = NOW() WHERE id = ?",
+            [$permissions_json, $role['id']]
+        );
+        
+        if ($result) {
+            error_log("Succès: Permissions accordées au rôle '$role_nom' pour le module '$module'");
+            return true;
+        } else {
+            error_log("Erreur: Impossible de mettre à jour les permissions pour le rôle '$role_nom'");
+            return false;
+        }
+        
+    } catch (Exception $e) {
+        error_log("Erreur lors de l'octroi des permissions: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Révoquer des permissions d'accès à des pages pour un rôle spécifique
+ * 
+ * @param string $role_nom Nom du rôle dans la base de données
+ * @param string $module Nom du module
+ * @param array $pages Liste des pages à révoquer (optionnel, si vide révoque tout le module)
+ * @return bool True si succès, False si erreur
+ */
+function revokePagePermissions($role_nom, $module, $pages = []) {
+    global $database;
+    
+    try {
+        // Vérifier que le rôle existe
+        $role = $database->query(
+            "SELECT id, nom, permissions FROM roles WHERE nom = ? AND actif = 1",
+            [$role_nom]
+        )->fetch();
+        
+        if (!$role) {
+            error_log("Erreur: Le rôle '$role_nom' n'existe pas ou est inactif");
+            return false;
+        }
+        
+        // Décoder les permissions existantes
+        $existing_permissions = [];
+        if ($role['permissions']) {
+            $decoded = json_decode($role['permissions'], true);
+            if ($decoded) {
+                $existing_permissions = $decoded;
+            }
+        }
+        
+        if (empty($pages)) {
+            // Révoquer tout le module
+            if (isset($existing_permissions[$module])) {
+                unset($existing_permissions[$module]);
+            }
+        } else {
+            // Révoquer des pages spécifiques
+            if (isset($existing_permissions[$module]['pages'])) {
+                foreach ($pages as $page_name) {
+                    if (isset($existing_permissions[$module]['pages'][$page_name])) {
+                        unset($existing_permissions[$module]['pages'][$page_name]);
+                    }
+                }
+                
+                // Si plus de pages, supprimer le module
+                if (empty($existing_permissions[$module]['pages'])) {
+                    unset($existing_permissions[$module]);
+                }
+            }
+        }
+        
+        // Encoder et sauvegarder
+        $permissions_json = json_encode($existing_permissions, JSON_UNESCAPED_UNICODE);
+        
+        $result = $database->execute(
+            "UPDATE roles SET permissions = ?, date_modification = NOW() WHERE id = ?",
+            [$permissions_json, $role['id']]
+        );
+        
+        if ($result) {
+            error_log("Succès: Permissions révoquées pour le rôle '$role_nom' dans le module '$module'");
+            return true;
+        } else {
+            error_log("Erreur: Impossible de révoquer les permissions pour le rôle '$role_nom'");
+            return false;
+        }
+        
+    } catch (Exception $e) {
+        error_log("Erreur lors de la révocation des permissions: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Obtenir toutes les permissions d'un rôle spécifique
+ * 
+ * @param string $role_nom Nom du rôle dans la base de données
+ * @return array|false Permissions du rôle ou False si erreur
+ */
+function getRolePermissions($role_nom) {
+    global $database;
+    
+    try {
+        $role = $database->query(
+            "SELECT id, nom, permissions FROM roles WHERE nom = ? AND actif = 1",
+            [$role_nom]
+        )->fetch();
+        
+        if (!$role) {
+            error_log("Erreur: Le rôle '$role_nom' n'existe pas ou est inactif");
+            return false;
+        }
+        
+        $permissions = [];
+        if ($role['permissions']) {
+            $decoded = json_decode($role['permissions'], true);
+            if ($decoded) {
+                $permissions = $decoded;
+            }
+        }
+        
+        return $permissions;
+        
+    } catch (Exception $e) {
+        error_log("Erreur lors de la récupération des permissions: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Vérifier si un rôle a des permissions pour un module/page/action spécifique
+ * 
+ * @param string $role_nom Nom du rôle dans la base de données
+ * @param string $module Nom du module
+ * @param string $page Nom de la page
+ * @param string $action Action à vérifier
+ * @param string $subpage Nom de la sous-page (optionnel)
+ * @return bool True si le rôle a la permission, False sinon
+ */
+function roleHasPagePermission($role_nom, $module, $page, $action, $subpage = null) {
+    $permissions = getRolePermissions($role_nom);
+    
+    if (!$permissions || !isset($permissions[$module])) {
+        return false;
+    }
+    
+    $module_permissions = $permissions[$module];
+    
+    if (!isset($module_permissions['pages'][$page])) {
+        return false;
+    }
+    
+    $page_data = $module_permissions['pages'][$page];
+    
+    if ($subpage) {
+        // Vérifier dans les sous-pages
+        if (isset($page_data['pages'][$subpage]['permissions'])) {
+            return in_array($action, $page_data['pages'][$subpage]['permissions']);
+        }
+    } else {
+        // Vérifier dans la page directe
+        if (isset($page_data['permissions'])) {
+            return in_array($action, $page_data['permissions']);
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Synchroniser les permissions d'un module pour tous les rôles actifs
+ * 
+ * @param string $module Nom du module
+ * @param array $module_pages Structure des pages du module (format detailed-permissions)
+ * @return array Résultat de la synchronisation par rôle
+ */
+function syncModulePermissions($module, $module_pages) {
+    global $database;
+    
+    $results = [];
+    
+    try {
+        // Récupérer tous les rôles actifs
+        $roles = $database->query("SELECT id, nom, permissions FROM roles WHERE actif = 1")->fetchAll();
+        
+        foreach ($roles as $role) {
+            $result = grantPagePermissions($role['nom'], $module, $module_pages['pages']);
+            $results[$role['nom']] = [
+                'success' => $result,
+                'message' => $result ? 'Permissions synchronisées' : 'Erreur lors de la synchronisation'
+            ];
+        }
+        
+        return $results;
+        
+    } catch (Exception $e) {
+        error_log("Erreur lors de la synchronisation des permissions: " . $e->getMessage());
+        return ['error' => $e->getMessage()];
+    }
+}
+
+/**
+ * Nettoyer les données d'entrée
+ */
+function sanitizeInput($data) {
+    return htmlspecialchars(strip_tags(trim($data)));
 }
 ?>

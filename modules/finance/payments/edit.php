@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'payments', 'edit', '../../dashboard.php');
 
 // Récupérer l'ID du paiement
 $id = (int)($_GET['id'] ?? 0);
@@ -25,11 +23,13 @@ if (!$id) {
 // Récupérer les informations du paiement
 $sql = "SELECT p.*, 
                e.nom, e.prenom, e.numero_matricule,
-               c.nom as classe_nom, c.niveau
+               c.nom as classe_nom, c.niveau,
+               tf.nom as type_paiement
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
+        JOIN type_frais tf ON p.type_frais_id = tf.id
         WHERE p.id = ?";
 
 $paiement = $database->query($sql, [$id])->fetch();
@@ -59,11 +59,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date_paiement = sanitizeInput($_POST['date_paiement'] ?? '');
     $observation = sanitizeInput($_POST['observation'] ?? '');
     $mois_concerne = sanitizeInput($_POST['mois_concerne'] ?? '');
-    
+
     // Validation des champs obligatoires
     if (empty($type_paiement)) $errors[] = 'Le type de paiement est obligatoire.';
     if ($montant <= 0) $errors[] = 'Le montant doit être supérieur à 0.';
     if (empty($mode_paiement)) $errors[] = 'Le mode de paiement est obligatoire.';
+    
+    // Récupérer l'ID du type de frais
+    $type_frais_id = null;
+    if (!empty($type_paiement)) {
+        $type_frais = $database->query(
+            "SELECT id FROM type_frais WHERE nom = ? AND annee_scolaire_id = ? AND actif = 1",
+            [$type_paiement, $current_year['id']]
+        )->fetch();
+        
+        if ($type_frais) {
+            $type_frais_id = $type_frais['id'];
+        } else {
+            $errors[] = 'Type de frais non trouvé ou inactif.';
+        }
+    }
     if (empty($date_paiement)) $errors[] = 'La date de paiement est obligatoire.';
     
     // Validation de la date
@@ -83,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Mettre à jour le paiement
             $sql = "UPDATE paiements SET 
-                        type_paiement = ?, 
+                        type_frais_id = ?, 
                         montant = ?, 
                         mode_paiement = ?, 
                         date_paiement = ?, 
@@ -93,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE id = ?";
             
             $database->execute($sql, [
-                $type_paiement, $montant, $mode_paiement, $date_paiement,
+                $type_frais_id, $montant, $mode_paiement, $date_paiement,
                 $observation, $mois_concerne, $id
             ]);
             
@@ -194,18 +209,19 @@ include '../../../includes/header.php';
                             </label>
                             <select class="form-select" id="type_paiement" name="type_paiement" required>
                                 <option value="">Sélectionner le type</option>
-                                <option value="inscription" <?php echo ($paiement['type_paiement'] ?? '') === 'inscription' ? 'selected' : ''; ?>>
-                                    Frais d'inscription
-                                </option>
-                                <option value="mensualite" <?php echo ($paiement['type_paiement'] ?? '') === 'mensualite' ? 'selected' : ''; ?>>
-                                    Mensualité
-                                </option>
-                                <option value="examen" <?php echo ($paiement['type_paiement'] ?? '') === 'examen' ? 'selected' : ''; ?>>
-                                    Frais d'examen
-                                </option>
-                                <option value="autre" <?php echo ($paiement['type_paiement'] ?? '') === 'autre' ? 'selected' : ''; ?>>
-                                    Autre
-                                </option>
+                                <?php 
+                                // Récupérer les types de frais actifs pour l'année scolaire
+                                $types_frais = $database->query(
+                                    "SELECT id, nom FROM type_frais WHERE annee_scolaire_id = ? AND actif = 1 ORDER BY priorite ASC, nom ASC",
+                                    [$current_year['id']]
+                                )->fetchAll();
+                                
+                                foreach ($types_frais as $type): ?>
+                                    <option value="<?php echo htmlspecialchars($type['nom']); ?>" 
+                                            <?php echo ($paiement['type_paiement'] ?? '') === $type['nom'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($type['nom']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">
                                 Veuillez sélectionner un type de paiement.

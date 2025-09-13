@@ -1,26 +1,24 @@
-<?php
+﻿<?php
 /**
- * Module de gestion financière - Rapport des débiteurs
- * Application de gestion scolaire - République Démocratique du Congo
+ * Module de gestion financiÃ¨re - Rapport des dÃ©biteurs
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('finance', 'reports', 'read', '../../dashboard.php');
 
-$page_title = 'Rapport des Débiteurs';
+$page_title = 'Rapport des DÃ©biteurs';
 
-// Obtenir l'année scolaire actuelle
+// Obtenir l'annÃ©e scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Paramètres de filtrage
+// ParamÃ¨tres de filtrage
 $niveau_filter = sanitizeInput($_GET['niveau'] ?? '');
 $classe_filter = (int)($_GET['classe_id'] ?? 0);
 $montant_min = (float)($_GET['montant_min'] ?? 0);
@@ -30,7 +28,7 @@ $page = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 25;
 $offset = ($page - 1) * $per_page;
 
-// Calculer les dates pour les filtres de délai
+// Calculer les dates pour les filtres de dÃ©lai
 $date_limite = '';
 switch ($delai_filter) {
     case '7_jours':
@@ -50,13 +48,13 @@ switch ($delai_filter) {
         break;
 }
 
-// Récupérer les débiteurs
+// RÃ©cupÃ©rer les dÃ©biteurs
 $debiteurs = [];
 $total_debiteurs = 0;
 $total_dette = 0;
 
 try {
-    // Requête pour compter le total
+    // RequÃªte pour compter le total
     $count_sql = "
         SELECT COUNT(DISTINCT e.id) as total, SUM(dette.montant_du) as total_dette
         FROM eleves e
@@ -71,8 +69,9 @@ try {
             FROM eleves e
             JOIN inscriptions i ON e.id = i.eleve_id
             JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+            JOIN type_frais tf ON fs.type_frais_id = tf.id
             LEFT JOIN paiements p ON e.id = p.eleve_id 
-                AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                AND p.type_frais_id = tf.id
                 AND p.annee_scolaire_id = fs.annee_scolaire_id
             WHERE i.annee_scolaire_id = ? 
                 AND fs.annee_scolaire_id = ?
@@ -108,7 +107,7 @@ try {
     $total_debiteurs = $count_result['total'];
     $total_dette = $count_result['total_dette'] ?? 0;
     
-    // Requête pour les données détaillées
+    // RequÃªte pour les donnÃ©es dÃ©taillÃ©es
     $sql = "
         SELECT 
             e.id,
@@ -134,8 +133,9 @@ try {
             FROM eleves e
             JOIN inscriptions i ON e.id = i.eleve_id
             JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+            JOIN type_frais tf ON fs.type_frais_id = tf.id
             LEFT JOIN paiements p ON e.id = p.eleve_id 
-                AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                AND p.type_frais_id = tf.id
                 AND p.annee_scolaire_id = fs.annee_scolaire_id
             WHERE i.annee_scolaire_id = ? 
                 AND fs.annee_scolaire_id = ?
@@ -179,10 +179,10 @@ try {
     $debiteurs = $database->query($sql, $params)->fetchAll();
     
 } catch (Exception $e) {
-    showMessage('error', 'Erreur lors de la récupération des données : ' . $e->getMessage());
+    showMessage('error', 'Erreur lors de la rÃ©cupÃ©ration des donnÃ©es : ' . $e->getMessage());
 }
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
@@ -206,8 +206,9 @@ try {
             FROM eleves e
             JOIN inscriptions i ON e.id = i.eleve_id
             JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+            JOIN type_frais tf ON fs.type_frais_id = tf.id
             LEFT JOIN paiements p ON e.id = p.eleve_id 
-                AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                AND p.type_frais_id = tf.id
                 AND p.annee_scolaire_id = fs.annee_scolaire_id
             WHERE i.annee_scolaire_id = ? 
                 AND fs.annee_scolaire_id = ?
@@ -233,7 +234,7 @@ include '../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-exclamation-triangle me-2"></i>
-        Rapport des Débiteurs
+        Rapport des DÃ©biteurs
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -259,7 +260,7 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Statistiques générales -->
+<!-- Statistiques gÃ©nÃ©rales -->
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card text-white bg-danger">
@@ -267,7 +268,7 @@ include '../../../includes/header.php';
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4><?php echo $total_debiteurs; ?></h4>
-                        <p class="mb-0">Débiteurs</p>
+                        <p class="mb-0">DÃ©biteurs</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-users fa-2x"></i>
@@ -316,7 +317,7 @@ include '../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-bar me-2"></i>
-                    Répartition par niveau
+                    RÃ©partition par niveau
                 </h5>
             </div>
             <div class="card-body">
@@ -334,7 +335,7 @@ include '../../../includes/header.php';
                                     <div class="row text-center">
                                         <div class="col-6">
                                             <h5 class="text-danger"><?php echo $stat['nombre_debiteurs']; ?></h5>
-                                            <small class="text-muted">Débiteurs</small>
+                                            <small class="text-muted">DÃ©biteurs</small>
                                         </div>
                                         <div class="col-6">
                                             <h5 class="text-warning"><?php echo formatMoney($stat['total_dette']); ?></h5>
@@ -391,7 +392,7 @@ include '../../../includes/header.php';
                 <input type="number" name="montant_max" id="montant_max" class="form-control" value="<?php echo $montant_max; ?>" min="0" step="0.01">
             </div>
             <div class="col-md-2">
-                <label for="delai" class="form-label">Délai</label>
+                <label for="delai" class="form-label">DÃ©lai</label>
                 <select name="delai" id="delai" class="form-select">
                     <option value="">Tous</option>
                     <option value="7_jours" <?php echo $delai_filter === '7_jours' ? 'selected' : ''; ?>>+7 jours</option>
@@ -412,31 +413,31 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Liste des débiteurs -->
+<!-- Liste des dÃ©biteurs -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Liste des débiteurs (<?php echo $total_debiteurs; ?> résultats)
+            Liste des dÃ©biteurs (<?php echo $total_debiteurs; ?> rÃ©sultats)
         </h5>
     </div>
     <div class="card-body">
         <?php if (empty($debiteurs)): ?>
             <div class="text-center py-4">
                 <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                <h5 class="text-success">Aucun débiteur trouvé</h5>
-                <p class="text-muted">Tous les élèves sont à jour dans leurs paiements.</p>
+                <h5 class="text-success">Aucun dÃ©biteur trouvÃ©</h5>
+                <p class="text-muted">Tous les Ã©lÃ¨ves sont Ã  jour dans leurs paiements.</p>
             </div>
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Élève</th>
+                            <th>Ã‰lÃ¨ve</th>
                             <th>Classe</th>
                             <th>Montant total</th>
-                            <th>Montant payé</th>
-                            <th>Montant dû</th>
+                            <th>Montant payÃ©</th>
+                            <th>Montant dÃ»</th>
                             <th>Jours de retard</th>
                             <th>Actions</th>
                         </tr>
@@ -491,7 +492,7 @@ include '../../../includes/header.php';
                                         <a href="../../students/records/view.php?id=<?php echo $debiteur['id']; ?>" class="btn btn-outline-info" title="Voir dossier">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="debtor-details.php?eleve_id=<?php echo $debiteur['id']; ?>" class="btn btn-outline-primary" title="Détails dette">
+                                        <a href="debtor-details.php?eleve_id=<?php echo $debiteur['id']; ?>" class="btn btn-outline-primary" title="DÃ©tails dette">
                                             <i class="fas fa-chart-line"></i>
                                         </a>
                                     </div>
@@ -504,7 +505,7 @@ include '../../../includes/header.php';
             
             <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
-                <nav aria-label="Pagination des débiteurs">
+                <nav aria-label="Pagination des dÃ©biteurs">
                     <ul class="pagination justify-content-center">
                         <?php if ($page > 1): ?>
                             <li class="page-item">
@@ -537,3 +538,4 @@ include '../../../includes/header.php';
 </div>
 
 <?php include '../../../includes/footer.php'; ?>
+

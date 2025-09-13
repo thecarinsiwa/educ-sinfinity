@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin')) {
-    showMessage('error', 'Accès refusé. Seuls les administrateurs peuvent modifier les paramètres.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('library', 'settings', 'edit', '../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

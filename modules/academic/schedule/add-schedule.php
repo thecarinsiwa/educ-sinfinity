@@ -7,11 +7,10 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 requireLogin();
-if (!checkPermission('academic')) {
-    redirectTo('../../login.php');
-}
+requirePagePermissionFromDB('academic', 'schedule', 'create', '../../../dashboard.php', 'add-schedule');
 
 $class_id = isset($_GET['class_id']) ? intval($_GET['class_id']) : 0;
 if ($class_id <= 0) {
@@ -109,3 +108,4 @@ include '../../../includes/header.php';
     </form>
 </div>
 <?php include '../../../includes/footer.php'; ?>
+

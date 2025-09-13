@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admissions')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
+requirePagePermissionFromDB('admissions', 'applications', 'update', '../../../dashboard.php');
 
 $page_title = 'Évaluation de Demande d\'Admission';
 
@@ -452,3 +450,4 @@ document.querySelector('form').addEventListener('submit', function(e) {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

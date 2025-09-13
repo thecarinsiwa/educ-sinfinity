@@ -1,31 +1,30 @@
-<?php
+﻿<?php
 /**
- * Gestion des documents d'un élève
+ * Gestion des documents d'un Ã©lÃ¨ve
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+
+requirePagePermissionFromDB('students', 'records', 'read', '../../../dashboard.php');
 
 $eleve_id = intval($_GET['id'] ?? 0);
 
 if (!$eleve_id) {
-    showMessage('error', 'ID d\'élève invalide.');
+    showMessage('error', 'ID d\'Ã©lÃ¨ve invalide.');
     redirectTo('index.php');
 }
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Récupérer les informations de l'élève
+// RÃ©cupÃ©rer les informations de l'Ã©lÃ¨ve
 try {
     $eleve = $database->query(
         "SELECT e.*, CONCAT('INS', YEAR(i.date_inscription), LPAD(i.id, 4, '0')) as numero_inscription,
@@ -38,11 +37,11 @@ try {
     )->fetch();
 
     if (!$eleve) {
-        showMessage('error', 'Élève non trouvé ou non inscrit pour l\'année scolaire actuelle.');
+        showMessage('error', 'Ã‰lÃ¨ve non trouvÃ© ou non inscrit pour l\'année scolaire actuelle.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
-    showMessage('error', 'Erreur lors du chargement de l\'élève : ' . $e->getMessage());
+    showMessage('error', 'Erreur lors du chargement de l\'Ã©lÃ¨ve : ' . $e->getMessage());
     redirectTo('index.php');
 }
 
@@ -50,7 +49,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    if ($action === 'add_document' && checkPermission('students')) {
+    if ($action === 'add_document' && checkPagePermission('students')) {
         $type_document = $_POST['type_document'] ?? '';
         $nom_document = sanitizeInput($_POST['nom_document'] ?? '');
         $description = sanitizeInput($_POST['description'] ?? '');
@@ -63,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      VALUES (?, ?, ?, ?, ?, ?, NOW())",
                     [$eleve_id, $type_document, $nom_document, $description, $obligatoire, $_SESSION['user_id']]
                 );
-                showMessage('success', 'Document ajouté avec succès.');
+                showMessage('success', 'Document ajoutÃ© avec succÃ¨s.');
             } catch (Exception $e) {
                 showMessage('error', 'Erreur lors de l\'ajout du document : ' . $e->getMessage());
             }
@@ -72,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'update_status' && checkPermission('students')) {
+    if ($action === 'update_status' && checkPagePermission('students')) {
         $document_id = intval($_POST['document_id'] ?? 0);
         $statut = $_POST['statut'] ?? '';
         $commentaire = sanitizeInput($_POST['commentaire'] ?? '');
@@ -86,14 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      WHERE id = ? AND eleve_id = ?",
                     [$statut, $commentaire, $_SESSION['user_id'], $document_id, $eleve_id]
                 );
-                showMessage('success', 'Statut du document mis à jour.');
+                showMessage('success', 'Statut du document mis Ã  jour.');
             } catch (Exception $e) {
-                showMessage('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
+                showMessage('error', 'Erreur lors de la mise Ã  jour : ' . $e->getMessage());
             }
         }
     }
     
-    if ($action === 'delete_document' && checkPermission('students')) {
+    if ($action === 'delete_document' && checkPagePermission('students')) {
         $document_id = intval($_POST['document_id'] ?? 0);
         
         if ($document_id) {
@@ -102,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "DELETE FROM documents_eleves WHERE id = ? AND eleve_id = ?",
                     [$document_id, $eleve_id]
                 );
-                showMessage('success', 'Document supprimé avec succès.');
+                showMessage('success', 'Document supprimÃ© avec succÃ¨s.');
             } catch (Exception $e) {
                 showMessage('error', 'Erreur lors de la suppression : ' . $e->getMessage());
             }
@@ -110,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les documents de l'élève
+// RÃ©cupÃ©rer les documents de l'Ã©lÃ¨ve
 try {
     $documents = $database->query(
         "SELECT de.*, u1.username as ajoute_par_nom, u2.username as verifie_par_nom
@@ -128,12 +127,12 @@ try {
 // Types de documents disponibles
 $types_documents = [
     'certificat_naissance' => 'Certificat de naissance',
-    'bulletin_precedent' => 'Bulletin de l\'année précédente',
-    'certificat_medical' => 'Certificat médical',
-    'photo_identite' => 'Photo d\'identité',
+    'bulletin_precedent' => 'Bulletin de l\'année prÃ©cÃ©dente',
+    'certificat_medical' => 'Certificat mÃ©dical',
+    'photo_identite' => 'Photo d\'identitÃ©',
     'fiche_inscription' => 'Fiche d\'inscription',
-    'attestation_scolarite' => 'Attestation de scolarité',
-    'releve_notes' => 'Relevé de notes',
+    'attestation_scolarite' => 'Attestation de scolaritÃ©',
+    'releve_notes' => 'RelevÃ© de notes',
     'certificat_conduite' => 'Certificat de bonne conduite',
     'autre' => 'Autre document'
 ];
@@ -161,7 +160,7 @@ include '../../../includes/header.php';
                 Liste des dossiers
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
                 <i class="fas fa-plus me-1"></i>
@@ -172,14 +171,14 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Informations de l'élève -->
+<!-- Informations de l'Ã©lÃ¨ve -->
 <div class="alert alert-info mb-4">
     <div class="row">
         <div class="col-md-3">
-            <strong>Élève :</strong> <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?>
+            <strong>Ã‰lÃ¨ve :</strong> <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?>
         </div>
         <div class="col-md-3">
-            <strong>N° Inscription :</strong> <code><?php echo htmlspecialchars($eleve['numero_inscription']); ?></code>
+            <strong>NÂ° Inscription :</strong> <code><?php echo htmlspecialchars($eleve['numero_inscription']); ?></code>
         </div>
         <div class="col-md-3">
             <strong>Classe :</strong> <?php echo htmlspecialchars($eleve['classe_nom']); ?>
@@ -213,7 +212,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-success"><?php echo $stats['verifie']; ?></h4>
-                <small class="text-muted">Vérifiés</small>
+                <small class="text-muted">VÃ©rifiÃ©s</small>
             </div>
         </div>
     </div>
@@ -229,7 +228,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-danger"><?php echo $stats['rejete']; ?></h4>
-                <small class="text-muted">Rejetés</small>
+                <small class="text-muted">RejetÃ©s</small>
             </div>
         </div>
     </div>
@@ -246,7 +245,7 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <?php $pourcentage = $stats['total'] > 0 ? round(($stats['verifie'] / $stats['total']) * 100) : 0; ?>
                 <h4 class="text-secondary"><?php echo $pourcentage; ?>%</h4>
-                <small class="text-muted">Complétude</small>
+                <small class="text-muted">ComplÃ©tude</small>
             </div>
         </div>
     </div>
@@ -265,8 +264,8 @@ include '../../../includes/header.php';
             <div class="text-center py-4">
                 <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun document</h5>
-                <p class="text-muted">Cet élève n'a encore aucun document dans son dossier.</p>
-                <?php if (checkPermission('students')): ?>
+                <p class="text-muted">Cet Ã©lÃ¨ve n'a encore aucun document dans son dossier.</p>
+                <?php if (checkPagePermission('students')): ?>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
                         <i class="fas fa-plus me-1"></i>
                         Ajouter le premier document
@@ -283,8 +282,8 @@ include '../../../includes/header.php';
                             <th>Statut</th>
                             <th>Obligatoire</th>
                             <th>Date d'ajout</th>
-                            <th>Ajouté par</th>
-                            <?php if (checkPermission('students')): ?>
+                            <th>AjoutÃ© par</th>
+                            <?php if (checkPagePermission('students')): ?>
                             <th>Actions</th>
                             <?php endif; ?>
                         </tr>
@@ -329,16 +328,16 @@ include '../../../includes/header.php';
                                 <td>
                                     <?php echo formatDate($document['date_ajout']); ?>
                                     <?php if ($document['date_verification']): ?>
-                                        <br><small class="text-muted">Vérifié le <?php echo formatDate($document['date_verification']); ?></small>
+                                        <br><small class="text-muted">VÃ©rifiÃ© le <?php echo formatDate($document['date_verification']); ?></small>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php echo htmlspecialchars($document['ajoute_par_nom'] ?? 'Inconnu'); ?>
                                     <?php if ($document['verifie_par_nom']): ?>
-                                        <br><small class="text-muted">Vérifié par <?php echo htmlspecialchars($document['verifie_par_nom']); ?></small>
+                                        <br><small class="text-muted">VÃ©rifiÃ© par <?php echo htmlspecialchars($document['verifie_par_nom']); ?></small>
                                     <?php endif; ?>
                                 </td>
-                                <?php if (checkPermission('students')): ?>
+                                <?php if (checkPagePermission('students')): ?>
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <button type="button" class="btn btn-outline-primary" 
@@ -361,7 +360,7 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<?php if (checkPermission('students')): ?>
+<?php if (checkPagePermission('students')): ?>
 <!-- Modal d'ajout de document -->
 <div class="modal fade" id="addDocumentModal" tabindex="-1">
     <div class="modal-dialog">
@@ -376,7 +375,7 @@ include '../../../includes/header.php';
                     <div class="mb-3">
                         <label for="type_document" class="form-label">Type de document <span class="text-danger">*</span></label>
                         <select class="form-select" id="type_document" name="type_document" required>
-                            <option value="">Sélectionner un type...</option>
+                            <option value="">SÃ©lectionner un type...</option>
                             <?php foreach ($types_documents as $value => $label): ?>
                                 <option value="<?php echo $value; ?>"><?php echo htmlspecialchars($label); ?></option>
                             <?php endforeach; ?>
@@ -406,7 +405,7 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Modals de mise à jour de statut -->
+<!-- Modals de mise Ã  jour de statut -->
 <?php foreach ($documents as $document): ?>
 <div class="modal fade" id="statusModal<?php echo $document['id']; ?>" tabindex="-1">
     <div class="modal-dialog">
@@ -415,7 +414,7 @@ include '../../../includes/header.php';
                 <input type="hidden" name="action" value="update_status">
                 <input type="hidden" name="document_id" value="<?php echo $document['id']; ?>">
                 <div class="modal-header">
-                    <h5 class="modal-title">Mettre à jour le statut</h5>
+                    <h5 class="modal-title">Mettre Ã  jour le statut</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -424,8 +423,8 @@ include '../../../includes/header.php';
                         <label for="statut<?php echo $document['id']; ?>" class="form-label">Nouveau statut</label>
                         <select class="form-select" id="statut<?php echo $document['id']; ?>" name="statut" required>
                             <option value="en_attente" <?php echo $document['statut_verification'] === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
-                            <option value="verifie" <?php echo $document['statut_verification'] === 'verifie' ? 'selected' : ''; ?>>Vérifié</option>
-                            <option value="rejete" <?php echo $document['statut_verification'] === 'rejete' ? 'selected' : ''; ?>>Rejeté</option>
+                            <option value="verifie" <?php echo $document['statut_verification'] === 'verifie' ? 'selected' : ''; ?>>VÃ©rifiÃ©</option>
+                            <option value="rejete" <?php echo $document['statut_verification'] === 'rejete' ? 'selected' : ''; ?>>RejetÃ©</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -435,7 +434,7 @@ include '../../../includes/header.php';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    <button type="submit" class="btn btn-primary">Mettre Ã  jour</button>
                 </div>
             </form>
         </div>
@@ -451,7 +450,7 @@ include '../../../includes/header.php';
 
 <script>
 function deleteDocument(id, nom) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer le document "' + nom + '" ?')) {
+    if (confirm('ÃŠtes-vous sÃ»r de vouloir supprimer le document "' + nom + '" ?')) {
         document.getElementById('deleteDocumentId').value = id;
         document.getElementById('deleteForm').submit();
     }
@@ -460,3 +459,7 @@ function deleteDocument(id, nom) {
 <?php endif; ?>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

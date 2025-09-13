@@ -1,24 +1,22 @@
-<?php
+﻿<?php
 /**
  * Module Recouvrement - Rapports des Paiements
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('recouvrement', 'rapports', 'read', '../../dashboard.php');
 
 $errors = [];
 $success_message = '';
 
-// Paramètres de filtrage
+// ParamÃ¨tres de filtrage
 $date_debut = $_GET['date_debut'] ?? date('Y-m-01');
 $date_fin = $_GET['date_fin'] ?? date('Y-m-t');
 $classe_id = $_GET['classe_id'] ?? '';
@@ -26,7 +24,7 @@ $type_frais = $_GET['type_frais'] ?? '';
 $mode_paiement = $_GET['mode_paiement'] ?? '';
 
 try {
-    // Récupérer les classes pour le filtre
+    // RÃ©cupÃ©rer les classes pour le filtre
     $classes = $database->query("
         SELECT id, nom 
         FROM classes 
@@ -34,16 +32,17 @@ try {
         ORDER BY nom
     ")->fetchAll();
 
-    // Récupérer les types de frais pour le filtre
+    // RÃ©cupÃ©rer les types de frais pour le filtre
     $types_frais = $database->query("
         SELECT DISTINCT tf.id, tf.nom
         FROM types_frais tf
         JOIN frais_scolaires fs ON tf.id = fs.type_frais_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         WHERE tf.status = 'active'
         ORDER BY tf.nom
     ")->fetchAll();
 
-    // Construire la requête avec filtres
+    // Construire la requÃªte avec filtres
     $where_conditions = ["p.status = 'valide'"];
     $params = [];
 
@@ -87,6 +86,7 @@ try {
         JOIN eleves e ON p.eleve_id = e.id
         LEFT JOIN inscriptions i ON e.id = i.eleve_id AND i.status = 'inscrit'
         LEFT JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         WHERE $where_clause
     ", $params)->fetch();
 
@@ -100,6 +100,7 @@ try {
         JOIN eleves e ON p.eleve_id = e.id
         LEFT JOIN inscriptions i ON e.id = i.eleve_id AND i.status = 'inscrit'
         LEFT JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         WHERE $where_clause
         GROUP BY p.mode_paiement
         ORDER BY montant_total DESC
@@ -113,6 +114,7 @@ try {
             SUM(p.montant) as montant_total
         FROM paiements p
         JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         JOIN types_frais tf ON fs.type_frais_id = tf.id
         JOIN eleves e ON p.eleve_id = e.id
         LEFT JOIN inscriptions i ON e.id = i.eleve_id AND i.status = 'inscrit'
@@ -121,7 +123,7 @@ try {
         ORDER BY montant_total DESC
     ", $params)->fetchAll();
 
-    // Évolution des paiements par jour
+    // Ã‰volution des paiements par jour
     $evolution_paiements = $database->query("
         SELECT 
             DATE(p.date_paiement) as date_paiement,
@@ -131,13 +133,14 @@ try {
         JOIN eleves e ON p.eleve_id = e.id
         LEFT JOIN inscriptions i ON e.id = i.eleve_id AND i.status = 'inscrit'
         LEFT JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         WHERE $where_clause
         GROUP BY DATE(p.date_paiement)
         ORDER BY date_paiement DESC
         LIMIT 30
     ", $params)->fetchAll();
 
-    // Liste détaillée des paiements
+    // Liste dÃ©taillÃ©e des paiements
     $paiements_details = $database->query("
         SELECT 
             p.*,
@@ -151,6 +154,7 @@ try {
         LEFT JOIN inscriptions i ON e.id = i.eleve_id AND i.status = 'inscrit'
         LEFT JOIN classes cl ON i.classe_id = cl.id
         LEFT JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         LEFT JOIN types_frais tf ON fs.type_frais_id = tf.id
         LEFT JOIN utilisateurs u ON p.created_by = u.id
         WHERE $where_clause
@@ -159,7 +163,7 @@ try {
     ", $params)->fetchAll();
 
 } catch (Exception $e) {
-    $errors[] = "Erreur lors du chargement des données : " . $e->getMessage();
+    $errors[] = "Erreur lors du chargement des donnÃ©es : " . $e->getMessage();
 }
 
 $page_title = "Rapports des Paiements";
@@ -213,7 +217,7 @@ include '../../../includes/header.php';
     <div class="card-body">
         <form method="GET" class="row g-3">
             <div class="col-md-3">
-                <label for="date_debut" class="form-label">Date de début</label>
+                <label for="date_debut" class="form-label">Date de dÃ©but</label>
                 <input type="date" class="form-control" id="date_debut" name="date_debut" 
                        value="<?php echo htmlspecialchars($date_debut); ?>">
             </div>
@@ -250,10 +254,10 @@ include '../../../includes/header.php';
                 <label for="mode_paiement" class="form-label">Mode de paiement</label>
                 <select class="form-select" id="mode_paiement" name="mode_paiement">
                     <option value="">Tous les modes</option>
-                    <option value="especes" <?php echo ($mode_paiement == 'especes') ? 'selected' : ''; ?>>Espèces</option>
+                    <option value="especes" <?php echo ($mode_paiement == 'especes') ? 'selected' : ''; ?>>EspÃ¨ces</option>
                     <option value="virement" <?php echo ($mode_paiement == 'virement') ? 'selected' : ''; ?>>Virement</option>
                     <option value="mobile_money" <?php echo ($mode_paiement == 'mobile_money') ? 'selected' : ''; ?>>Mobile Money</option>
-                    <option value="cheque" <?php echo ($mode_paiement == 'cheque') ? 'selected' : ''; ?>>Chèque</option>
+                    <option value="cheque" <?php echo ($mode_paiement == 'cheque') ? 'selected' : ''; ?>>ChÃ¨que</option>
                 </select>
             </div>
             <div class="col-12">
@@ -263,14 +267,14 @@ include '../../../includes/header.php';
                 </button>
                 <a href="paiements.php" class="btn btn-outline-secondary">
                     <i class="fas fa-times me-1"></i>
-                    Réinitialiser
+                    RÃ©initialiser
                 </a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Statistiques générales -->
+<!-- Statistiques gÃ©nÃ©rales -->
 <div class="row mb-4">
     <div class="col-md-2">
         <div class="card bg-success text-white shadow-sm">
@@ -292,7 +296,7 @@ include '../../../includes/header.php';
         <div class="card bg-warning text-white shadow-sm">
             <div class="card-body text-center">
                 <h4 class="mb-0"><?php echo number_format($stats_paiements['eleves_payeurs'] ?? 0); ?></h4>
-                <small>Élèves Payeurs</small>
+                <small>Ã‰lÃ¨ves Payeurs</small>
             </div>
         </div>
     </div>
@@ -329,7 +333,7 @@ include '../../../includes/header.php';
             <div class="card-header bg-light">
                 <h5 class="mb-0">
                     <i class="fas fa-credit-card me-2"></i>
-                    Répartition par Mode de Paiement
+                    RÃ©partition par Mode de Paiement
                 </h5>
             </div>
             <div class="card-body">
@@ -351,7 +355,7 @@ include '../../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center text-muted">
                         <i class="fas fa-credit-card fa-3x mb-3"></i>
-                        <p>Aucune donnée disponible</p>
+                        <p>Aucune donnÃ©e disponible</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -364,7 +368,7 @@ include '../../../includes/header.php';
             <div class="card-header bg-light">
                 <h5 class="mb-0">
                     <i class="fas fa-tags me-2"></i>
-                    Répartition par Type de Frais
+                    RÃ©partition par Type de Frais
                 </h5>
             </div>
             <div class="card-body">
@@ -386,7 +390,7 @@ include '../../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center text-muted">
                         <i class="fas fa-tags fa-3x mb-3"></i>
-                        <p>Aucune donnée disponible</p>
+                        <p>Aucune donnÃ©e disponible</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -394,14 +398,14 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Évolution des paiements -->
+<!-- Ã‰volution des paiements -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-header bg-light">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-line me-2"></i>
-                    Évolution des Paiements (30 derniers jours)
+                    Ã‰volution des Paiements (30 derniers jours)
                 </h5>
             </div>
             <div class="card-body">
@@ -410,7 +414,7 @@ include '../../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center text-muted">
                         <i class="fas fa-chart-line fa-3x mb-3"></i>
-                        <p>Aucune donnée d'évolution disponible</p>
+                        <p>Aucune donnÃ©e d'Ã©volution disponible</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -418,12 +422,12 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Liste détaillée des paiements -->
+<!-- Liste dÃ©taillÃ©e des paiements -->
 <div class="card shadow-sm">
     <div class="card-header bg-light">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Détail des Paiements (100 derniers)
+            DÃ©tail des Paiements (100 derniers)
         </h5>
     </div>
     <div class="card-body">
@@ -434,12 +438,12 @@ include '../../../includes/header.php';
                         <tr>
                             <th>Date</th>
                             <th>Matricule</th>
-                            <th>Élève</th>
+                            <th>Ã‰lÃ¨ve</th>
                             <th>Classe</th>
                             <th>Type de Frais</th>
                             <th>Montant</th>
                             <th>Mode</th>
-                            <th>Référence</th>
+                            <th>RÃ©fÃ©rence</th>
                             <th>Statut</th>
                         </tr>
                     </thead>
@@ -478,7 +482,7 @@ include '../../../includes/header.php';
         <?php else: ?>
             <div class="text-center text-muted">
                 <i class="fas fa-money-bill-wave fa-3x mb-3"></i>
-                <p>Aucun paiement trouvé avec les critères sélectionnés</p>
+                <p>Aucun paiement trouvÃ© avec les critÃ¨res sÃ©lectionnÃ©s</p>
             </div>
         <?php endif; ?>
     </div>
@@ -554,7 +558,7 @@ const typesChart = new Chart(typesCtx, {
 });
 <?php endif; ?>
 
-// Graphique d'évolution
+// Graphique d'Ã©volution
 <?php if (!empty($evolution_paiements)): ?>
 const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
 const evolutionChart = new Chart(evolutionCtx, {
@@ -612,3 +616,4 @@ const evolutionChart = new Chart(evolutionCtx, {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

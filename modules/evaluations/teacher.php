@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('evaluations', 'teacher', 'read', '../../dashboard.php');
 
 // Récupérer l'ID de l'enseignant
 $teacher_id = (int)($_GET['id'] ?? 0);
@@ -320,7 +318,7 @@ include '../../includes/header.php';
                     <i class="fas fa-list me-2"></i>
                     Évaluations (<?php echo count($evaluations); ?>)
                 </h6>
-                <?php if (checkPermission('evaluations')): ?>
+                <?php if (checkPagePermission('evaluations')): ?>
                     <a href="evaluations/add.php?enseignant_id=<?php echo $teacher_id; ?>" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Nouvelle évaluation
@@ -333,7 +331,7 @@ include '../../includes/header.php';
                         <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Aucune évaluation trouvée</h5>
                         <p class="text-muted">Cet enseignant n'a pas encore d'évaluations pour cette année scolaire.</p>
-                        <?php if (checkPermission('evaluations')): ?>
+                        <?php if (checkPagePermission('evaluations')): ?>
                             <a href="evaluations/add.php?enseignant_id=<?php echo $teacher_id; ?>" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Créer la première évaluation
@@ -434,7 +432,7 @@ include '../../includes/header.php';
                                                    title="Voir les détails">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('evaluations')): ?>
+                                                <?php if (checkPagePermission('evaluations')): ?>
                                                     <a href="evaluations/edit.php?id=<?php echo $evaluation['id']; ?>" 
                                                        class="btn btn-outline-secondary" 
                                                        title="Modifier">

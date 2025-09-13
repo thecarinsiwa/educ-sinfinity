@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module Gestion des Certificats de Transfert - Page principale
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../../dashboard.php');
 
 $page_title = 'Gestion des Certificats de Transfert';
 
@@ -68,7 +67,7 @@ try {
     $stats_par_type = [];
 }
 
-// Construction de la requête avec filtres
+// Construction de la requÃªte avec filtres
 $where_conditions = ["t.statut = 'complete'"];
 $params = [];
 
@@ -312,7 +311,7 @@ include '../../../../includes/header.php';
         <p class="mb-0">
             <a href="../../../../fix-students-tables.php" class="btn btn-warning me-2">
                 <i class="fas fa-tools me-1"></i>
-                Créer la table automatiquement
+                CrÃ©er la table automatiquement
             </a>
             <a href="../../../../debug-tables.php" class="btn btn-info">
                 <i class="fas fa-search me-1"></i>
@@ -323,7 +322,7 @@ include '../../../../includes/header.php';
     </div>
 <?php endif; ?>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="certificate-header">
     <div class="container-fluid">
         <div class="row align-items-center">
@@ -400,7 +399,7 @@ include '../../../../includes/header.php';
                     echo array_sum(array_column($sorties, 'nombre'));
                     ?>
                 </h3>
-                <p class="text-muted mb-0">Certificats de fin de scolarité</p>
+                <p class="text-muted mb-0">Certificats de fin de Scolarité</p>
             </div>
         </div>
     </div>
@@ -447,7 +446,7 @@ include '../../../../includes/header.php';
                     Transfert sortant
                 </option>
                 <option value="sortie_definitive" <?php echo $type_filter === 'sortie_definitive' ? 'selected' : ''; ?>>
-                    Sortie définitive
+                    Sortie dÃ©finitive
                 </option>
             </select>
         </div>
@@ -464,7 +463,7 @@ include '../../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('students')): ?>
+<?php if (checkPagePermission('students')): ?>
 <div class="row mb-4">
     <div class="col-12">
         <div class="certificate-card animate-fade-in animate-delay-2">
@@ -601,7 +600,7 @@ include '../../../../includes/header.php';
                                             <?php endif; ?>
                                         </div>
 
-                                        <?php if (checkPermission('students')): ?>
+                                        <?php if (checkPagePermission('students')): ?>
                                             <?php if (!$transfer['certificat_genere']): ?>
                                                 <a href="generate.php?id=<?php echo $transfer['id']; ?>"
                                                    class="btn btn-primary btn-sm btn-modern">
@@ -844,3 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module de Suivi Scolaire
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('students', 'tracking', 'read', '../../../../dashboard.php');
 
 $page_title = 'Suivi Scolaire';
 
@@ -29,7 +28,7 @@ $classe_filter = $_GET['classe_filter'] ?? '';
 $trimestre_filter = $_GET['trimestre_filter'] ?? '';
 $search = trim($_GET['search'] ?? '');
 
-// Construction de la requête
+// Construction de la requÃªte
 $where_conditions = ["e.status = 'actif'"];
 $params = [];
 
@@ -53,7 +52,7 @@ if ($search) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les élèves avec leur suivi scolaire
+// RÃ©cupÃ©rer les élèves avec leur suivi scolaire
 try {
     $eleves = $database->query(
         "SELECT e.*, c.nom as classe_nom, c.niveau,
@@ -74,7 +73,7 @@ try {
     $eleves = [];
 }
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 try {
     $classes = $database->query(
         "SELECT DISTINCT c.id, c.nom, c.niveau 
@@ -109,7 +108,7 @@ try {
     $moyennes_classes = [];
 }
 
-// Élèves en difficulté
+// Ã‰lÃ¨ves en difficultÃ©
 try {
     $eleves_difficulte = $database->query(
         "SELECT e.*, c.nom as classe_nom, ss.moyenne_generale, ss.decision_conseil
@@ -137,13 +136,13 @@ include '../../../../includes/header.php';
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="../../../../dashboard.php">Tableau de bord</a></li>
-                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Élèves</a></li>
+                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Ã‰lÃ¨ves</a></li>
                         <li class="breadcrumb-item active">Suivi Scolaire</li>
                     </ol>
                 </div>
                 <h4 class="page-title">
                     <i class="mdi mdi-account-multiple-check me-2"></i>
-                    Suivi Scolaire des Élèves
+                    Suivi Scolaire des Ã‰lÃ¨ves
                 </h4>
             </div>
         </div>
@@ -161,7 +160,7 @@ include '../../../../includes/header.php';
                             <label for="search" class="form-label">Recherche</label>
                             <input type="text" class="form-control" id="search" name="search" 
                                    value="<?php echo htmlspecialchars($search); ?>" 
-                                   placeholder="Nom, prénom ou matricule...">
+                                   placeholder="Nom, prÃ©nom ou matricule...">
                         </div>
                         <div class="col-md-3">
                             <label for="classe_filter" class="form-label">Classe</label>
@@ -179,8 +178,8 @@ include '../../../../includes/header.php';
                             <select class="form-select" id="trimestre_filter" name="trimestre_filter">
                                 <option value="">Tous les trimestres</option>
                                 <option value="1er_trimestre" <?php echo $trimestre_filter === '1er_trimestre' ? 'selected' : ''; ?>>1er Trimestre</option>
-                                <option value="2eme_trimestre" <?php echo $trimestre_filter === '2eme_trimestre' ? 'selected' : ''; ?>>2ème Trimestre</option>
-                                <option value="3eme_trimestre" <?php echo $trimestre_filter === '3eme_trimestre' ? 'selected' : ''; ?>>3ème Trimestre</option>
+                                <option value="2eme_trimestre" <?php echo $trimestre_filter === '2eme_trimestre' ? 'selected' : ''; ?>>2Ã¨me Trimestre</option>
+                                <option value="3eme_trimestre" <?php echo $trimestre_filter === '3eme_trimestre' ? 'selected' : ''; ?>>3Ã¨me Trimestre</option>
                                 <option value="annuel" <?php echo $trimestre_filter === 'annuel' ? 'selected' : ''; ?>>Annuel</option>
                             </select>
                         </div>
@@ -217,7 +216,7 @@ include '../../../../includes/header.php';
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-0"><?php echo $classe['classe_nom']; ?></h6>
-                                        <small class="text-muted"><?php echo $classe['nombre_eleves']; ?> élève(s)</small>
+                                        <small class="text-muted"><?php echo $classe['nombre_eleves']; ?> Ã©lÃ¨ve(s)</small>
                                     </div>
                                     <div class="text-end">
                                         <h5 class="mb-0 text-primary">
@@ -231,20 +230,20 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-3">
                             <i class="mdi mdi-information-outline text-muted" style="font-size: 32px;"></i>
-                            <p class="text-muted mt-2">Aucune donnée disponible</p>
+                            <p class="text-muted mt-2">Aucune donnÃ©e disponible</p>
                         </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Élèves en difficulté -->
+        <!-- Ã‰lÃ¨ves en difficultÃ© -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
                     <h5 class="header-title">
                         <i class="mdi mdi-alert-circle me-2"></i>
-                        Élèves en Difficulté
+                        Ã‰lÃ¨ves en DifficultÃ©
                     </h5>
                 </div>
                 <div class="card-body">
@@ -253,10 +252,10 @@ include '../../../../includes/header.php';
                             <table class="table table-centered table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Élève</th>
+                                        <th>Ã‰lÃ¨ve</th>
                                         <th>Classe</th>
                                         <th>Moyenne</th>
-                                        <th>Décision</th>
+                                        <th>DÃ©cision</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -292,7 +291,7 @@ include '../../../../includes/header.php';
                                                         <?php echo $eleve['moyenne_generale']; ?>/20
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Non évalué</span>
+                                                    <span class="badge bg-secondary">Non Ã©valuÃ©</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -320,7 +319,7 @@ include '../../../../includes/header.php';
                                                         <?php echo ucfirst(str_replace('_', ' ', $eleve['decision_conseil'])); ?>
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Non décidé</span>
+                                                    <span class="badge bg-secondary">Non dÃ©cidÃ©</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -337,7 +336,7 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-3">
                             <i class="mdi mdi-check-circle text-success" style="font-size: 32px;"></i>
-                            <p class="text-success mt-2">Aucun élève en difficulté !</p>
+                            <p class="text-success mt-2">Aucun Ã©lÃ¨ve en difficultÃ© !</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -352,7 +351,7 @@ include '../../../../includes/header.php';
                 <div class="card-header">
                     <h4 class="header-title">
                         <i class="mdi mdi-format-list-bulleted me-2"></i>
-                        Suivi Scolaire des Élèves
+                        Suivi Scolaire des Ã‰lÃ¨ves
                     </h4>
                 </div>
                 <div class="card-body">
@@ -361,12 +360,12 @@ include '../../../../includes/header.php';
                             <table class="table table-centered table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Élève</th>
+                                        <th>Ã‰lÃ¨ve</th>
                                         <th>Classe</th>
                                         <th>Trimestre</th>
                                         <th>Moyenne</th>
                                         <th>Rang</th>
-                                        <th>Décision</th>
+                                        <th>DÃ©cision</th>
                                         <th>Paiements</th>
                                         <th>Sanctions</th>
                                         <th>Actions</th>
@@ -395,7 +394,7 @@ include '../../../../includes/header.php';
                                             </td>
                                             <td>
                                                 <span class="badge bg-light text-dark">
-                                                    <?php echo $eleve['classe_nom'] ?? 'Non assigné'; ?>
+                                                    <?php echo $eleve['classe_nom'] ?? 'Non assignÃ©'; ?>
                                                 </span>
                                             </td>
                                             <td>
@@ -404,7 +403,7 @@ include '../../../../includes/header.php';
                                                         <?php echo ucfirst(str_replace('_', ' ', $eleve['trimestre'])); ?>
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Non défini</span>
+                                                    <span class="badge bg-secondary">Non dÃ©fini</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -413,7 +412,7 @@ include '../../../../includes/header.php';
                                                         <?php echo $eleve['moyenne_generale']; ?>/20
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Non évalué</span>
+                                                    <span class="badge bg-secondary">Non Ã©valuÃ©</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -450,7 +449,7 @@ include '../../../../includes/header.php';
                                                         <?php echo ucfirst(str_replace('_', ' ', $eleve['decision_conseil'])); ?>
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-secondary">Non décidé</span>
+                                                    <span class="badge bg-secondary">Non dÃ©cidÃ©</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -459,7 +458,7 @@ include '../../../../includes/header.php';
                                                         <?php echo $eleve['paiements_en_retard']; ?> en retard
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge bg-success">À jour</span>
+                                                    <span class="badge bg-success">Ã€ jour</span>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -495,7 +494,7 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-4">
                             <i class="mdi mdi-information-outline text-muted" style="font-size: 48px;"></i>
-                            <p class="text-muted mt-2">Aucun élève trouvé</p>
+                            <p class="text-muted mt-2">Aucun Ã©lÃ¨ve trouvÃ©</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -505,3 +504,7 @@ include '../../../../includes/header.php';
 </div>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

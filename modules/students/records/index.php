@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module Dossiers Scolaires - Page principale
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('students', 'records', 'read', '../../../dashboard.php');
 
 $page_title = 'Dossiers Scolaires';
 
@@ -53,7 +52,7 @@ $stats['dossiers_complets'] = $stmt->fetch()['total'];
 // Dossiers incomplets
 $stats['dossiers_incomplets'] = $stats['total_dossiers'] - $stats['dossiers_complets'];
 
-// Dossiers mis à jour récemment
+// Dossiers mis Ã  jour rÃ©cemment
 $stmt = $database->query(
     "SELECT COUNT(DISTINCT e.id) as total FROM eleves e 
      JOIN inscriptions i ON e.id = i.eleve_id 
@@ -63,7 +62,7 @@ $stmt = $database->query(
 );
 $stats['dossiers_recents'] = $stmt->fetch()['total'];
 
-// Construction de la requête pour les dossiers
+// Construction de la requÃªte pour les dossiers
 $where_conditions = ["i.annee_scolaire_id = ?"];
 $params = [$current_year['id'] ?? 0];
 
@@ -85,7 +84,7 @@ if ($niveau_filter) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les dossiers avec pagination
+// RÃ©cupÃ©rer les dossiers avec pagination
 $page = (int)($_GET['page'] ?? 1);
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
@@ -121,13 +120,13 @@ $total_stmt = $database->query(
 $total_records = $total_stmt->fetch()['total'];
 $total_pages = ceil($total_records / $per_page);
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
-// Dossiers nécessitant mise à jour
+// Dossiers nÃ©cessitant mise Ã  jour
 $dossiers_attention = $database->query(
     "SELECT e.*, c.nom as classe_nom, c.niveau,
             CASE 
@@ -135,7 +134,7 @@ $dossiers_attention = $database->query(
                 WHEN e.date_naissance IS NULL THEN 'Date de naissance manquante'
                 WHEN e.lieu_naissance IS NULL THEN 'Lieu de naissance manquant'
                 WHEN e.adresse IS NULL THEN 'Adresse manquante'
-                ELSE 'Informations incomplètes'
+                ELSE 'Informations incomplÃ¨tes'
             END as probleme
      FROM eleves e
      JOIN inscriptions i ON e.id = i.eleve_id
@@ -209,13 +208,13 @@ include '../../../includes/header.php';
             </button>
             <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="bulk-update.php">
-                    <i class="fas fa-edit me-2"></i>Mise à jour en masse
+                    <i class="fas fa-edit me-2"></i>Mise Ã  jour en masse
                 </a></li>
                 <li><a class="dropdown-item" href="archive.php">
                     <i class="fas fa-archive me-2"></i>Archiver dossiers
                 </a></li>
                 <li><a class="dropdown-item" href="statistics.php">
-                    <i class="fas fa-chart-bar me-2"></i>Statistiques détaillées
+                    <i class="fas fa-chart-bar me-2"></i>Statistiques dÃ©taillÃ©es
                 </a></li>
             </ul>
         </div>
@@ -275,7 +274,7 @@ include '../../../includes/header.php';
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4><?php echo $stats['dossiers_recents']; ?></h4>
-                        <p class="mb-0">Mis à jour (30j)</p>
+                        <p class="mb-0">Mis Ã  jour (30j)</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-sync fa-2x"></i>
@@ -294,7 +293,7 @@ include '../../../includes/header.php';
                 <label for="search" class="form-label">Rechercher</label>
                 <input type="text" class="form-control" id="search" name="search" 
                        value="<?php echo htmlspecialchars($search); ?>" 
-                       placeholder="Nom, prénom ou matricule...">
+                       placeholder="Nom, prÃ©nom ou matricule...">
             </div>
             <div class="col-md-3">
                 <label for="niveau" class="form-label">Niveau</label>
@@ -360,7 +359,7 @@ include '../../../includes/header.php';
                                 <thead>
                                     <tr>
                                         <th>Photo</th>
-                                        <th>Élève</th>
+                                        <th>Ã‰lÃ¨ve</th>
                                         <th>Matricule</th>
                                         <th>Classe</th>
                                         <th>Statut dossier</th>
@@ -385,7 +384,7 @@ include '../../../includes/header.php';
                                             <td>
                                                 <strong><?php echo htmlspecialchars($dossier['nom'] . ' ' . $dossier['prenom']); ?></strong>
                                                 <br><small class="text-muted">
-                                                    <?php echo $dossier['sexe'] === 'M' ? 'Masculin' : 'Féminin'; ?>
+                                                    <?php echo $dossier['sexe'] === 'M' ? 'Masculin' : 'FÃ©minin'; ?>
                                                     <?php if ($dossier['date_naissance']): ?>
                                                         - <?php echo calculateAge($dossier['date_naissance']); ?> ans
                                                     <?php endif; ?>
@@ -416,7 +415,7 @@ include '../../../includes/header.php';
                                                        class="btn btn-outline-info" title="Voir dossier">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <?php if (checkPermission('students')): ?>
+                                                    <?php if (checkPagePermission('students')): ?>
                                                         <a href="edit.php?id=<?php echo $dossier['id']; ?>" 
                                                            class="btn btn-outline-primary" title="Modifier">
                                                             <i class="fas fa-edit"></i>
@@ -477,7 +476,7 @@ include '../../../includes/header.php';
                                                        class="btn btn-outline-info">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <?php if (checkPermission('students')): ?>
+                                                    <?php if (checkPagePermission('students')): ?>
                                                         <a href="edit.php?id=<?php echo $dossier['id']; ?>" 
                                                            class="btn btn-outline-primary">
                                                             <i class="fas fa-edit"></i>
@@ -499,7 +498,7 @@ include '../../../includes/header.php';
                                 <?php if ($page > 1): ?>
                                     <li class="page-item">
                                         <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
-                                            Précédent
+                                            PrÃ©cÃ©dent
                                         </a>
                                     </li>
                                 <?php endif; ?>
@@ -525,10 +524,10 @@ include '../../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center py-5">
                         <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">Aucun dossier trouvé</h4>
+                        <h4 class="text-muted">Aucun dossier trouvÃ©</h4>
                         <p class="text-muted">
                             <?php if ($search || $classe_filter || $niveau_filter): ?>
-                                Aucun dossier ne correspond aux critères de recherche.
+                                Aucun dossier ne correspond aux critÃ¨res de recherche.
                             <?php else: ?>
                                 Aucun dossier scolaire n'est disponible.
                             <?php endif; ?>
@@ -546,7 +545,7 @@ include '../../../includes/header.php';
     </div>
     
     <div class="col-lg-3">
-        <!-- Dossiers nécessitant attention -->
+        <!-- Dossiers nÃ©cessitant attention -->
         <?php if (!empty($dossiers_attention)): ?>
         <div class="card mb-4">
             <div class="card-header bg-warning text-dark">
@@ -615,7 +614,7 @@ include '../../../includes/header.php';
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-muted text-center">Aucune donnée disponible</p>
+                    <p class="text-muted text-center">Aucune donnÃ©e disponible</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -643,3 +642,7 @@ function toggleView(viewType) {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

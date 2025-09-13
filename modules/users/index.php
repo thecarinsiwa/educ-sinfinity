@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin') && !checkPermission('users_manage')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermission('users', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Utilisateurs';
 
@@ -39,14 +37,19 @@ $stats['recent_logins'] = $stmt->fetch()['total'];
 
 // Utilisateurs par rôle
 $users_by_role = $database->query(
-    "SELECT role, COUNT(*) as nombre FROM users GROUP BY role ORDER BY nombre DESC"
+    "SELECT r.nom as role, COUNT(u.id) as nombre 
+     FROM roles r
+     LEFT JOIN users u ON r.id = u.role_id
+     GROUP BY r.id, r.nom
+     ORDER BY nombre DESC"
 )->fetchAll();
 
 // Utilisateurs récemment créés
 $recent_users = $database->query(
-    "SELECT id, username, nom, prenom, role, status, created_at
-     FROM users 
-     ORDER BY created_at DESC 
+    "SELECT u.id, u.username, u.nom, u.prenom, r.nom as role, u.status, u.created_at
+     FROM users u
+     LEFT JOIN roles r ON u.role_id = r.id
+     ORDER BY u.created_at DESC 
      LIMIT 8"
 )->fetchAll();
 
@@ -74,7 +77,7 @@ include '../../includes/header.php';
         Gestion des Utilisateurs
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <?php if (checkPermission('admin')): ?>
+        <?php if (checkPagePermission('admin')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -389,12 +392,16 @@ include '../../includes/header.php';
                                             <?php echo htmlspecialchars($user['nom'] . ' ' . $user['prenom']); ?>
                                         </td>
                                         <td>
-                                            <span class="badge bg-<?php 
-                                                echo $user['role'] === 'admin' ? 'danger' : 
-                                                    ($user['role'] === 'directeur' ? 'warning' : 'info'); 
-                                            ?>">
-                                                <?php echo ucfirst($user['role']); ?>
-                                            </span>
+                                            <?php if ($user['role']): ?>
+                                                <span class="badge bg-<?php 
+                                                    echo $user['role'] === 'admin' ? 'danger' : 
+                                                        ($user['role'] === 'directeur' ? 'warning' : 'info'); 
+                                                ?>">
+                                                    <?php echo htmlspecialchars($user['role']); ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-secondary">Aucun rôle</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <span class="badge bg-<?php echo $user['status'] === 'actif' ? 'success' : 'secondary'; ?>">
@@ -410,7 +417,7 @@ include '../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('admin')): ?>
+                                                <?php if (checkPagePermission('admin')): ?>
                                                     <a href="edit.php?id=<?php echo $user['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Modifier">
                                                         <i class="fas fa-edit"></i>
@@ -492,7 +499,7 @@ include '../../includes/header.php';
                                     ($role['role'] === 'directeur' ? 'warning' : 
                                     ($role['role'] === 'enseignant' ? 'primary' : 'info')); 
                             ?>">
-                                <?php echo ucfirst($role['role']); ?>
+                                <?php echo htmlspecialchars($role['role']); ?>
                             </span>
                             <div class="text-end">
                                 <strong><?php echo $role['nombre']; ?></strong>
@@ -518,7 +525,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPermission('admin')): ?>
+                    <?php if (checkPagePermission('admin')): ?>
                         <a href="add.php" class="btn btn-outline-primary">
                             <i class="fas fa-user-plus me-2"></i>
                             Nouvel utilisateur

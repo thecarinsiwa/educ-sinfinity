@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('evaluations', 'evaluations', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de l'évaluation
 $evaluation_id = (int)($_GET['id'] ?? 0);
@@ -112,7 +110,7 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (checkPermission('evaluations')): ?>
+        <?php if (checkPagePermission('evaluations')): ?>
             <div class="btn-group">
                 <a href="../notes/entry.php?evaluation_id=<?php echo $evaluation_id; ?>" class="btn btn-success">
                     <i class="fas fa-edit me-1"></i>
@@ -271,7 +269,7 @@ include '../../../includes/header.php';
                     <i class="fas fa-list-ol me-2"></i>
                     Notes des élèves (<?php echo count($notes); ?>/<?php echo $stats['total_eleves']; ?>)
                 </h5>
-                <?php if (checkPermission('evaluations')): ?>
+                <?php if (checkPagePermission('evaluations')): ?>
                     <a href="../notes/entry.php?evaluation_id=<?php echo $evaluation_id; ?>" class="btn btn-sm btn-success">
                         <i class="fas fa-plus me-1"></i>
                         Saisir/Modifier notes
@@ -339,7 +337,7 @@ include '../../../includes/header.php';
                         <i class="fas fa-clipboard fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Aucune note saisie</h5>
                         <p class="text-muted">Les notes pour cette évaluation n'ont pas encore été saisies.</p>
-                        <?php if (checkPermission('evaluations')): ?>
+                        <?php if (checkPagePermission('evaluations')): ?>
                             <a href="../notes/entry.php?evaluation_id=<?php echo $evaluation_id; ?>" class="btn btn-primary">
                                 <i class="fas fa-edit me-1"></i>
                                 Commencer la saisie
@@ -439,7 +437,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPermission('evaluations')): ?>
+                    <?php if (checkPagePermission('evaluations')): ?>
                         <a href="../notes/entry.php?evaluation_id=<?php echo $evaluation_id; ?>" class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i>
                             Saisir/Modifier les notes
@@ -470,7 +468,7 @@ include '../../../includes/header.php';
                         Analyses détaillées
                     </a>
                     
-                    <?php if (checkPermission('evaluations')): ?>
+                    <?php if (checkPagePermission('evaluations')): ?>
                         <a href="delete.php?id=<?php echo $evaluation_id; ?>" 
                            class="btn btn-outline-danger btn-sm btn-delete"
                            data-name="<?php echo htmlspecialchars($evaluation['nom']); ?>">

@@ -16,20 +16,11 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
-if (!function_exists('requireLogin') || !isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Non authentifié']);
-    exit;
-}
-
-// Vérifier les permissions
-if (!function_exists('checkPermission') || !checkPermission('finance')) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Accès refusé']);
-    exit;
-}
+// Vérifier l'authentification et les permissions
+requireLogin();
+requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
 
 // Obtenir l'année scolaire actuelle
 $current_year = null;
@@ -47,33 +38,57 @@ try {
     // Récupérer les statuts demandés
     $statuses = ['actif', 'transfere', 'abandonne', 'diplome', 'non-evalue', 'admis', 'evalue'];
     
-    // Construire la requête SQL - simplifiée pour éviter les erreurs
-    // Utiliser une approche plus simple qui ne dépend pas des inscriptions
-    $sql = "SELECT DISTINCT 
+    // Construire la requête SQL pour calculer la situation financière de chaque élève
+    // CORRECTION: Utilisation de sous-requêtes pour éviter la multiplication par 2
+    // 1. Récupère tous les frais programmés pour la classe de l'élève
+    // 2. Récupère tous les paiements effectués par l'élève pour l'année scolaire active
+    // 3. Calcule le solde restant = (Total frais programmés - Total payé)
+    $sql = "SELECT 
                 e.id,
                 e.nom,
                 e.prenom,
                 e.numero_matricule,
                 COALESCE(c.nom, 'Non assigné') as classe_nom,
                 COALESCE(c.niveau, '-') as niveau,
-                COALESCE(e.status, 'non-defini') as status,
-                COALESCE(c.id, 0) as classe_id
+                COALESCE(i.status, 'non-defini') as status,
+                COALESCE(c.id, 0) as classe_id,
+                -- 1. Total des frais programmés pour la classe de l'élève (sous-requête)
+                COALESCE((
+                    SELECT SUM(fs.montant) 
+                    FROM frais_scolaires fs 
+                    WHERE fs.classe_id = c.id AND fs.annee_scolaire_id = ?
+                ), 0) as total_frais_programmes,
+                -- 2. Total des paiements effectués par l'élève (sous-requête)
+                COALESCE((
+                    SELECT SUM(p.montant_devise_par_defaut) 
+                    FROM paiements p 
+                    WHERE p.eleve_id = e.id AND p.annee_scolaire_id = ?
+                ), 0) as total_paye
             FROM eleves e
-            LEFT JOIN classes c ON e.classe_id = c.id
-            WHERE e.status IN (" . str_repeat('?,', count($statuses) - 1) . "?)
+            JOIN inscriptions i ON e.id = i.eleve_id
+            LEFT JOIN classes c ON i.classe_id = c.id
+            WHERE i.annee_scolaire_id = ? AND i.status = 'inscrit'
             ORDER BY e.nom, e.prenom";
     
-    // Préparer les paramètres (juste les statuts)
-    $params = $statuses;
+    // Préparer les paramètres (année scolaire pour frais, paiements et inscriptions)
+    $params = [$current_year['id'], $current_year['id'], $current_year['id']];
     
     // Exécuter la requête en utilisant la méthode query de la classe Database
     $stmt = $database->query($sql, $params);
     $eleves = $stmt->fetchAll();
     
-    // Formater les données pour DataTables
+    // Obtenir la devise par défaut pour l'affichage
+    $devise_par_defaut = getDefaultCurrency();
+    $symbole_devise = $devise_par_defaut['symbole'] ?? 'FC';
+    
+    // Formater les données pour DataTables avec les informations financières
     $data = [];
     foreach ($eleves as $eleve) {
-        // Nettoyer et valider les données
+        // Nettoyer et valider les données financières
+        $total_frais = (float)($eleve['total_frais_programmes'] ?? 0);      // Total des frais programmés pour la classe
+        $total_paye = (float)($eleve['total_paye'] ?? 0);                  // Total des paiements effectués par l'élève
+        $solde_restant = $total_frais - $total_paye;                       // Solde restant = Total frais - Total payé
+        
         $data[] = [
             'id' => (int)$eleve['id'],
             'numero_matricule' => htmlspecialchars($eleve['numero_matricule'] ?? ''),
@@ -83,6 +98,12 @@ try {
             'niveau' => htmlspecialchars($eleve['niveau'] ?? '-'),
             'status' => htmlspecialchars($eleve['status'] ?? 'non-defini'),
             'classe_id' => (int)$eleve['classe_id'],
+            'total_frais' => $total_frais,
+            'total_paye' => $total_paye,
+            'solde_restant' => $solde_restant,
+            'total_frais_formatted' => number_format($total_frais, 0, ',', ' ') . ' ' . $symbole_devise,
+            'total_paye_formatted' => number_format($total_paye, 0, ',', ' ') . ' ' . $symbole_devise,
+            'solde_restant_formatted' => number_format($solde_restant, 0, ',', ' ') . ' ' . $symbole_devise,
             'actions' => '' // Sera rempli par DataTables
         ];
     }

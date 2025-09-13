@@ -7,7 +7,10 @@
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 requireLogin();
+
+requirePagePermissionFromDB('cartes_eleves', 'get-students', 'read', '../dashboard.php');
 
 $classe_id = $_POST['classe_id'] ?? 0;
 $generation_type = $_POST['generation_type'] ?? 'all';

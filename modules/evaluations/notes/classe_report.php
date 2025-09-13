@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+
+requirePagePermissionFromDB('evaluations', 'notes', 'read', '../../../dashboard.php');
 
 // Récupérer les paramètres
 $classe_id = (int)($_GET['classe_id'] ?? 0);
@@ -439,3 +438,4 @@ if ($print_mode) {
 <?php else: ?>
     <?php include '../../../includes/footer.php'; ?>
 <?php endif; ?>
+

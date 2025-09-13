@@ -1,24 +1,22 @@
-<?php
+﻿<?php
 /**
  * Module Recouvrement - Rapports Comparatifs
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('recouvrement', 'rapports', 'read', '../../dashboard.php');
 
 $errors = [];
 $success_message = '';
 
-// Paramètres de comparaison
+// ParamÃ¨tres de comparaison
 $periode1_debut = $_GET['periode1_debut'] ?? date('Y-m-01', strtotime('-1 month'));
 $periode1_fin = $_GET['periode1_fin'] ?? date('Y-m-t', strtotime('-1 month'));
 $periode2_debut = $_GET['periode2_debut'] ?? date('Y-m-01');
@@ -26,7 +24,7 @@ $periode2_fin = $_GET['periode2_fin'] ?? date('Y-m-t');
 $type_comparaison = $_GET['type_comparaison'] ?? 'mensuel';
 
 try {
-    // Fonction pour récupérer les statistiques d'une période
+    // Fonction pour rÃ©cupÃ©rer les statistiques d'une pÃ©riode
     function getStatsForPeriod($database, $debut, $fin) {
         // Statistiques des paiements
         $paiements = $database->query("
@@ -40,7 +38,7 @@ try {
             AND DATE(date_paiement) BETWEEN ? AND ?
         ", [$debut, $fin])->fetch();
 
-        // Statistiques de solvabilité (snapshot actuel)
+        // Statistiques de solvabilitÃ© (snapshot actuel)
         $solvabilite = $database->query("
             SELECT 
                 COUNT(*) as total_eleves,
@@ -55,7 +53,7 @@ try {
             WHERE a.status = 'active'
         ")->fetch();
 
-        // Statistiques des présences
+        // Statistiques des prÃ©sences
         $presences = $database->query("
             SELECT 
                 COUNT(*) as total_scans,
@@ -75,11 +73,11 @@ try {
         ];
     }
 
-    // Récupérer les statistiques pour les deux périodes
+    // RÃ©cupÃ©rer les statistiques pour les deux pÃ©riodes
     $stats_periode1 = getStatsForPeriod($database, $periode1_debut, $periode1_fin);
     $stats_periode2 = getStatsForPeriod($database, $periode2_debut, $periode2_fin);
 
-    // Comparaison par classe pour la période actuelle
+    // Comparaison par classe pour la pÃ©riode actuelle
     $comparaison_classes = $database->query("
         SELECT 
             cl.nom as classe_nom,
@@ -101,7 +99,7 @@ try {
         ORDER BY montant_total_paiements DESC
     ", [$periode2_debut, $periode2_fin, $periode2_debut, $periode2_fin])->fetchAll();
 
-    // Évolution mensuelle des paiements (12 derniers mois)
+    // Ã‰volution mensuelle des paiements (12 derniers mois)
     $evolution_mensuelle = $database->query("
         SELECT 
             DATE_FORMAT(date_paiement, '%Y-%m') as mois,
@@ -115,7 +113,7 @@ try {
         ORDER BY mois
     ")->fetchAll();
 
-    // Top 10 des types de frais les plus payés
+    // Top 10 des types de frais les plus payÃ©s
     $top_types_frais = $database->query("
         SELECT 
             tf.nom as type_frais,
@@ -123,6 +121,7 @@ try {
             SUM(p.montant) as montant_total
         FROM paiements p
         JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
         JOIN types_frais tf ON fs.type_frais_id = tf.id
         WHERE p.status = 'valide'
         AND DATE(p.date_paiement) BETWEEN ? AND ?
@@ -132,7 +131,7 @@ try {
     ", [$periode2_debut, $periode2_fin])->fetchAll();
 
 } catch (Exception $e) {
-    $errors[] = "Erreur lors du chargement des données : " . $e->getMessage();
+    $errors[] = "Erreur lors du chargement des donnÃ©es : " . $e->getMessage();
 }
 
 // Fonction pour calculer le pourcentage de variation
@@ -181,33 +180,33 @@ include '../../../includes/header.php';
     </div>
 <?php endif; ?>
 
-<!-- Paramètres de comparaison -->
+<!-- ParamÃ¨tres de comparaison -->
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-light">
         <h5 class="mb-0">
             <i class="fas fa-calendar-alt me-2"></i>
-            Paramètres de Comparaison
+            ParamÃ¨tres de Comparaison
         </h5>
     </div>
     <div class="card-body">
         <form method="GET" class="row g-3">
             <div class="col-md-2">
-                <label for="periode1_debut" class="form-label">Période 1 - Début</label>
+                <label for="periode1_debut" class="form-label">PÃ©riode 1 - DÃ©but</label>
                 <input type="date" class="form-control" id="periode1_debut" name="periode1_debut" 
                        value="<?php echo htmlspecialchars($periode1_debut); ?>">
             </div>
             <div class="col-md-2">
-                <label for="periode1_fin" class="form-label">Période 1 - Fin</label>
+                <label for="periode1_fin" class="form-label">PÃ©riode 1 - Fin</label>
                 <input type="date" class="form-control" id="periode1_fin" name="periode1_fin" 
                        value="<?php echo htmlspecialchars($periode1_fin); ?>">
             </div>
             <div class="col-md-2">
-                <label for="periode2_debut" class="form-label">Période 2 - Début</label>
+                <label for="periode2_debut" class="form-label">PÃ©riode 2 - DÃ©but</label>
                 <input type="date" class="form-control" id="periode2_debut" name="periode2_debut" 
                        value="<?php echo htmlspecialchars($periode2_debut); ?>">
             </div>
             <div class="col-md-2">
-                <label for="periode2_fin" class="form-label">Période 2 - Fin</label>
+                <label for="periode2_fin" class="form-label">PÃ©riode 2 - Fin</label>
                 <input type="date" class="form-control" id="periode2_fin" name="periode2_fin" 
                        value="<?php echo htmlspecialchars($periode2_fin); ?>">
             </div>
@@ -217,7 +216,7 @@ include '../../../includes/header.php';
                     <option value="mensuel" <?php echo ($type_comparaison == 'mensuel') ? 'selected' : ''; ?>>Mensuel</option>
                     <option value="trimestriel" <?php echo ($type_comparaison == 'trimestriel') ? 'selected' : ''; ?>>Trimestriel</option>
                     <option value="annuel" <?php echo ($type_comparaison == 'annuel') ? 'selected' : ''; ?>>Annuel</option>
-                    <option value="personnalise" <?php echo ($type_comparaison == 'personnalise') ? 'selected' : ''; ?>>Personnalisé</option>
+                    <option value="personnalise" <?php echo ($type_comparaison == 'personnalise') ? 'selected' : ''; ?>>PersonnalisÃ©</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex align-items-end">
@@ -230,26 +229,26 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Comparaison des périodes -->
+<!-- Comparaison des pÃ©riodes -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-balance-scale me-2"></i>
-                    Comparaison des Périodes
+                    Comparaison des PÃ©riodes
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-md-6">
                         <h6 class="text-muted">
-                            Période 1: <?php echo date('d/m/Y', strtotime($periode1_debut)); ?> - <?php echo date('d/m/Y', strtotime($periode1_fin)); ?>
+                            PÃ©riode 1: <?php echo date('d/m/Y', strtotime($periode1_debut)); ?> - <?php echo date('d/m/Y', strtotime($periode1_fin)); ?>
                         </h6>
                     </div>
                     <div class="col-md-6">
                         <h6 class="text-muted">
-                            Période 2: <?php echo date('d/m/Y', strtotime($periode2_debut)); ?> - <?php echo date('d/m/Y', strtotime($periode2_fin)); ?>
+                            PÃ©riode 2: <?php echo date('d/m/Y', strtotime($periode2_debut)); ?> - <?php echo date('d/m/Y', strtotime($periode2_fin)); ?>
                         </h6>
                     </div>
                 </div>
@@ -259,8 +258,8 @@ include '../../../includes/header.php';
                         <thead class="table-light">
                             <tr>
                                 <th>Indicateur</th>
-                                <th class="text-center">Période 1</th>
-                                <th class="text-center">Période 2</th>
+                                <th class="text-center">PÃ©riode 1</th>
+                                <th class="text-center">PÃ©riode 2</th>
                                 <th class="text-center">Variation</th>
                                 <th class="text-center">Tendance</th>
                             </tr>
@@ -310,7 +309,7 @@ include '../../../includes/header.php';
                                 </td>
                             </tr>
                             <tr>
-                                <td><strong>Élèves Payeurs</strong></td>
+                                <td><strong>Ã‰lÃ¨ves Payeurs</strong></td>
                                 <td class="text-center"><?php echo number_format($stats_periode1['paiements']['eleves_payeurs'] ?? 0); ?></td>
                                 <td class="text-center"><?php echo number_format($stats_periode2['paiements']['eleves_payeurs'] ?? 0); ?></td>
                                 <td class="text-center">
@@ -330,9 +329,9 @@ include '../../../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                             </tr>
-                            <!-- Présences -->
+                            <!-- PrÃ©sences -->
                             <tr>
-                                <td><strong>Total Scans Présence</strong></td>
+                                <td><strong>Total Scans PrÃ©sence</strong></td>
                                 <td class="text-center"><?php echo number_format($stats_periode1['presences']['total_scans'] ?? 0); ?></td>
                                 <td class="text-center"><?php echo number_format($stats_periode2['presences']['total_scans'] ?? 0); ?></td>
                                 <td class="text-center">
@@ -353,7 +352,7 @@ include '../../../includes/header.php';
                                 </td>
                             </tr>
                             <tr>
-                                <td><strong>Élèves Présents</strong></td>
+                                <td><strong>Ã‰lÃ¨ves PrÃ©sents</strong></td>
                                 <td class="text-center"><?php echo number_format($stats_periode1['presences']['eleves_presents'] ?? 0); ?></td>
                                 <td class="text-center"><?php echo number_format($stats_periode2['presences']['eleves_presents'] ?? 0); ?></td>
                                 <td class="text-center">
@@ -382,13 +381,13 @@ include '../../../includes/header.php';
 </div>
 
 <div class="row mb-4">
-    <!-- Évolution mensuelle -->
+    <!-- Ã‰volution mensuelle -->
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-header bg-light">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-line me-2"></i>
-                    Évolution Mensuelle des Paiements (12 derniers mois)
+                    Ã‰volution Mensuelle des Paiements (12 derniers mois)
                 </h5>
             </div>
             <div class="card-body">
@@ -397,7 +396,7 @@ include '../../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center text-muted">
                         <i class="fas fa-chart-line fa-3x mb-3"></i>
-                        <p>Aucune donnée d'évolution disponible</p>
+                        <p>Aucune donnÃ©e d'Ã©volution disponible</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -410,7 +409,7 @@ include '../../../includes/header.php';
             <div class="card-header bg-light">
                 <h5 class="mb-0">
                     <i class="fas fa-tags me-2"></i>
-                    Top Types de Frais (Période 2)
+                    Top Types de Frais (PÃ©riode 2)
                 </h5>
             </div>
             <div class="card-body">
@@ -432,7 +431,7 @@ include '../../../includes/header.php';
                 <?php else: ?>
                     <div class="text-center text-muted">
                         <i class="fas fa-tags fa-3x mb-3"></i>
-                        <p>Aucune donnée disponible</p>
+                        <p>Aucune donnÃ©e disponible</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -445,7 +444,7 @@ include '../../../includes/header.php';
     <div class="card-header bg-light">
         <h5 class="mb-0">
             <i class="fas fa-graduation-cap me-2"></i>
-            Performance par Classe (Période 2)
+            Performance par Classe (PÃ©riode 2)
         </h5>
     </div>
     <div class="card-body">
@@ -455,10 +454,10 @@ include '../../../includes/header.php';
                     <thead>
                         <tr>
                             <th>Classe</th>
-                            <th>Élèves Payeurs</th>
+                            <th>Ã‰lÃ¨ves Payeurs</th>
                             <th>Montant Total Paiements</th>
-                            <th>% Solvabilité Moyen</th>
-                            <th>Élèves Présents</th>
+                            <th>% SolvabilitÃ© Moyen</th>
+                            <th>Ã‰lÃ¨ves PrÃ©sents</th>
                             <th>Performance Globale</th>
                         </tr>
                     </thead>
@@ -504,7 +503,7 @@ include '../../../includes/header.php';
         <?php else: ?>
             <div class="text-center text-muted">
                 <i class="fas fa-graduation-cap fa-3x mb-3"></i>
-                <p>Aucune donnée par classe disponible</p>
+                <p>Aucune donnÃ©e par classe disponible</p>
             </div>
         <?php endif; ?>
     </div>
@@ -514,7 +513,7 @@ include '../../../includes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// Graphique d'évolution mensuelle
+// Graphique d'Ã©volution mensuelle
 <?php if (!empty($evolution_mensuelle)): ?>
 const evolutionMensuelleCtx = document.getElementById('evolutionMensuelleChart').getContext('2d');
 const evolutionMensuelleChart = new Chart(evolutionMensuelleCtx, {
@@ -578,13 +577,13 @@ const evolutionMensuelleChart = new Chart(evolutionMensuelleCtx, {
 });
 <?php endif; ?>
 
-// Mise à jour automatique des dates selon le type de comparaison
+// Mise Ã  jour automatique des dates selon le type de comparaison
 document.getElementById('type_comparaison').addEventListener('change', function() {
     const type = this.value;
     const now = new Date();
     
     if (type === 'mensuel') {
-        // Mois précédent vs mois actuel
+        // Mois prÃ©cÃ©dent vs mois actuel
         const moisPrecedent = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const finMoisPrecedent = new Date(now.getFullYear(), now.getMonth(), 0);
         const debutMoisActuel = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -595,8 +594,9 @@ document.getElementById('type_comparaison').addEventListener('change', function(
         document.getElementById('periode2_debut').value = debutMoisActuel.toISOString().split('T')[0];
         document.getElementById('periode2_fin').value = finMoisActuel.toISOString().split('T')[0];
     }
-    // Ajouter d'autres types si nécessaire
+    // Ajouter d'autres types si nÃ©cessaire
 });
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

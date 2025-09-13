@@ -1,20 +1,18 @@
-<?php
+﻿<?php
 /**
- * API pour récupérer les données d'une candidature
+ * API pour rÃ©cupÃ©rer les donnÃ©es d'une candidature
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
-    exit;
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
 
 $candidature_id = intval($_GET['id'] ?? 0);
 
@@ -34,7 +32,7 @@ try {
 
     if (!$candidature) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Candidature non trouvée ou non acceptée']);
+        echo json_encode(['success' => false, 'message' => 'Candidature non trouvÃ©e ou non acceptÃ©e']);
         exit;
     }
 
@@ -51,3 +49,7 @@ try {
     echo json_encode(['success' => false, 'message' => 'Erreur serveur']);
 }
 ?>
+
+
+
+

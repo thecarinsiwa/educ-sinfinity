@@ -6,13 +6,10 @@
 
 require_once '../../config/config.php';
 require_once '../../includes/functions.php';
+require_once '../includes/permissions-pages.php';
 requireLogin();
 
-// Vérifier les permissions
-if (!hasPermission('cartes_eleves', 'manage')) {
-    echo json_encode(['success' => false, 'message' => 'Permissions insuffisantes']);
-    exit;
-}
+requirePagePermissionFromDB('cartes_eleves', 'regenerate-all', 'edit', '../dashboard.php');
 
 try {
     $database->beginTransaction();
@@ -79,3 +76,4 @@ try {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 ?>
+

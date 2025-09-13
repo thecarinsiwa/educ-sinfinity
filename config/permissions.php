@@ -176,18 +176,68 @@ $ROLES_PERMISSIONS = [
  * @return bool True si l'utilisateur a la permission
  */
 function checkPermission($permission) {
-    global $ROLES_PERMISSIONS;
+    global $ROLES_PERMISSIONS, $database;
     
     // Vérifier si l'utilisateur est connecté
-    if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role'])) {
+    if (!isset($_SESSION['user_id'])) {
         return false;
     }
     
-    $user_role = $_SESSION['user_role'];
+    // Essayer d'abord le nouveau système basé sur la table roles
+    if (isset($database) && isset($_SESSION['user_id'])) {
+        try {
+            // Récupérer les permissions du rôle de l'utilisateur
+            $stmt = $database->query(
+                "SELECT r.permissions 
+                 FROM users u 
+                 JOIN roles r ON u.role_id = r.id 
+                 WHERE u.id = ? AND r.actif = 1",
+                [$_SESSION['user_id']]
+            );
+            $result = $stmt->fetch();
+            
+            if ($result && $result['permissions']) {
+                $permissions = json_decode($result['permissions'], true);
+                
+                // Vérifier si l'utilisateur a la permission dans le nouveau format
+                // Format: module:page:action
+                if (is_array($permissions)) {
+                    foreach ($permissions as $module => $module_permissions) {
+                        if (is_array($module_permissions)) {
+                            foreach ($module_permissions as $page => $actions) {
+                                if (is_array($actions)) {
+                                    // Vérifier si la permission correspond au module
+                                    if ($permission === $module || 
+                                        $permission === $module . '_view' || 
+                                        $permission === $module . '_edit') {
+                                        return true;
+                                    }
+                                    
+                                    // Vérifier les permissions spécifiques
+                                    foreach ($actions as $action) {
+                                        if ($permission === $module . ':' . $page . ':' . $action) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Erreur dans checkPermission (nouveau système): " . $e->getMessage());
+        }
+    }
     
-    // Vérifier si le rôle existe et a la permission
-    if (isset($ROLES_PERMISSIONS[$user_role])) {
-        return in_array($permission, $ROLES_PERMISSIONS[$user_role]);
+    // Fallback vers l'ancien système si le nouveau ne fonctionne pas
+    if (isset($_SESSION['user_role'])) {
+        $user_role = $_SESSION['user_role'];
+        
+        // Vérifier si le rôle existe et a la permission
+        if (isset($ROLES_PERMISSIONS[$user_role])) {
+            return in_array($permission, $ROLES_PERMISSIONS[$user_role]);
+        }
     }
     
     return false;

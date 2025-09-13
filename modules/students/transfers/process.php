@@ -1,22 +1,22 @@
-<?php
+﻿<?php
 /**
- * Traitement individuel d'un transfert d'élève
+ * Traitement individuel d'un transfert d'Ã©lÃ¨ve
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'transfers', 'edit', '../../../dashboard.php');
 
 $page_title = "Traitement du transfert";
 
-// Récupérer l'ID du transfert
+// RÃ©cupÃ©rer l'ID du transfert
 $transfer_id = $_GET['id'] ?? null;
 
 if (!$transfer_id) {
@@ -43,10 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Historique
                 $database->query(
                     "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'approbation', 'en_attente', 'approuve', ?, ?)",
-                    [$transfer_id, $commentaire ?: 'Transfert approuvé', $_SESSION['user_id']]
+                    [$transfer_id, $commentaire ?: 'Transfert approuvÃ©', $_SESSION['user_id']]
                 );
                 
-                $message = 'Transfert approuvé avec succès !';
+                $message = 'Transfert approuvÃ© avec succÃ¨s !';
                 $message_type = 'success';
                 break;
                 
@@ -60,19 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Historique
                 $database->query(
                     "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'rejet', 'en_attente', 'rejete', ?, ?)",
-                    [$transfer_id, $commentaire ?: 'Transfert rejeté', $_SESSION['user_id']]
+                    [$transfer_id, $commentaire ?: 'Transfert rejetÃ©', $_SESSION['user_id']]
                 );
                 
-                $message = 'Transfert rejeté';
+                $message = 'Transfert rejetÃ©';
                 $message_type = 'warning';
                 break;
                 
             case 'complete':
-                // Compléter le transfert
+                // ComplÃ©ter le transfert
                 $transfer_info = $database->query("SELECT * FROM transfers WHERE id = ?", [$transfer_id])->fetch();
                 
                 if ($transfer_info['statut'] !== 'approuve') {
-                    throw new Exception('Le transfert doit être approuvé avant d\'être complété');
+                    throw new Exception('Le transfert doit Ãªtre approuvÃ© avant d\'Ãªtre complÃ©tÃ©');
                 }
                 
                 $database->query(
@@ -80,14 +80,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [$transfer_id]
                 );
                 
-                // Mettre à jour le statut de l'élève si c'est une sortie
+                // Mettre Ã  jour le statut de l'Ã©lÃ¨ve si c'est une sortie
                 if (in_array($transfer_info['type_mouvement'], ['transfert_sortant', 'sortie_definitive'])) {
                     $database->query(
                         "UPDATE inscriptions SET status = 'transfere' WHERE eleve_id = ? AND status = 'inscrit'",
                         [$transfer_info['eleve_id']]
                     );
                     
-                    // Mettre à jour le statut de l'élève
+                    // Mettre Ã  jour le statut de l'Ã©lÃ¨ve
                     $new_status = $transfer_info['type_mouvement'] === 'sortie_definitive' ? 'diplome' : 'transfere';
                     $database->query(
                         "UPDATE eleves SET status = ? WHERE id = ?",
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                 }
                 
-                // Générer automatiquement un certificat si pas encore fait
+                // GÃ©nÃ©rer automatiquement un certificat si pas encore fait
                 if (!$transfer_info['certificat_genere']) {
                     $numero_certificat = 'CERT' . date('Y') . str_pad($transfer_id, 6, '0', STR_PAD_LEFT);
                     $database->query(
@@ -107,10 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Historique
                 $database->query(
                     "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'completion', 'approuve', 'complete', ?, ?)",
-                    [$transfer_id, $commentaire ?: 'Transfert complété', $_SESSION['user_id']]
+                    [$transfer_id, $commentaire ?: 'Transfert complÃ©tÃ©', $_SESSION['user_id']]
                 );
                 
-                $message = 'Transfert complété avec succès ! Certificat généré automatiquement.';
+                $message = 'Transfert complÃ©tÃ© avec succÃ¨s ! Certificat gÃ©nÃ©rÃ© automatiquement.';
                 $message_type = 'success';
                 break;
                 
@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'update_documents':
-                // Mettre à jour les documents
+                // Mettre Ã  jour les documents
                 $documents = $_POST['documents'] ?? [];
                 
                 foreach ($documents as $doc_id => $status) {
@@ -144,16 +144,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Historique
                 $database->query(
-                    "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Documents mis à jour', ?)",
+                    "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Documents mis Ã  jour', ?)",
                     [$transfer_id, $_POST['current_status'], $_POST['current_status'], $_SESSION['user_id']]
                 );
                 
-                $message = 'Documents mis à jour avec succès';
+                $message = 'Documents mis Ã  jour avec succÃ¨s';
                 $message_type = 'success';
                 break;
                 
             case 'update_fees':
-                // Mettre à jour les frais
+                // Mettre Ã  jour les frais
                 $fees = $_POST['fees'] ?? [];
                 
                 foreach ($fees as $fee_id => $data) {
@@ -169,11 +169,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Historique
                 $database->query(
-                    "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Frais mis à jour', ?)",
+                    "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Frais mis Ã  jour', ?)",
                     [$transfer_id, $_POST['current_status'], $_POST['current_status'], $_SESSION['user_id']]
                 );
                 
-                $message = 'Frais mis à jour avec succès';
+                $message = 'Frais mis Ã  jour avec succÃ¨s';
                 $message_type = 'success';
                 break;
                 
@@ -188,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         showMessage($message_type, $message);
         
-        // Rediriger vers la page de visualisation après traitement
+        // Rediriger vers la page de visualisation aprÃ¨s traitement
         if (in_array($action, ['approve', 'reject', 'complete', 'reopen'])) {
             redirectTo("view.php?id=$transfer_id");
         }
@@ -199,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les informations complètes du transfert
+// RÃ©cupÃ©rer les informations complÃ¨tes du transfert
 $transfer = $database->query(
     "SELECT t.*, e.numero_matricule, e.nom, e.prenom, e.date_naissance, e.lieu_naissance, e.sexe,
             e.adresse, e.telephone_parent, e.email_parent, e.nom_pere, e.nom_mere, e.profession_pere, e.profession_mere,
@@ -221,23 +221,23 @@ $transfer = $database->query(
 )->fetch();
 
 if (!$transfer) {
-    showMessage('error', 'Transfert non trouvé');
+    showMessage('error', 'Transfert non trouvÃ©');
     redirectTo('bulk-process.php');
 }
 
-// Récupérer les documents
+// RÃ©cupÃ©rer les documents
 $documents = $database->query(
     "SELECT * FROM transfer_documents WHERE transfer_id = ? ORDER BY obligatoire DESC, nom_document",
     [$transfer_id]
 )->fetchAll();
 
-// Récupérer les frais
+// RÃ©cupÃ©rer les frais
 $fees = $database->query(
     "SELECT * FROM transfer_fees WHERE transfer_id = ? ORDER BY type_frais",
     [$transfer_id]
 )->fetchAll();
 
-// Récupérer l'historique récent
+// RÃ©cupÃ©rer l'historique rÃ©cent
 $recent_history = $database->query(
     "SELECT th.*, u.nom as user_nom, u.prenom as user_prenom
      FROM transfer_history th
@@ -540,7 +540,7 @@ include '../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="process-header">
     <div class="container-fluid">
         <div class="row align-items-center">
@@ -550,7 +550,7 @@ include '../../../includes/header.php';
                     Traitement du transfert
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Transfert N° <?php echo str_pad($transfer_id, 6, '0', STR_PAD_LEFT); ?> -
+                    Transfert NÂ° <?php echo str_pad($transfer_id, 6, '0', STR_PAD_LEFT); ?> -
                     <?php echo htmlspecialchars($transfer['nom'] . ' ' . $transfer['prenom']); ?>
                 </p>
             </div>
@@ -558,7 +558,7 @@ include '../../../includes/header.php';
                 <div class="animate-fade-in animate-delay-2">
                     <a href="view.php?id=<?php echo $transfer_id; ?>" class="btn btn-light btn-process">
                         <i class="fas fa-eye me-2"></i>
-                        Voir détails
+                        Voir dÃ©tails
                     </a>
                     <a href="bulk-process.php" class="btn btn-secondary btn-process">
                         <i class="fas fa-arrow-left me-2"></i>
@@ -570,7 +570,7 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Résumé de l'élève et du transfert -->
+<!-- RÃ©sumÃ© de l'Ã©lÃ¨ve et du transfert -->
 <div class="student-header animate-fade-in animate-delay-1">
     <div class="row align-items-center">
         <div class="col-md-2 text-center">
@@ -591,7 +591,7 @@ include '../../../includes/header.php';
                         $type_labels = [
                             'transfert_entrant' => '<i class="fas fa-arrow-right text-success"></i> Transfert entrant',
                             'transfert_sortant' => '<i class="fas fa-arrow-left text-warning"></i> Transfert sortant',
-                            'sortie_definitive' => '<i class="fas fa-graduation-cap text-info"></i> Sortie définitive'
+                            'sortie_definitive' => '<i class="fas fa-graduation-cap text-info"></i> Sortie dÃ©finitive'
                         ];
                         echo $type_labels[$transfer['type_mouvement']] ?? $transfer['type_mouvement'];
                         ?>
@@ -617,9 +617,9 @@ include '../../../includes/header.php';
                 ];
                 $status_labels = [
                     'en_attente' => 'En attente',
-                    'approuve' => 'Approuvé',
-                    'rejete' => 'Rejeté',
-                    'complete' => 'Complété'
+                    'approuve' => 'ApprouvÃ©',
+                    'rejete' => 'RejetÃ©',
+                    'complete' => 'ComplÃ©tÃ©'
                 ];
                 ?>
                 <i class="<?php echo $status_icons[$transfer['statut']] ?? 'fas fa-question'; ?> me-2"></i>
@@ -699,13 +699,13 @@ include '../../../includes/header.php';
 
             <button type="button" class="btn btn-info btn-process" data-bs-toggle="modal" data-bs-target="#documentsModal">
                 <i class="fas fa-file-alt me-2"></i>
-                Gérer documents
+                GÃ©rer documents
             </button>
 
             <?php if (!empty($fees)): ?>
                 <button type="button" class="btn btn-secondary btn-process" data-bs-toggle="modal" data-bs-target="#feesModal">
                     <i class="fas fa-money-bill me-2"></i>
-                    Gérer frais
+                    GÃ©rer frais
                 </button>
             <?php endif; ?>
         </div>
@@ -759,7 +759,7 @@ include '../../../includes/header.php';
         <div class="process-card animate-fade-in animate-delay-4">
             <h5 class="mb-3">
                 <i class="fas fa-money-bill me-2"></i>
-                Frais associés
+                Frais associÃ©s
                 <span class="badge bg-secondary ms-2"><?php echo count($fees); ?></span>
             </h5>
 
@@ -783,7 +783,7 @@ include '../../../includes/header.php';
                                     <div class="fw-bold"><?php echo number_format($fee['montant'], 0, ',', ' '); ?> FC</div>
                                     <?php if ($fee['paye']): ?>
                                         <small class="text-success">
-                                            <i class="fas fa-check me-1"></i>Payé
+                                            <i class="fas fa-check me-1"></i>PayÃ©
                                             <?php if ($fee['date_paiement']): ?>
                                                 <br><?php echo date('d/m/Y', strtotime($fee['date_paiement'])); ?>
                                             <?php endif; ?>
@@ -798,36 +798,36 @@ include '../../../includes/header.php';
                         </div>
                     <?php endforeach; ?>
 
-                    <!-- Résumé des frais -->
+                    <!-- RÃ©sumÃ© des frais -->
                     <div class="mt-3 p-3 bg-light rounded">
                         <div class="d-flex justify-content-between">
                             <strong>Total frais:</strong>
                             <strong><?php echo number_format($total_frais, 0, ',', ' '); ?> FC</strong>
                         </div>
                         <div class="d-flex justify-content-between text-success">
-                            <span>Total payé:</span>
+                            <span>Total payÃ©:</span>
                             <span><?php echo number_format($total_payes, 0, ',', ' '); ?> FC</span>
                         </div>
                         <?php if ($total_frais > $total_payes): ?>
                             <div class="d-flex justify-content-between text-danger">
-                                <span>Reste à payer:</span>
+                                <span>Reste Ã  payer:</span>
                                 <span><?php echo number_format($total_frais - $total_payes, 0, ',', ' '); ?> FC</span>
                             </div>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <p class="text-muted text-center">Aucun frais associé</p>
+                    <p class="text-muted text-center">Aucun frais associÃ©</p>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Historique récent -->
+<!-- Historique rÃ©cent -->
 <div class="process-card animate-fade-in animate-delay-4">
     <h5 class="mb-3">
         <i class="fas fa-history me-2"></i>
-        Historique récent
+        Historique rÃ©cent
         <span class="badge bg-secondary ms-2"><?php echo count($recent_history); ?></span>
     </h5>
 
@@ -839,7 +839,7 @@ include '../../../includes/header.php';
                         <h6 class="mb-1">
                             <?php
                             $action_labels = [
-                                'creation' => 'Création du transfert',
+                                'creation' => 'CrÃ©ation du transfert',
                                 'modification' => 'Modification',
                                 'approbation' => 'Approbation',
                                 'rejet' => 'Rejet',
@@ -854,14 +854,14 @@ include '../../../includes/header.php';
                         <?php if ($item['ancien_statut'] && $item['nouveau_statut'] && $item['ancien_statut'] !== $item['nouveau_statut']): ?>
                             <small class="text-info">
                                 <i class="fas fa-arrow-right me-1"></i>
-                                <?php echo ucfirst(str_replace('_', ' ', $item['ancien_statut'])); ?> →
+                                <?php echo ucfirst(str_replace('_', ' ', $item['ancien_statut'])); ?> â†’
                                 <?php echo ucfirst(str_replace('_', ' ', $item['nouveau_statut'])); ?>
                             </small>
                         <?php endif; ?>
                     </div>
                     <div class="text-end">
                         <small class="text-muted">
-                            <?php echo date('d/m/Y à H:i', strtotime($item['created_at'])); ?>
+                            <?php echo date('d/m/Y Ã  H:i', strtotime($item['created_at'])); ?>
                             <?php if ($item['user_nom']): ?>
                                 <br>par <?php echo htmlspecialchars($item['user_nom'] . ' ' . $item['user_prenom']); ?>
                             <?php endif; ?>
@@ -936,7 +936,7 @@ include '../../../includes/header.php';
                 <div class="modal-body">
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        Cette action rejettera définitivement le transfert.
+                        Cette action rejettera dÃ©finitivement le transfert.
                     </div>
                     <div class="mb-3">
                         <label for="reject_comment" class="form-label">Motif du rejet <span class="text-danger">*</span></label>
@@ -972,7 +972,7 @@ include '../../../includes/header.php';
                 <div class="modal-body">
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle me-2"></i>
-                        Cette action finalisera le transfert et générera automatiquement le certificat.
+                        Cette action finalisera le transfert et gÃ©nÃ©rera automatiquement le certificat.
                     </div>
                     <div class="mb-3">
                         <label for="complete_comment" class="form-label">Commentaire (optionnel)</label>
@@ -992,7 +992,7 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Modal de réouverture -->
+<!-- Modal de rÃ©ouverture -->
 <div class="modal fade" id="reopenModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1012,7 +1012,7 @@ include '../../../includes/header.php';
                         Cette action remettra le transfert en attente d'approbation.
                     </div>
                     <div class="mb-3">
-                        <label for="reopen_comment" class="form-label">Motif de la réouverture <span class="text-danger">*</span></label>
+                        <label for="reopen_comment" class="form-label">Motif de la rÃ©ouverture <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="reopen_comment" name="commentaire" rows="3"
                                   placeholder="Expliquer pourquoi rouvrir ce transfert..." required></textarea>
                     </div>
@@ -1075,14 +1075,14 @@ include '../../../includes/header.php';
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <p class="text-muted text-center">Aucun document à gérer</p>
+                        <p class="text-muted text-center">Aucun document Ã  gÃ©rer</p>
                     <?php endif; ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-info">
                         <i class="fas fa-save me-2"></i>
-                        Mettre à jour
+                        Mettre Ã  jour
                     </button>
                 </div>
             </form>
@@ -1127,7 +1127,7 @@ include '../../../includes/header.php';
                                                        <?php echo $fee['paye'] ? 'checked' : ''; ?>
                                                        onchange="togglePaymentDetails(<?php echo $fee['id']; ?>)">
                                                 <label class="form-check-label" for="fee_<?php echo $fee['id']; ?>">
-                                                    Frais payé
+                                                    Frais payÃ©
                                                 </label>
                                             </div>
 
@@ -1143,8 +1143,8 @@ include '../../../includes/header.php';
                                                     <label class="form-label">Mode de paiement</label>
                                                     <select class="form-select form-select-sm"
                                                             name="fees[<?php echo $fee['id']; ?>][mode_paiement]">
-                                                        <option value="especes" <?php echo ($fee['mode_paiement'] ?? 'especes') === 'especes' ? 'selected' : ''; ?>>Espèces</option>
-                                                        <option value="cheque" <?php echo ($fee['mode_paiement'] ?? '') === 'cheque' ? 'selected' : ''; ?>>Chèque</option>
+                                                        <option value="especes" <?php echo ($fee['mode_paiement'] ?? 'especes') === 'especes' ? 'selected' : ''; ?>>EspÃ¨ces</option>
+                                                        <option value="cheque" <?php echo ($fee['mode_paiement'] ?? '') === 'cheque' ? 'selected' : ''; ?>>ChÃ¨que</option>
                                                         <option value="virement" <?php echo ($fee['mode_paiement'] ?? '') === 'virement' ? 'selected' : ''; ?>>Virement</option>
                                                         <option value="mobile_money" <?php echo ($fee['mode_paiement'] ?? '') === 'mobile_money' ? 'selected' : ''; ?>>Mobile Money</option>
                                                     </select>
@@ -1156,14 +1156,14 @@ include '../../../includes/header.php';
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <p class="text-muted text-center">Aucun frais à gérer</p>
+                        <p class="text-muted text-center">Aucun frais Ã  gÃ©rer</p>
                     <?php endif; ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save me-2"></i>
-                        Mettre à jour
+                        Mettre Ã  jour
                     </button>
                 </div>
             </form>
@@ -1184,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Fonction pour basculer les détails de paiement
+// Fonction pour basculer les dÃ©tails de paiement
 function togglePaymentDetails(feeId) {
     const checkbox = document.getElementById('fee_' + feeId);
     const details = document.getElementById('payment_details_' + feeId);
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
 
-            if (!confirm('Confirmer la finalisation de ce transfert ? Cette action générera automatiquement le certificat.')) {
+            if (!confirm('Confirmer la finalisation de ce transfert ? Cette action gÃ©nÃ©rera automatiquement le certificat.')) {
                 e.preventDefault();
                 return false;
             }
@@ -1268,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Confirmation pour la réouverture
+    // Confirmation pour la rÃ©ouverture
     const reopenForm = document.querySelector('#reopenModal form');
     if (reopenForm) {
         reopenForm.addEventListener('submit', function(e) {
@@ -1280,11 +1280,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const comment = document.getElementById('reopen_comment').value.trim();
             if (!comment) {
                 e.preventDefault();
-                alert('Le motif de la réouverture est obligatoire');
+                alert('Le motif de la rÃ©ouverture est obligatoire');
                 return false;
             }
 
-            if (!confirm('Confirmer la réouverture de ce transfert ?')) {
+            if (!confirm('Confirmer la rÃ©ouverture de ce transfert ?')) {
                 e.preventDefault();
                 return false;
             }
@@ -1307,7 +1307,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             processingAction = true;
             const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mise à jour...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mise Ã  jour...';
             submitBtn.disabled = true;
         });
     }
@@ -1323,13 +1323,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             processingAction = true;
             const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mise à jour...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mise Ã  jour...';
             submitBtn.disabled = true;
         });
     }
 });
 
-// Fonction pour actualiser la page après une action
+// Fonction pour actualiser la page aprÃ¨s une action
 function refreshAfterAction() {
     setTimeout(function() {
         window.location.reload();
@@ -1338,3 +1338,7 @@ function refreshAfterAction() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

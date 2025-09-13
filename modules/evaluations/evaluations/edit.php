@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('evaluations', 'evaluations', 'edit', '../../../dashboard.php');
 
 // Récupérer l'ID de l'évaluation
 $evaluation_id = (int)($_GET['id'] ?? 0);

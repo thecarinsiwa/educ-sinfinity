@@ -1,24 +1,22 @@
-<?php
+﻿<?php
 /**
  * Module Recouvrement - Export des Rapports
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('recouvrement', 'rapports', 'read', '../../dashboard.php');
 
 $type = $_GET['type'] ?? '';
 $format = $_GET['format'] ?? 'excel';
 
-// Fonction pour générer un export Excel simple (CSV)
+// Fonction pour gÃ©nÃ©rer un export Excel simple (CSV)
 function exportToCSV($data, $headers, $filename) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
@@ -30,10 +28,10 @@ function exportToCSV($data, $headers, $filename) {
     // Ajouter BOM pour UTF-8
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     
-    // Écrire les en-têtes
+    // Ã‰crire les en-tÃªtes
     fputcsv($output, $headers, ';');
     
-    // Écrire les données
+    // Ã‰crire les donnÃ©es
     foreach ($data as $row) {
         fputcsv($output, $row, ';');
     }
@@ -42,7 +40,7 @@ function exportToCSV($data, $headers, $filename) {
     exit;
 }
 
-// Fonction pour générer un export PDF simple (HTML)
+// Fonction pour gÃ©nÃ©rer un export PDF simple (HTML)
 function exportToPDF($content, $title, $filename) {
     header('Content-Type: text/html; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '.html"');
@@ -64,7 +62,7 @@ function exportToPDF($content, $title, $filename) {
     <body>
         <div class="header">
             <h1>' . htmlspecialchars($title) . '</h1>
-            <p class="date">Généré le ' . date('d/m/Y à H:i') . '</p>
+            <p class="date">GÃ©nÃ©rÃ© le ' . date('d/m/Y Ã  H:i') . '</p>
         </div>
         ' . $content . '
     </body>
@@ -82,7 +80,7 @@ try {
             $type_frais = $_GET['type_frais'] ?? '';
             $mode_paiement = $_GET['mode_paiement'] ?? '';
             
-            // Construire la requête avec filtres
+            // Construire la requÃªte avec filtres
             $where_conditions = ["p.status = 'valide'"];
             $params = [];
             
@@ -130,6 +128,7 @@ try {
                 LEFT JOIN inscriptions i ON e.id = i.eleve_id AND i.status = 'inscrit'
                 LEFT JOIN classes cl ON i.classe_id = cl.id
                 LEFT JOIN frais_scolaires fs ON p.frais_id = fs.id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
                 LEFT JOIN types_frais tf ON fs.type_frais_id = tf.id
                 WHERE $where_clause
                 ORDER BY p.date_paiement DESC
@@ -138,7 +137,7 @@ try {
             if ($format === 'excel') {
                 $headers = [
                     'Date', 'Matricule', 'Nom Complet', 'Classe', 'Type de Frais', 
-                    'Frais', 'Montant (FC)', 'Mode de Paiement', 'Référence', 'Statut'
+                    'Frais', 'Montant (FC)', 'Mode de Paiement', 'RÃ©fÃ©rence', 'Statut'
                 ];
                 
                 $data = [];
@@ -184,7 +183,7 @@ try {
             break;
             
         case 'solvabilite':
-            // Export de la solvabilité
+            // Export de la solvabilitÃ©
             $classe_id = $_GET['classe_id'] ?? '';
             $status_solvabilite = $_GET['status_solvabilite'] ?? '';
             
@@ -224,8 +223,8 @@ try {
             
             if ($format === 'excel') {
                 $headers = [
-                    'Matricule', 'Nom Complet', 'Classe', 'Montant Payé (FC)', 
-                    'Solde Restant (FC)', 'Pourcentage (%)', 'Statut', 'Dernière MAJ'
+                    'Matricule', 'Nom Complet', 'Classe', 'Montant PayÃ© (FC)', 
+                    'Solde Restant (FC)', 'Pourcentage (%)', 'Statut', 'DerniÃ¨re MAJ'
                 ];
                 
                 $data = [];
@@ -252,7 +251,7 @@ try {
                 $content = '<table>';
                 $content .= '<thead><tr>';
                 $content .= '<th>Matricule</th><th>Nom Complet</th><th>Classe</th>';
-                $content .= '<th>Montant Payé (FC)</th><th>Pourcentage (%)</th><th>Statut</th>';
+                $content .= '<th>Montant PayÃ© (FC)</th><th>Pourcentage (%)</th><th>Statut</th>';
                 $content .= '</tr></thead><tbody>';
                 
                 foreach ($solvabilite as $eleve) {
@@ -273,12 +272,12 @@ try {
                 
                 $content .= '</tbody></table>';
                 
-                exportToPDF($content, 'Rapport de Solvabilité', 'rapport_solvabilite_' . date('Y-m-d'));
+                exportToPDF($content, 'Rapport de SolvabilitÃ©', 'rapport_solvabilite_' . date('Y-m-d'));
             }
             break;
             
         case 'presences':
-            // Export des présences
+            // Export des prÃ©sences
             $date_debut = $_GET['date_debut'] ?? date('Y-m-01');
             $date_fin = $_GET['date_fin'] ?? date('Y-m-t');
             $classe_id = $_GET['classe_id'] ?? '';
@@ -362,12 +361,12 @@ try {
                 
                 $content .= '</tbody></table>';
                 
-                exportToPDF($content, 'Rapport des Présences', 'rapport_presences_' . date('Y-m-d'));
+                exportToPDF($content, 'Rapport des PrÃ©sences', 'rapport_presences_' . date('Y-m-d'));
             }
             break;
             
         default:
-            throw new Exception('Type d\'export non supporté.');
+            throw new Exception('Type d\'export non supportÃ©.');
     }
     
 } catch (Exception $e) {
@@ -375,3 +374,4 @@ try {
     showMessage('error', 'Erreur lors de l\'export : ' . $e->getMessage());
     redirectTo('index.php');
 }
+

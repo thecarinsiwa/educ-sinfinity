@@ -7,9 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
+// Vérifier l'authentification et les permissions
 requireLogin();
+requirePagePermissionFromDB('reports', 'academic', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports Académiques';
 
@@ -56,8 +58,8 @@ $stmt = $database->query(
 $stats['taux_reussite'] = round($stmt->fetch()['taux_reussite'] ?? 0, 1);
 
 // Performance par classe
-$performance_classes = $database->query(
-    "SELECT c.id, c.nom as classe_nom, c.niveau,
+$params_classes = [$current_year['id'] ?? 0];
+$sql_classes = "SELECT c.id, c.nom as classe_nom, c.niveau,
             COUNT(DISTINCT n.eleve_id) as nb_eleves_evalues,
             AVG(n.note) as moyenne_classe,
             MIN(n.note) as note_min,
@@ -69,16 +71,20 @@ $performance_classes = $database->query(
      JOIN inscriptions i ON c.id = i.classe_id
      JOIN notes n ON i.eleve_id = n.eleve_id
      JOIN evaluations e ON n.evaluation_id = e.id
-     WHERE c.annee_scolaire_id = ? AND i.status = 'inscrit'
-     " . ($periode_filter ? "AND e.periode = ?" : "") . "
-     GROUP BY c.id, c.nom, c.niveau
-     ORDER BY moyenne_classe DESC",
-    array_filter([$current_year['id'] ?? 0, $periode_filter])
-)->fetchAll();
+     WHERE c.annee_scolaire_id = ? AND i.status = 'inscrit'";
+
+if ($periode_filter) {
+    $sql_classes .= " AND e.periode = ?";
+    $params_classes[] = $periode_filter;
+}
+
+$sql_classes .= " GROUP BY c.id, c.nom, c.niveau ORDER BY moyenne_classe DESC";
+
+$performance_classes = $database->query($sql_classes, $params_classes)->fetchAll();
 
 // Performance par matière
-$performance_matieres = $database->query(
-    "SELECT m.id, m.nom as matiere_nom, m.coefficient,
+$params_matieres = [$current_year['id'] ?? 0];
+$sql_matieres = "SELECT m.id, m.nom as matiere_nom, m.coefficient,
             COUNT(n.id) as nb_notes,
             AVG(n.note) as moyenne_matiere,
             MIN(n.note) as note_min,
@@ -86,12 +92,16 @@ $performance_matieres = $database->query(
      FROM matieres m
      JOIN evaluations e ON m.id = e.matiere_id
      JOIN notes n ON e.id = n.evaluation_id
-     WHERE e.annee_scolaire_id = ?
-     " . ($periode_filter ? "AND e.periode = ?" : "") . "
-     GROUP BY m.id, m.nom, m.coefficient
-     ORDER BY moyenne_matiere DESC",
-    array_filter([$current_year['id'] ?? 0, $periode_filter])
-)->fetchAll();
+     WHERE e.annee_scolaire_id = ?";
+
+if ($periode_filter) {
+    $sql_matieres .= " AND e.periode = ?";
+    $params_matieres[] = $periode_filter;
+}
+
+$sql_matieres .= " GROUP BY m.id, m.nom, m.coefficient ORDER BY moyenne_matiere DESC";
+
+$performance_matieres = $database->query($sql_matieres, $params_matieres)->fetchAll();
 
 // Évolution des moyennes par trimestre
 $evolution_trimestres = $database->query(
@@ -110,8 +120,8 @@ $evolution_trimestres = $database->query(
 )->fetchAll();
 
 // Top 10 des meilleurs élèves
-$meilleurs_eleves = $database->query(
-    "SELECT e.id, e.nom, e.prenom, e.numero_matricule, c.nom as classe_nom,
+$params_eleves = [$current_year['id'] ?? 0];
+$sql_eleves = "SELECT e.id, e.nom, e.prenom, e.numero_matricule, c.nom as classe_nom,
             AVG(n.note) as moyenne_generale,
             COUNT(n.id) as nb_notes
      FROM eleves e
@@ -119,18 +129,23 @@ $meilleurs_eleves = $database->query(
      JOIN classes c ON i.classe_id = c.id
      JOIN notes n ON e.id = n.eleve_id
      JOIN evaluations ev ON n.evaluation_id = ev.id
-     WHERE i.status = 'inscrit' AND i.annee_scolaire_id = ?
-     " . ($periode_filter ? "AND ev.periode = ?" : "") . "
-     GROUP BY e.id, e.nom, e.prenom, e.numero_matricule, c.nom
+     WHERE i.status = 'inscrit' AND i.annee_scolaire_id = ?";
+
+if ($periode_filter) {
+    $sql_eleves .= " AND ev.periode = ?";
+    $params_eleves[] = $periode_filter;
+}
+
+$sql_eleves .= " GROUP BY e.id, e.nom, e.prenom, e.numero_matricule, c.nom
      HAVING nb_notes >= 3
      ORDER BY moyenne_generale DESC
-     LIMIT 10",
-    array_filter([$current_year['id'] ?? 0, $periode_filter])
-)->fetchAll();
+     LIMIT 10";
+
+$meilleurs_eleves = $database->query($sql_eleves, $params_eleves)->fetchAll();
 
 // Répartition des mentions
-$repartition_mentions = $database->query(
-    "SELECT 
+$params_mentions = [$current_year['id'] ?? 0];
+$sql_mentions = "SELECT 
         CASE 
             WHEN moyenne >= 16 THEN 'Excellent'
             WHEN moyenne >= 14 THEN 'Très bien'
@@ -144,9 +159,14 @@ $repartition_mentions = $database->query(
         SELECT AVG(n.note) as moyenne
         FROM notes n 
         JOIN evaluations e ON n.evaluation_id = e.id 
-        WHERE e.annee_scolaire_id = ?
-        " . ($periode_filter ? "AND e.periode = ?" : "") . "
-        GROUP BY n.eleve_id
+        WHERE e.annee_scolaire_id = ?";
+
+if ($periode_filter) {
+    $sql_mentions .= " AND e.periode = ?";
+    $params_mentions[] = $periode_filter;
+}
+
+$sql_mentions .= " GROUP BY n.eleve_id
      ) as moyennes_eleves
      GROUP BY mention
      ORDER BY 
@@ -157,9 +177,9 @@ $repartition_mentions = $database->query(
             WHEN 'Satisfaisant' THEN 4
             WHEN 'Passable' THEN 5
             ELSE 6
-        END",
-    array_filter([$current_year['id'] ?? 0, $periode_filter])
-)->fetchAll();
+        END";
+
+$repartition_mentions = $database->query($sql_mentions, $params_mentions)->fetchAll();
 
 // Récupérer les classes et matières pour les filtres
 $classes = $database->query(

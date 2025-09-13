@@ -1,22 +1,22 @@
-<?php
+﻿<?php
 /**
- * Visualisation détaillée d'un transfert d'élève
+ * Visualisation dÃ©taillÃ©e d'un transfert d'Ã©lÃ¨ve
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
 
-$page_title = "Détails du transfert";
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
 
-// Récupérer l'ID du transfert
+$page_title = "DÃ©tails du transfert";
+
+// RÃ©cupÃ©rer l'ID du transfert
 $transfer_id = $_GET['id'] ?? null;
 
 if (!$transfer_id) {
@@ -39,10 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Historique
                 $database->query(
                     "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'approbation', 'en_attente', 'approuve', ?, ?)",
-                    [$transfer_id, $_POST['commentaire'] ?? 'Transfert approuvé', $_SESSION['user_id']]
+                    [$transfer_id, $_POST['commentaire'] ?? 'Transfert approuvÃ©', $_SESSION['user_id']]
                 );
                 
-                showMessage('success', 'Transfert approuvé avec succès !');
+                showMessage('success', 'Transfert approuvÃ© avec succÃ¨s !');
                 break;
                 
             case 'reject':
@@ -54,10 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Historique
                 $database->query(
                     "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'rejet', 'en_attente', 'rejete', ?, ?)",
-                    [$transfer_id, $_POST['commentaire'] ?? 'Transfert rejeté', $_SESSION['user_id']]
+                    [$transfer_id, $_POST['commentaire'] ?? 'Transfert rejetÃ©', $_SESSION['user_id']]
                 );
                 
-                showMessage('success', 'Transfert rejeté');
+                showMessage('success', 'Transfert rejetÃ©');
                 break;
                 
             case 'complete':
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [$transfer_id]
                 );
                 
-                // Mettre à jour le statut de l'élève si c'est une sortie
+                // Mettre Ã  jour le statut de l'Ã©lÃ¨ve si c'est une sortie
                 $transfer_info = $database->query("SELECT * FROM transfers WHERE id = ?", [$transfer_id])->fetch();
                 if (in_array($transfer_info['type_mouvement'], ['transfert_sortant', 'sortie_definitive'])) {
                     $database->query(
@@ -78,10 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Historique
                 $database->query(
                     "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'completion', 'approuve', 'complete', ?, ?)",
-                    [$transfer_id, $_POST['commentaire'] ?? 'Transfert complété', $_SESSION['user_id']]
+                    [$transfer_id, $_POST['commentaire'] ?? 'Transfert complÃ©tÃ©', $_SESSION['user_id']]
                 );
                 
-                showMessage('success', 'Transfert complété avec succès !');
+                showMessage('success', 'Transfert complÃ©tÃ© avec succÃ¨s !');
                 break;
                 
             case 'add_comment':
@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [$transfer_id, $_POST['current_status'], $_POST['current_status'], $_POST['commentaire'], $_SESSION['user_id']]
                 );
                 
-                showMessage('success', 'Commentaire ajouté avec succès !');
+                showMessage('success', 'Commentaire ajoutÃ© avec succÃ¨s !');
                 break;
         }
         
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les informations complètes du transfert
+// RÃ©cupÃ©rer les informations complÃ¨tes du transfert
 $transfer = $database->query(
     "SELECT t.*, e.numero_matricule, e.nom, e.prenom, e.date_naissance, e.lieu_naissance, e.sexe,
             e.adresse, e.telephone_parent, e.email_parent, e.nom_pere, e.nom_mere, e.profession_pere, e.profession_mere,
@@ -124,23 +124,23 @@ $transfer = $database->query(
 )->fetch();
 
 if (!$transfer) {
-    showMessage('error', 'Transfert non trouvé');
+    showMessage('error', 'Transfert non trouvÃ©');
     redirectTo('bulk-process.php');
 }
 
-// Récupérer les documents
+// RÃ©cupÃ©rer les documents
 $documents = $database->query(
     "SELECT * FROM transfer_documents WHERE transfer_id = ? ORDER BY obligatoire DESC, nom_document",
     [$transfer_id]
 )->fetchAll();
 
-// Récupérer les frais
+// RÃ©cupÃ©rer les frais
 $fees = $database->query(
     "SELECT * FROM transfer_fees WHERE transfer_id = ? ORDER BY type_frais",
     [$transfer_id]
 )->fetchAll();
 
-// Récupérer l'historique
+// RÃ©cupÃ©rer l'historique
 $history = $database->query(
     "SELECT th.*, u.nom as user_nom, u.prenom as user_prenom
      FROM transfer_history th
@@ -434,17 +434,17 @@ include '../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="view-header">
     <div class="container-fluid">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="animate-fade-in">
                     <i class="fas fa-eye me-3"></i>
-                    Détails du transfert
+                    DÃ©tails du transfert
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Transfert N° <?php echo str_pad($transfer_id, 6, '0', STR_PAD_LEFT); ?> - 
+                    Transfert NÂ° <?php echo str_pad($transfer_id, 6, '0', STR_PAD_LEFT); ?> - 
                     <?php echo htmlspecialchars($transfer['nom'] . ' ' . $transfer['prenom']); ?>
                 </p>
             </div>
@@ -452,7 +452,7 @@ include '../../../includes/header.php';
                 <div class="animate-fade-in animate-delay-2">
                     <a href="bulk-process.php" class="btn btn-light btn-modern">
                         <i class="fas fa-arrow-left me-2"></i>
-                        Retour à la liste
+                        Retour Ã  la liste
                     </a>
                 </div>
             </div>
@@ -460,7 +460,7 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Résumé de l'élève et du transfert -->
+<!-- RÃ©sumÃ© de l'Ã©lÃ¨ve et du transfert -->
 <div class="student-summary animate-fade-in animate-delay-1">
     <div class="row align-items-center">
         <div class="col-md-2 text-center">
@@ -481,7 +481,7 @@ include '../../../includes/header.php';
                         $type_labels = [
                             'transfert_entrant' => '<i class="fas fa-arrow-right text-success"></i> Transfert entrant',
                             'transfert_sortant' => '<i class="fas fa-arrow-left text-warning"></i> Transfert sortant',
-                            'sortie_definitive' => '<i class="fas fa-graduation-cap text-info"></i> Sortie définitive'
+                            'sortie_definitive' => '<i class="fas fa-graduation-cap text-info"></i> Sortie dÃ©finitive'
                         ];
                         echo $type_labels[$transfer['type_mouvement']] ?? $transfer['type_mouvement'];
                         ?>
@@ -492,7 +492,7 @@ include '../../../includes/header.php';
                     <?php if ($transfer['date_effective']): ?>
                         <p class="mb-1"><strong>Date effective:</strong> <?php echo date('d/m/Y', strtotime($transfer['date_effective'])); ?></p>
                     <?php endif; ?>
-                    <p class="mb-1"><strong>Année scolaire:</strong> <?php echo htmlspecialchars($transfer['annee_nom'] ?? 'Non spécifiée'); ?></p>
+                    <p class="mb-1"><strong>AnnÃ©e scolaire:</strong> <?php echo htmlspecialchars($transfer['annee_nom'] ?? 'Non spÃ©cifiÃ©e'); ?></p>
                 </div>
             </div>
         </div>
@@ -507,9 +507,9 @@ include '../../../includes/header.php';
                 ];
                 $status_labels = [
                     'en_attente' => 'En attente',
-                    'approuve' => 'Approuvé',
-                    'rejete' => 'Rejeté',
-                    'complete' => 'Complété'
+                    'approuve' => 'ApprouvÃ©',
+                    'rejete' => 'RejetÃ©',
+                    'complete' => 'ComplÃ©tÃ©'
                 ];
                 ?>
                 <i class="<?php echo $status_icons[$transfer['statut']] ?? 'fas fa-question'; ?> me-2"></i>
@@ -540,7 +540,7 @@ include '../../../includes/header.php';
         <?php elseif ($transfer['statut'] === 'approuve'): ?>
             <button type="button" class="btn btn-primary btn-modern" data-bs-toggle="modal" data-bs-target="#completeModal">
                 <i class="fas fa-check-circle me-2"></i>
-                Marquer comme complété
+                Marquer comme complÃ©tÃ©
             </button>
         <?php endif; ?>
 
@@ -559,7 +559,7 @@ include '../../../includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Détails du transfert -->
+<!-- DÃ©tails du transfert -->
 <div class="row">
     <div class="col-lg-8">
         <!-- Informations du transfert -->
@@ -570,7 +570,7 @@ include '../../../includes/header.php';
             </h5>
 
             <div class="detail-section">
-                <h6><i class="fas fa-info-circle"></i>Détails généraux</h6>
+                <h6><i class="fas fa-info-circle"></i>DÃ©tails gÃ©nÃ©raux</h6>
                 <div class="detail-row">
                     <div class="detail-label">Motif:</div>
                     <div class="detail-value"><?php echo htmlspecialchars($transfer['motif']); ?></div>
@@ -578,7 +578,7 @@ include '../../../includes/header.php';
 
                 <?php if ($transfer['type_mouvement'] === 'transfert_entrant'): ?>
                     <div class="detail-row">
-                        <div class="detail-label">École d'origine:</div>
+                        <div class="detail-label">Ã‰cole d'origine:</div>
                         <div class="detail-value"><?php echo htmlspecialchars($transfer['ecole_origine']); ?></div>
                     </div>
                     <div class="detail-row">
@@ -587,16 +587,16 @@ include '../../../includes/header.php';
                     </div>
                 <?php elseif ($transfer['type_mouvement'] === 'transfert_sortant'): ?>
                     <div class="detail-row">
-                        <div class="detail-label">Classe fréquentée:</div>
+                        <div class="detail-label">Classe frÃ©quentÃ©e:</div>
                         <div class="detail-value"><?php echo htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')); ?></div>
                     </div>
                     <div class="detail-row">
-                        <div class="detail-label">École de destination:</div>
+                        <div class="detail-label">Ã‰cole de destination:</div>
                         <div class="detail-value"><?php echo htmlspecialchars($transfer['ecole_destination']); ?></div>
                     </div>
                 <?php else: ?>
                     <div class="detail-row">
-                        <div class="detail-label">Dernière classe:</div>
+                        <div class="detail-label">DerniÃ¨re classe:</div>
                         <div class="detail-value"><?php echo htmlspecialchars(($transfer['classe_origine_niveau'] ?? '') . ' - ' . ($transfer['classe_origine_nom'] ?? '')); ?></div>
                     </div>
                 <?php endif; ?>
@@ -618,7 +618,7 @@ include '../../../includes/header.php';
                 <?php if ($transfer['date_approbation']): ?>
                     <div class="detail-row">
                         <div class="detail-label">Date d'approbation:</div>
-                        <div class="detail-value"><?php echo date('d/m/Y à H:i', strtotime($transfer['date_approbation'])); ?></div>
+                        <div class="detail-value"><?php echo date('d/m/Y Ã  H:i', strtotime($transfer['date_approbation'])); ?></div>
                     </div>
                 <?php endif; ?>
                 <?php if ($transfer['date_effective']): ?>
@@ -628,26 +628,26 @@ include '../../../includes/header.php';
                     </div>
                 <?php endif; ?>
                 <div class="detail-row">
-                    <div class="detail-label">Créé le:</div>
-                    <div class="detail-value"><?php echo date('d/m/Y à H:i', strtotime($transfer['created_at'])); ?></div>
+                    <div class="detail-label">CrÃ©Ã© le:</div>
+                    <div class="detail-value"><?php echo date('d/m/Y Ã  H:i', strtotime($transfer['created_at'])); ?></div>
                 </div>
             </div>
 
             <div class="detail-section">
-                <h6><i class="fas fa-users"></i>Personnes impliquées</h6>
+                <h6><i class="fas fa-users"></i>Personnes impliquÃ©es</h6>
                 <div class="detail-row">
-                    <div class="detail-label">Traité par:</div>
+                    <div class="detail-label">TraitÃ© par:</div>
                     <div class="detail-value">
                         <?php if ($transfer['traite_par_nom']): ?>
                             <?php echo htmlspecialchars($transfer['traite_par_nom'] . ' ' . $transfer['traite_par_prenom']); ?>
                         <?php else: ?>
-                            <span class="text-muted">Non spécifié</span>
+                            <span class="text-muted">Non spÃ©cifiÃ©</span>
                         <?php endif; ?>
                     </div>
                 </div>
                 <?php if ($transfer['approuve_par_nom']): ?>
                     <div class="detail-row">
-                        <div class="detail-label">Approuvé par:</div>
+                        <div class="detail-label">ApprouvÃ© par:</div>
                         <div class="detail-value">
                             <?php echo htmlspecialchars($transfer['approuve_par_nom'] . ' ' . $transfer['approuve_par_prenom']); ?>
                             <small class="text-muted">(<?php echo date('d/m/Y', strtotime($transfer['date_approbation'])); ?>)</small>
@@ -657,7 +657,7 @@ include '../../../includes/header.php';
             </div>
         </div>
 
-        <!-- Informations personnelles de l'élève -->
+        <!-- Informations personnelles de l'Ã©lÃ¨ve -->
         <div class="info-card animate-fade-in animate-delay-4">
             <h5 class="mb-3">
                 <i class="fas fa-user me-2"></i>
@@ -667,18 +667,18 @@ include '../../../includes/header.php';
             <div class="row">
                 <div class="col-md-6">
                     <div class="detail-section">
-                        <h6><i class="fas fa-id-card"></i>Identité</h6>
+                        <h6><i class="fas fa-id-card"></i>IdentitÃ©</h6>
                         <div class="detail-row">
                             <div class="detail-label">Lieu de naissance:</div>
-                            <div class="detail-value"><?php echo htmlspecialchars($transfer['lieu_naissance'] ?: 'Non spécifié'); ?></div>
+                            <div class="detail-value"><?php echo htmlspecialchars($transfer['lieu_naissance'] ?: 'Non spÃ©cifiÃ©'); ?></div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">Sexe:</div>
-                            <div class="detail-value"><?php echo $transfer['sexe'] === 'M' ? 'Masculin' : 'Féminin'; ?></div>
+                            <div class="detail-value"><?php echo $transfer['sexe'] === 'M' ? 'Masculin' : 'FÃ©minin'; ?></div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">Adresse:</div>
-                            <div class="detail-value"><?php echo htmlspecialchars($transfer['adresse'] ?: 'Non spécifiée'); ?></div>
+                            <div class="detail-value"><?php echo htmlspecialchars($transfer['adresse'] ?: 'Non spÃ©cifiÃ©e'); ?></div>
                         </div>
                     </div>
                 </div>
@@ -686,16 +686,16 @@ include '../../../includes/header.php';
                     <div class="detail-section">
                         <h6><i class="fas fa-users"></i>Famille</h6>
                         <div class="detail-row">
-                            <div class="detail-label">Nom du père:</div>
-                            <div class="detail-value"><?php echo htmlspecialchars($transfer['nom_pere'] ?: 'Non spécifié'); ?></div>
+                            <div class="detail-label">Nom du pÃ¨re:</div>
+                            <div class="detail-value"><?php echo htmlspecialchars($transfer['nom_pere'] ?: 'Non spÃ©cifiÃ©'); ?></div>
                         </div>
                         <div class="detail-row">
-                            <div class="detail-label">Nom de la mère:</div>
-                            <div class="detail-value"><?php echo htmlspecialchars($transfer['nom_mere'] ?: 'Non spécifié'); ?></div>
+                            <div class="detail-label">Nom de la mÃ¨re:</div>
+                            <div class="detail-value"><?php echo htmlspecialchars($transfer['nom_mere'] ?: 'Non spÃ©cifiÃ©'); ?></div>
                         </div>
                         <div class="detail-row">
-                            <div class="detail-label">Profession du père:</div>
-                            <div class="detail-value"><?php echo htmlspecialchars($transfer['profession_pere'] ?: 'Non spécifiée'); ?></div>
+                            <div class="detail-label">Profession du pÃ¨re:</div>
+                            <div class="detail-value"><?php echo htmlspecialchars($transfer['profession_pere'] ?: 'Non spÃ©cifiÃ©e'); ?></div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">Contact:</div>
@@ -707,7 +707,7 @@ include '../../../includes/header.php';
                                     <br><i class="fas fa-envelope me-1"></i><?php echo htmlspecialchars($transfer['email_parent']); ?>
                                 <?php endif; ?>
                                 <?php if (!$transfer['telephone_parent'] && !$transfer['email_parent']): ?>
-                                    <span class="text-muted">Non spécifié</span>
+                                    <span class="text-muted">Non spÃ©cifiÃ©</span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -780,7 +780,7 @@ include '../../../includes/header.php';
                                 <div class="fw-bold"><?php echo number_format($fee['montant'], 0, ',', ' '); ?> FC</div>
                                 <?php if ($fee['paye']): ?>
                                     <small class="text-success">
-                                        <i class="fas fa-check me-1"></i>Payé
+                                        <i class="fas fa-check me-1"></i>PayÃ©
                                         <?php if ($fee['date_paiement']): ?>
                                             <br><?php echo date('d/m/Y', strtotime($fee['date_paiement'])); ?>
                                         <?php endif; ?>
@@ -795,25 +795,25 @@ include '../../../includes/header.php';
                     </div>
                 <?php endforeach; ?>
 
-                <!-- Résumé des frais -->
+                <!-- RÃ©sumÃ© des frais -->
                 <div class="mt-3 p-3 bg-light rounded">
                     <div class="d-flex justify-content-between">
                         <strong>Total frais:</strong>
                         <strong><?php echo number_format($total_frais, 0, ',', ' '); ?> FC</strong>
                     </div>
                     <div class="d-flex justify-content-between text-success">
-                        <span>Total payé:</span>
+                        <span>Total payÃ©:</span>
                         <span><?php echo number_format($total_payes, 0, ',', ' '); ?> FC</span>
                     </div>
                     <?php if ($total_frais > $total_payes): ?>
                         <div class="d-flex justify-content-between text-danger">
-                            <span>Reste à payer:</span>
+                            <span>Reste Ã  payer:</span>
                             <span><?php echo number_format($total_frais - $total_payes, 0, ',', ' '); ?> FC</span>
                         </div>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
-                <p class="text-muted text-center">Aucun frais associé</p>
+                <p class="text-muted text-center">Aucun frais associÃ©</p>
             <?php endif; ?>
         </div>
     </div>
@@ -836,7 +836,7 @@ include '../../../includes/header.php';
                             <h6 class="mb-1">
                                 <?php
                                 $action_labels = [
-                                    'creation' => 'Création du transfert',
+                                    'creation' => 'CrÃ©ation du transfert',
                                     'modification' => 'Modification',
                                     'approbation' => 'Approbation',
                                     'rejet' => 'Rejet',
@@ -851,14 +851,14 @@ include '../../../includes/header.php';
                             <?php if ($item['ancien_statut'] && $item['nouveau_statut'] && $item['ancien_statut'] !== $item['nouveau_statut']): ?>
                                 <small class="text-info">
                                     <i class="fas fa-arrow-right me-1"></i>
-                                    <?php echo ucfirst(str_replace('_', ' ', $item['ancien_statut'])); ?> →
+                                    <?php echo ucfirst(str_replace('_', ' ', $item['ancien_statut'])); ?> â†’
                                     <?php echo ucfirst(str_replace('_', ' ', $item['nouveau_statut'])); ?>
                                 </small>
                             <?php endif; ?>
                         </div>
                         <div class="text-end">
                             <small class="text-muted">
-                                <?php echo date('d/m/Y à H:i', strtotime($item['created_at'])); ?>
+                                <?php echo date('d/m/Y Ã  H:i', strtotime($item['created_at'])); ?>
                                 <?php if ($item['user_nom']): ?>
                                     <br>par <?php echo htmlspecialchars($item['user_nom'] . ' ' . $item['user_prenom']); ?>
                                 <?php endif; ?>
@@ -889,7 +889,7 @@ include '../../../includes/header.php';
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Êtes-vous sûr de vouloir approuver ce transfert ?</p>
+                    <p>ÃŠtes-vous sÃ»r de vouloir approuver ce transfert ?</p>
                     <div class="mb-3">
                         <label for="approve_comment" class="form-label">Commentaire (optionnel)</label>
                         <textarea class="form-control" id="approve_comment" name="commentaire" rows="3"
@@ -922,7 +922,7 @@ include '../../../includes/header.php';
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Êtes-vous sûr de vouloir rejeter ce transfert ?</p>
+                    <p>ÃŠtes-vous sÃ»r de vouloir rejeter ce transfert ?</p>
                     <div class="mb-3">
                         <label for="reject_comment" class="form-label">Motif du rejet <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="reject_comment" name="commentaire" rows="3"
@@ -955,10 +955,10 @@ include '../../../includes/header.php';
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Marquer ce transfert comme complété ?</p>
+                    <p>Marquer ce transfert comme complÃ©tÃ© ?</p>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        Cette action mettra à jour le statut de l'élève et permettra la génération du certificat.
+                        Cette action mettra Ã  jour le statut de l'Ã©lÃ¨ve et permettra la gÃ©nÃ©ration du certificat.
                     </div>
                     <div class="mb-3">
                         <label for="complete_comment" class="form-label">Commentaire (optionnel)</label>
@@ -1044,3 +1044,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('evaluations', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Évaluations et Notes';
 
@@ -134,7 +132,7 @@ include '../../includes/header.php';
                 <?php echo $current_year['annee'] ?? 'Aucune année active'; ?>
             </button>
         </div>
-        <?php if (checkPermission('evaluations')): ?>
+        <?php if (checkPagePermission('evaluations')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -403,7 +401,7 @@ include '../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('evaluations')): ?>
+                                                <?php if (checkPagePermission('evaluations')): ?>
                                                     <a href="notes/entry.php?evaluation_id=<?php echo $eval['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Saisir notes">
                                                         <i class="fas fa-edit"></i>
@@ -426,7 +424,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucune évaluation créée</p>
-                        <?php if (checkPermission('evaluations')): ?>
+                        <?php if (checkPagePermission('evaluations')): ?>
                             <a href="evaluations/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Créer la première évaluation
@@ -500,7 +498,7 @@ include '../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('evaluations')): ?>
+<?php if (checkPagePermission('evaluations')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">

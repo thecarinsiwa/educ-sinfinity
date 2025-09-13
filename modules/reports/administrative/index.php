@@ -7,9 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
+// Vérifier l'authentification et les permissions
 requireLogin();
+requirePagePermissionFromDB('reports', 'administrative', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports Administratifs';
 
@@ -39,12 +41,15 @@ $stats['total_classes'] = $stmt->fetch()['total'];
 
 // Taux d'occupation moyen
 $stmt = $database->query(
-    "SELECT AVG(effectif_actuel * 100.0 / capacite_max) as taux
-     FROM classes 
-     WHERE annee_scolaire_id = ? AND capacite_max > 0",
+    "SELECT AVG(COUNT(i.id) * 100.0 / c.capacite_max) as taux
+     FROM classes c
+     LEFT JOIN inscriptions i ON c.id = i.classe_id AND i.status = 'inscrit'
+     WHERE c.annee_scolaire_id = ? AND c.capacite_max > 0
+     GROUP BY c.id",
     [$current_year['id'] ?? 0]
 );
-$stats['taux_occupation'] = round($stmt->fetch()['taux'] ?? 0, 1);
+$result = $stmt->fetchAll();
+$stats['taux_occupation'] = !empty($result) ? round(array_sum(array_column($result, 'taux')) / count($result), 1) : 0;
 
 // Évolution des inscriptions par mois
 $inscriptions_mensuelles = $database->query(

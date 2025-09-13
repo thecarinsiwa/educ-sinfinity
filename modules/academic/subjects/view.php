@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('academic') && !checkPermission('academic_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('academic', 'subjects', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de la matière
 $matiere_id = (int)($_GET['id'] ?? 0);
@@ -101,7 +99,7 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (checkPermission('academic')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
             <div class="btn-group">
                 <a href="edit.php?id=<?php echo $matiere_id; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -419,7 +417,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPermission('academic')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
                         <a href="edit.php?id=<?php echo $matiere_id; ?>" class="btn btn-primary btn-sm">
                             <i class="fas fa-edit me-1"></i>
                             Modifier cette matière
@@ -445,7 +443,7 @@ include '../../../includes/header.php';
                         Exporter en PDF
                     </a>
                     
-                    <?php if (checkPermission('academic')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
                         <hr>
                         <a href="delete.php?id=<?php echo $matiere_id; ?>" 
                            class="btn btn-outline-danger btn-sm btn-delete"

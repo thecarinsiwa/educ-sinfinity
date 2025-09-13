@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('library') && !checkPermission('library_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('library', 'books', 'read', '../../dashboard.php');
 
 // Récupérer l'ID du livre
 $livre_id = intval($_GET['id'] ?? 0);
@@ -23,7 +21,7 @@ if (!$livre_id) {
 }
 
 // Traitement des actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('library')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('library')) {
     try {
         $action = $_POST['action'] ?? '';
         
@@ -118,7 +116,7 @@ include '../../../includes/header.php';
                 Retour au catalogue
             </a>
         </div>
-        <?php if (checkPermission('library')): ?>
+        <?php if (checkPagePermission('library')): ?>
             <div class="btn-group me-2">
                 <a href="edit.php?id=<?php echo $livre_id; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -331,7 +329,7 @@ include '../../../includes/header.php';
                             <?php echo $status_labels[$livre['status']] ?? ucfirst($livre['status']); ?>
                         </span>
                         
-                        <?php if (checkPermission('library')): ?>
+                        <?php if (checkPagePermission('library')): ?>
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -339,7 +337,7 @@ include '../../../includes/header.php';
                     </div>
                 </div>
                 
-                <?php if (checkPermission('library')): ?>
+                <?php if (checkPagePermission('library')): ?>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Actions rapides :</label>
                         <div class="d-grid gap-2">
@@ -452,7 +450,7 @@ include '../../../includes/header.php';
 <?php endif; ?>
 
 <!-- Modal pour changer le statut -->
-<?php if (checkPermission('library')): ?>
+<?php if (checkPagePermission('library')): ?>
     <div class="modal fade" id="statusModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">

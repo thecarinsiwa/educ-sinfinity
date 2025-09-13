@@ -1,15 +1,18 @@
-<?php
+﻿<?php
 /**
- * Récupérer l'historique d'une absence
+ * RÃ©cupÃ©rer l'historique d'une absence
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
+// VÃ©rifier l'authentification
 requireLogin();
+
+requirePagePermissionFromDB('students', 'attendance', 'read', '../../../dashboard.php');
 
 header('Content-Type: application/json');
 
@@ -20,7 +23,7 @@ try {
         throw new Exception('ID d\'absence manquant');
     }
     
-    // Vérifier que l'absence existe et récupérer ses informations
+    // VÃ©rifier que l'absence existe et rÃ©cupÃ©rer ses informations
     $absence_info = $database->query(
         "SELECT a.*, e.nom as eleve_nom, e.prenom as eleve_prenom,
                 c.nom as classe_nom, c.niveau,
@@ -37,10 +40,10 @@ try {
     )->fetch();
     
     if (!$absence_info) {
-        throw new Exception('Absence non trouvée');
+        throw new Exception('Absence non trouvÃ©e');
     }
     
-    // Récupérer l'historique des actions sur cette absence
+    // RÃ©cupÃ©rer l'historique des actions sur cette absence
     $history = $database->query(
         "SELECT ual.*, u.nom as user_nom, u.prenom as user_prenom, u.username
          FROM user_actions_log ual
@@ -51,7 +54,7 @@ try {
         [$absence_id, "%absence_id:$absence_id%"]
     )->fetchAll();
     
-    // Formater les données pour l'affichage
+    // Formater les donnÃ©es pour l'affichage
     $formatted_history = [];
     foreach ($history as $entry) {
         $formatted_history[] = [
@@ -75,7 +78,7 @@ try {
         'created_at' => formatDateTime($absence_info['created_at']),
         'updated_at' => $absence_info['updated_at'] ? formatDateTime($absence_info['updated_at']) : null,
         'created_by' => $absence_info['created_by_nom'] ? 
-            $absence_info['created_by_nom'] . ' ' . $absence_info['created_by_prenom'] : 'Non renseigné',
+            $absence_info['created_by_nom'] . ' ' . $absence_info['created_by_prenom'] : 'Non renseignÃ©',
         'updated_by' => $absence_info['updated_by_nom'] ? 
             $absence_info['updated_by_nom'] . ' ' . $absence_info['updated_by_prenom'] : null
     ];
@@ -95,7 +98,7 @@ try {
     ]);
     
 } catch (Exception $e) {
-    error_log("Erreur lors de la récupération de l'historique d'absence: " . $e->getMessage());
+    error_log("Erreur lors de la rÃ©cupÃ©ration de l'historique d'absence: " . $e->getMessage());
     
     echo json_encode([
         'success' => false,
@@ -103,3 +106,7 @@ try {
     ]);
 }
 ?>
+
+
+
+

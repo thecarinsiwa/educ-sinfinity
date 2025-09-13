@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('students', 'search', 'read', '../../dashboard.php');
 
 $page_title = 'Recherche Avancée d\'Élèves';
 
@@ -634,7 +632,7 @@ include '../../includes/header.php';
                                             <i class="fas fa-eye me-1"></i>
                                             Voir profil
                                         </a>
-                                        <?php if (checkPermission('students')): ?>
+                                        <?php if (checkPagePermission('students')): ?>
                                             <a href="records/edit.php?id=<?php echo $eleve['id']; ?>"
                                                class="btn btn-outline-primary btn-sm mb-1">
                                                 <i class="fas fa-edit me-1"></i>

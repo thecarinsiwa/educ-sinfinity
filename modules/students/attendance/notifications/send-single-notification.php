@@ -15,12 +15,8 @@ if (!isLoggedIn()) {
     exit;
 }
 
-// Vérifier les permissions
-if (!checkPermission('students')) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Permissions insuffisantes']);
-    exit;
-}
+require_once '../../../../includes/permissions-pages.php';
+requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../../dashboard.php');
 
 // Vérifier que c'est une requête POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

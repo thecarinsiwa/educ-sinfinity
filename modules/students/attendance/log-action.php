@@ -7,13 +7,13 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification
-if (!isLoggedIn()) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Non authentifié']);
-    exit;
-}
+requireLogin();
+
+// Vérifier les permissions
+requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
 
 // Vérifier que c'est une requête POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

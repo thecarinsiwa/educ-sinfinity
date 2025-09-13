@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module de Suivi des Élèves - Tableau de bord principal
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('students', 'tracking', 'read', '../../../dashboard.php');
 
 $page_title = 'Suivi des Élèves';
 
@@ -157,7 +156,7 @@ include '../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-user-check me-2"></i>
-        Suivi des Élèves
+            Suivi des Élèves
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -359,7 +358,7 @@ include '../../../includes/header.php';
                         </a>
                         <a href="decisions/" class="btn btn-secondary">
                             <i class="fas fa-gavel me-2"></i>
-                            Prendre les décisions
+                                Prendre les décisions
                         </a>
                         <a href="follow-up/" class="btn btn-dark">
                             <i class="fas fa-user-check me-2"></i>
@@ -575,3 +574,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+

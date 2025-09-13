@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Export des mouvements d'élèves (transferts)
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,25 +7,25 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../../dashboard.php');
 
 $page_title = "Export des mouvements d'élèves";
 
 // Traitement de l'export direct (depuis les rapports)
 if (isset($_GET['export']) && $_GET['export'] === 'excel') {
-    // Récupérer les paramètres de filtre depuis l'URL
+    // RÃ©cupÃ©rer les paramÃ¨tres de filtre depuis l'URL
     $period = $_GET['period'] ?? 'month';
     $type_filter = $_GET['type'] ?? '';
     $status_filter = $_GET['status'] ?? '';
     $date_from = $_GET['date_from'] ?? '';
     $date_to = $_GET['date_to'] ?? '';
     
-    // Définir les dates selon la période
+    // DÃ©finir les dates selon la période
     switch ($period) {
         case 'week':
             $date_from = $date_from ?: date('Y-m-d', strtotime('-7 days'));
@@ -61,7 +61,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     
     $where_clause = implode(' AND ', $where_conditions);
     
-    // Récupérer les données
+    // RÃ©cupÃ©rer les donnÃ©es
     $data = $database->query(
         "SELECT t.*, e.numero_matricule, e.nom, e.prenom, e.date_naissance, e.sexe,
                 c_orig.nom as classe_origine_nom, c_orig.niveau as classe_origine_niveau,
@@ -95,14 +95,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
         
         // Validation
         if (!$date_start || !$date_end) {
-            throw new Exception('Période de dates requise');
+            throw new Exception('PÃ©riode de dates requise');
         }
         
         if (strtotime($date_start) > strtotime($date_end)) {
-            throw new Exception('La date de début doit être antérieure à la date de fin');
+            throw new Exception('La date de dÃ©but doit Ãªtre antÃ©rieure Ã  la date de fin');
         }
         
-        // Construire la requête
+        // Construire la requÃªte
         $where_conditions = [
             "t.date_demande >= ?",
             "t.date_demande <= ?"
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
         
         $where_clause = implode(' AND ', $where_conditions);
         
-        // Requête selon le type d'export
+        // RequÃªte selon le type d'export
         if ($export_type === 'detailed') {
             $query = "
                 SELECT t.*, e.numero_matricule, e.nom, e.prenom, e.date_naissance, e.sexe, e.adresse,
@@ -160,10 +160,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
         $data = $database->query($query, $params)->fetchAll();
         
         if (empty($data)) {
-            throw new Exception('Aucune donnée trouvée pour les critères sélectionnés');
+            throw new Exception('Aucune donnÃ©e trouvÃ©e pour les critÃ¨res sÃ©lectionnÃ©s');
         }
         
-        // Générer l'export selon le format
+        // GÃ©nÃ©rer l'export selon le format
         switch ($export_format) {
             case 'excel':
                 generateExcelExport($data, $date_start, $date_end, implode(',', $selected_types), implode(',', $selected_statuses), $export_type);
@@ -175,25 +175,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
                 generatePDFExport($data, $date_start, $date_end, $export_type);
                 break;
             default:
-                throw new Exception('Format d\'export non supporté');
+                throw new Exception('Format d\'export non supportÃ©');
         }
         
         // Enregistrer l'action
         logUserAction(
             'export_movements',
             'transfers',
-            "Export $export_format - Type: $export_type, Période: $date_start à $date_end, Enregistrements: " . count($data),
+            "Export $export_format - Type: $export_type, PÃ©riode: $date_start Ã  $date_end, Enregistrements: " . count($data),
             null
         );
         
-        exit; // L'export a été généré, arrêter l'exécution
+        exit; // L'export a Ã©tÃ© gÃ©nÃ©rÃ©, arrÃªter l'exÃ©cution
         
     } catch (Exception $e) {
         showMessage('error', $e->getMessage());
     }
 }
 
-// Statistiques rapides pour l'aperçu
+// Statistiques rapides pour l'aperÃ§u
 $quick_stats = $database->query(
     "SELECT 
         COUNT(*) as total_records,
@@ -216,11 +216,11 @@ function generateExcelExport($data, $date_start, $date_end, $types = '', $status
     
     echo "<html><head><meta charset='UTF-8'></head><body>";
     echo "<h2>Export des mouvements d'élèves</h2>";
-    echo "<p>Période: " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
-    echo "<p>Type: " . ($export_type === 'detailed' ? 'Détaillé' : 'Résumé') . "</p>";
+    echo "<p>PÃ©riode: " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
+    echo "<p>Type: " . ($export_type === 'detailed' ? 'DÃ©taillÃ©' : 'RÃ©sumÃ©') . "</p>";
     if ($types) echo "<p>Types: " . $types . "</p>";
     if ($statuses) echo "<p>Statuts: " . $statuses . "</p>";
-    echo "<p>Généré le: " . date('d/m/Y à H:i:s') . "</p>";
+    echo "<p>GÃ©nÃ©rÃ© le: " . date('d/m/Y Ã  H:i:s') . "</p>";
     echo "<br>";
     
     echo "<table border='1' cellpadding='5' cellspacing='0'>";
@@ -229,10 +229,10 @@ function generateExcelExport($data, $date_start, $date_end, $types = '', $status
         echo "<tr style='background-color: #f0f0f0; font-weight: bold;'>";
         echo "<th>Matricule</th>";
         echo "<th>Nom</th>";
-        echo "<th>Prénom</th>";
+        echo "<th>PrÃ©nom</th>";
         echo "<th>Type mouvement</th>";
-        echo "<th>École origine</th>";
-        echo "<th>École destination</th>";
+        echo "<th>Ã‰cole origine</th>";
+        echo "<th>Ã‰cole destination</th>";
         echo "<th>Classe origine</th>";
         echo "<th>Classe destination</th>";
         echo "<th>Date demande</th>";
@@ -240,7 +240,7 @@ function generateExcelExport($data, $date_start, $date_end, $types = '', $status
         echo "<th>Statut</th>";
         echo "<th>Motif</th>";
         echo "<th>Frais</th>";
-        echo "<th>Traité par</th>";
+        echo "<th>TraitÃ© par</th>";
         echo "</tr>";
         
         foreach ($data as $row) {
@@ -266,10 +266,10 @@ function generateExcelExport($data, $date_start, $date_end, $types = '', $status
         echo "<th>Type mouvement</th>";
         echo "<th>Statut</th>";
         echo "<th>Nombre</th>";
-        echo "<th>Élèves concernés</th>";
+        echo "<th>Ã‰lÃ¨ves concernÃ©s</th>";
         echo "<th>Total frais</th>";
-        echo "<th>Total payé</th>";
-        echo "<th>Délai moyen (jours)</th>";
+        echo "<th>Total payÃ©</th>";
+        echo "<th>DÃ©lai moyen (jours)</th>";
         echo "</tr>";
         
         foreach ($data as $row) {
@@ -303,9 +303,9 @@ function generateCSVExport($data, $date_start, $date_end, $export_type) {
     
     if ($export_type === 'detailed') {
         fputcsv($output, [
-            'Matricule', 'Nom', 'Prénom', 'Type mouvement', 'École origine', 'École destination',
+            'Matricule', 'Nom', 'PrÃ©nom', 'Type mouvement', 'Ã‰cole origine', 'Ã‰cole destination',
             'Classe origine', 'Classe destination', 'Date demande', 'Date effective', 'Statut',
-            'Motif', 'Frais', 'Traité par'
+            'Motif', 'Frais', 'TraitÃ© par'
         ], ';');
         
         foreach ($data as $row) {
@@ -328,7 +328,7 @@ function generateCSVExport($data, $date_start, $date_end, $export_type) {
         }
     } else {
         fputcsv($output, [
-            'Type mouvement', 'Statut', 'Nombre', 'Élèves concernés', 'Total frais', 'Total payé', 'Délai moyen (jours)'
+            'Type mouvement', 'Statut', 'Nombre', 'Ã‰lÃ¨ves concernÃ©s', 'Total frais', 'Total payÃ©', 'DÃ©lai moyen (jours)'
         ], ';');
         
         foreach ($data as $row) {
@@ -367,9 +367,9 @@ function generatePDFExport($data, $date_start, $date_end, $export_type) {
     echo "<div class='header'>";
     echo "<h1>Export des mouvements d'élèves</h1>";
     echo "<div class='info'>";
-    echo "<p><strong>Période:</strong> " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
-    echo "<p><strong>Type:</strong> " . ($export_type === 'detailed' ? 'Détaillé' : 'Résumé') . "</p>";
-    echo "<p><strong>Généré le:</strong> " . date('d/m/Y à H:i:s') . "</p>";
+    echo "<p><strong>PÃ©riode:</strong> " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
+    echo "<p><strong>Type:</strong> " . ($export_type === 'detailed' ? 'DÃ©taillÃ©' : 'RÃ©sumÃ©') . "</p>";
+    echo "<p><strong>GÃ©nÃ©rÃ© le:</strong> " . date('d/m/Y Ã  H:i:s') . "</p>";
     echo "</div>";
     echo "</div>";
     
@@ -377,8 +377,8 @@ function generatePDFExport($data, $date_start, $date_end, $export_type) {
     
     if ($export_type === 'detailed') {
         echo "<tr>";
-        echo "<th>Matricule</th><th>Nom</th><th>Prénom</th><th>Type</th>";
-        echo "<th>École origine</th><th>École destination</th><th>Date demande</th><th>Statut</th>";
+        echo "<th>Matricule</th><th>Nom</th><th>PrÃ©nom</th><th>Type</th>";
+        echo "<th>Ã‰cole origine</th><th>Ã‰cole destination</th><th>Date demande</th><th>Statut</th>";
         echo "</tr>";
         
         foreach ($data as $row) {
@@ -396,7 +396,7 @@ function generatePDFExport($data, $date_start, $date_end, $export_type) {
     } else {
         echo "<tr>";
         echo "<th>Type mouvement</th><th>Statut</th><th>Nombre</th>";
-        echo "<th>Élèves concernés</th><th>Total frais</th>";
+        echo "<th>Ã‰lÃ¨ves concernÃ©s</th><th>Total frais</th>";
         echo "</tr>";
         
         foreach ($data as $row) {
@@ -598,7 +598,7 @@ include '../../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="export-header">
     <div class="container-fluid">
         <div class="row align-items-center">
@@ -608,7 +608,7 @@ include '../../../../includes/header.php';
                     Export des mouvements d'élèves
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Exportez vos données de transferts dans différents formats
+                    Exportez vos donnÃ©es de transferts dans diffÃ©rents formats
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -623,7 +623,7 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Aperçu des statistiques -->
+<!-- AperÃ§u des statistiques -->
 <div class="stats-overview animate-fade-in animate-delay-1">
     <div class="row">
         <div class="col-lg-2 col-md-4 col-sm-6">
@@ -659,7 +659,7 @@ include '../../../../includes/header.php';
         <div class="col-lg-2 col-md-4 col-sm-6">
             <div class="stat-item">
                 <span class="stat-number"><?php echo number_format($quick_stats['unique_students'] ?? 0); ?></span>
-                <span class="stat-label">Élèves concernés</span>
+                <span class="stat-label">Ã‰lÃ¨ves concernÃ©s</span>
             </div>
         </div>
     </div>
@@ -673,12 +673,12 @@ include '../../../../includes/header.php';
         <div class="row">
             <!-- Configuration de l'export -->
             <div class="col-lg-8">
-                <!-- Période -->
+                <!-- PÃ©riode -->
                 <div class="form-section">
-                    <h6><i class="fas fa-calendar-alt"></i>Période d'export</h6>
+                    <h6><i class="fas fa-calendar-alt"></i>PÃ©riode d'export</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="date_start" class="form-label">Date de début</label>
+                            <label for="date_start" class="form-label">Date de dÃ©but</label>
                             <input type="date" class="form-control form-control-lg" id="date_start" name="date_start"
                                    value="<?php echo date('Y-m-01'); ?>" required>
                         </div>
@@ -710,7 +710,7 @@ include '../../../../includes/header.php';
 
                 <!-- Types de mouvements -->
                 <div class="form-section">
-                    <h6><i class="fas fa-exchange-alt"></i>Types de mouvements à inclure</h6>
+                    <h6><i class="fas fa-exchange-alt"></i>Types de mouvements Ã  inclure</h6>
                     <div class="checkbox-group">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="selected_types[]" value="transfert_entrant"
@@ -733,7 +733,7 @@ include '../../../../includes/header.php';
                                    id="type_sortie" checked>
                             <label class="form-check-label" for="type_sortie">
                                 <i class="fas fa-graduation-cap text-info me-1"></i>
-                                Sorties définitives
+                                Sorties dÃ©finitives
                             </label>
                         </div>
                     </div>
@@ -741,7 +741,7 @@ include '../../../../includes/header.php';
 
                 <!-- Statuts -->
                 <div class="form-section">
-                    <h6><i class="fas fa-tasks"></i>Statuts à inclure</h6>
+                    <h6><i class="fas fa-tasks"></i>Statuts Ã  inclure</h6>
                     <div class="checkbox-group">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="selected_statuses[]" value="en_attente"
@@ -756,7 +756,7 @@ include '../../../../includes/header.php';
                                    id="status_approuve" checked>
                             <label class="form-check-label" for="status_approuve">
                                 <i class="fas fa-check text-info me-1"></i>
-                                Approuvés
+                                ApprouvÃ©s
                             </label>
                         </div>
                         <div class="form-check">
@@ -764,7 +764,7 @@ include '../../../../includes/header.php';
                                    id="status_rejete">
                             <label class="form-check-label" for="status_rejete">
                                 <i class="fas fa-times text-danger me-1"></i>
-                                Rejetés
+                                RejetÃ©s
                             </label>
                         </div>
                         <div class="form-check">
@@ -772,21 +772,21 @@ include '../../../../includes/header.php';
                                    id="status_complete" checked>
                             <label class="form-check-label" for="status_complete">
                                 <i class="fas fa-check-circle text-success me-1"></i>
-                                Complétés
+                                ComplÃ©tÃ©s
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Options avancées -->
+                <!-- Options avancÃ©es -->
                 <div class="form-section">
                     <h6><i class="fas fa-cog"></i>Options d'export</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="export_type" class="form-label">Type de données</label>
+                            <label for="export_type" class="form-label">Type de donnÃ©es</label>
                             <select class="form-select form-select-lg" id="export_type" name="export_type">
-                                <option value="detailed">Données détaillées</option>
-                                <option value="summary">Résumé statistique</option>
+                                <option value="detailed">DonnÃ©es dÃ©taillÃ©es</option>
+                                <option value="summary">RÃ©sumÃ© statistique</option>
                             </select>
                         </div>
                     </div>
@@ -802,7 +802,7 @@ include '../../../../includes/header.php';
                         <input type="radio" name="export_format" value="excel" id="format_excel" checked style="display: none;">
                         <i class="fas fa-file-excel text-success"></i>
                         <div class="fw-bold">Excel (.xls)</div>
-                        <small class="text-muted">Idéal pour l'analyse</small>
+                        <small class="text-muted">IdÃ©al pour l'analyse</small>
                     </div>
 
                     <div class="format-option" onclick="selectFormat('csv')">
@@ -824,7 +824,7 @@ include '../../../../includes/header.php';
                 <div class="d-grid">
                     <button type="submit" class="btn btn-export excel btn-lg" id="exportButton">
                         <i class="fas fa-download me-2"></i>
-                        Générer l'export
+                        GÃ©nÃ©rer l'export
                     </button>
                 </div>
             </div>
@@ -841,22 +841,22 @@ include '../../../../includes/header.php';
 
     <div class="row">
         <div class="col-md-6">
-            <h6 class="text-primary">📊 Types d'export</h6>
+            <h6 class="text-primary">ðŸ“Š Types d'export</h6>
             <ul class="list-unstyled">
                 <li class="mb-2">
-                    <strong>Données détaillées :</strong> Liste complète de tous les mouvements avec informations complètes
+                    <strong>DonnÃ©es dÃ©taillÃ©es :</strong> Liste complÃ¨te de tous les mouvements avec informations complÃ¨tes
                 </li>
                 <li class="mb-2">
-                    <strong>Résumé statistique :</strong> Statistiques agrégées par type et statut
+                    <strong>RÃ©sumÃ© statistique :</strong> Statistiques agrÃ©gÃ©es par type et statut
                 </li>
             </ul>
         </div>
 
         <div class="col-md-6">
-            <h6 class="text-success">📁 Formats disponibles</h6>
+            <h6 class="text-success">ðŸ“ Formats disponibles</h6>
             <ul class="list-unstyled">
                 <li class="mb-2">
-                    <strong>Excel (.xls) :</strong> Idéal pour l'analyse et les calculs
+                    <strong>Excel (.xls) :</strong> IdÃ©al pour l'analyse et les calculs
                 </li>
                 <li class="mb-2">
                     <strong>CSV (.csv) :</strong> Compatible avec tous les logiciels
@@ -870,7 +870,7 @@ include '../../../../includes/header.php';
 
     <div class="alert alert-info mt-3">
         <i class="fas fa-lightbulb me-2"></i>
-        <strong>Conseil :</strong> Pour de gros volumes de données, privilégiez le format CSV qui est plus rapide à générer.
+        <strong>Conseil :</strong> Pour de gros volumes de donnÃ©es, privilÃ©giez le format CSV qui est plus rapide Ã  gÃ©nÃ©rer.
     </div>
 </div>
 
@@ -880,24 +880,24 @@ let selectedFormat = 'excel';
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
-    // Sélectionner le format Excel par défaut
+    // SÃ©lectionner le format Excel par dÃ©faut
     selectFormat('excel');
 });
 
-// Sélection du format d'export
+// SÃ©lection du format d'export
 function selectFormat(format) {
     selectedFormat = format;
 
-    // Réinitialiser toutes les options
+    // RÃ©initialiser toutes les options
     document.querySelectorAll('.format-option').forEach(option => {
         option.classList.remove('selected');
     });
 
-    // Sélectionner l'option choisie
+    // SÃ©lectionner l'option choisie
     document.querySelector(`input[value="${format}"]`).checked = true;
     document.querySelector(`input[value="${format}"]`).closest('.format-option').classList.add('selected');
 
-    // Mettre à jour le bouton d'export
+    // Mettre Ã  jour le bouton d'export
     const button = document.getElementById('exportButton');
     const icons = {
         excel: 'fas fa-file-excel',
@@ -912,16 +912,16 @@ function selectFormat(format) {
     };
 
     const labels = {
-        excel: 'Générer Excel',
-        csv: 'Générer CSV',
-        pdf: 'Générer PDF'
+        excel: 'GÃ©nÃ©rer Excel',
+        csv: 'GÃ©nÃ©rer CSV',
+        pdf: 'GÃ©nÃ©rer PDF'
     };
 
     button.className = `btn btn-lg ${classes[format]}`;
     button.innerHTML = `<i class="${icons[format]} me-2"></i>${labels[format]}`;
 }
 
-// Définir des plages de dates prédéfinies
+// DÃ©finir des plages de dates prÃ©dÃ©finies
 function setDateRange(range) {
     const startInput = document.getElementById('date_start');
     const endInput = document.getElementById('date_end');
@@ -962,35 +962,35 @@ document.getElementById('exportForm').addEventListener('submit', function(e) {
 
     if (!startDate || !endDate) {
         e.preventDefault();
-        alert('Veuillez sélectionner une période de dates');
+        alert('Veuillez sÃ©lectionner une période de dates');
         return false;
     }
 
     if (new Date(startDate) > new Date(endDate)) {
         e.preventDefault();
-        alert('La date de début doit être antérieure à la date de fin');
+        alert('La date de dÃ©but doit Ãªtre antÃ©rieure Ã  la date de fin');
         return false;
     }
 
     if (selectedTypes.length === 0) {
         e.preventDefault();
-        alert('Veuillez sélectionner au moins un type de mouvement');
+        alert('Veuillez sÃ©lectionner au moins un type de mouvement');
         return false;
     }
 
     if (selectedStatuses.length === 0) {
         e.preventDefault();
-        alert('Veuillez sélectionner au moins un statut');
+        alert('Veuillez sÃ©lectionner au moins un statut');
         return false;
     }
 
     // Afficher un message de chargement
     const button = document.getElementById('exportButton');
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...';
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>GÃ©nÃ©ration en cours...';
     button.disabled = true;
 
-    // Réactiver le bouton après 5 secondes (au cas où)
+    // RÃ©activer le bouton aprÃ¨s 5 secondes (au cas oÃ¹)
     setTimeout(() => {
         button.innerHTML = originalText;
         button.disabled = false;
@@ -999,3 +999,7 @@ document.getElementById('exportForm').addEventListener('submit', function(e) {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

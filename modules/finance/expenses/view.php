@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'expenses', 'read', '../../dashboard.php');
 
 // Récupérer l'ID de la dépense
 $id = (int)($_GET['id'] ?? 0);
@@ -52,7 +50,7 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (checkPermission('finance')): ?>
+        <?php if (checkPagePermission('finance')): ?>
             <div class="btn-group">
                 <a href="edit.php?id=<?php echo $depense['id']; ?>" class="btn btn-outline-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -202,7 +200,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPermission('finance')): ?>
+                    <?php if (checkPagePermission('finance')): ?>
                         <a href="edit.php?id=<?php echo $depense['id']; ?>" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-2"></i>
                             Modifier

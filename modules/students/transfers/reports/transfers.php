@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Rapports des transferts d'élèves
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,23 +7,23 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'transfers', 'read', '../../../../dashboard.php');
 
 $page_title = "Rapports des transferts";
 
-// Récupérer les paramètres de filtre
+// RÃ©cupÃ©rer les paramÃ¨tres de filtre
 $period = $_GET['period'] ?? 'month';
 $type_filter = $_GET['type'] ?? '';
 $status_filter = $_GET['status'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 
-// Définir les dates selon la période
+// DÃ©finir les dates selon la période
 switch ($period) {
     case 'week':
         $date_from = $date_from ?: date('Y-m-d', strtotime('-7 days'));
@@ -77,14 +77,14 @@ $general_stats = $database->query(
     $params
 )->fetch();
 
-// Évolution mensuelle
-$monthly_evolution = []; // Temporairement désactivé pour debug
+// Ã‰volution mensuelle
+$monthly_evolution = []; // Temporairement dÃ©sactivÃ© pour debug
 
-// Top des écoles d'origine/destination
-$top_schools = []; // Temporairement désactivé pour debug
+// Top des Ã©coles d'origine/destination
+$top_schools = []; // Temporairement dÃ©sactivÃ© pour debug
 
 // Statistiques par statut
-$status_stats = []; // Temporairement désactivé pour debug
+$status_stats = []; // Temporairement dÃ©sactivÃ© pour debug
 
 // Statistiques par classe
 $class_stats = $database->query(
@@ -302,7 +302,7 @@ include '../../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="reports-header">
     <div class="container-fluid">
         <div class="row align-items-center">
@@ -312,7 +312,7 @@ include '../../../../includes/header.php';
                     Rapports des transferts
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Analyse détaillée des mouvements d'élèves - Période: <?php echo date('d/m/Y', strtotime($date_from)) . ' au ' . date('d/m/Y', strtotime($date_to)); ?>
+                    Analyse dÃ©taillÃ©e des mouvements d'élèves - PÃ©riode: <?php echo date('d/m/Y', strtotime($date_from)) . ' au ' . date('d/m/Y', strtotime($date_to)); ?>
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -321,7 +321,7 @@ include '../../../../includes/header.php';
                         <i class="fas fa-arrow-left me-1"></i>
                         Retour
                     </a>
-                    <button type="button" class="btn btn-info btn-modern me-2" onclick="refreshData()" data-bs-toggle="tooltip" title="Rafraîchir les données">
+                    <button type="button" class="btn btn-info btn-modern me-2" onclick="refreshData()" data-bs-toggle="tooltip" title="RafraÃ®chir les donnÃ©es">
                         <i class="fas fa-sync-alt me-1"></i>
                         Actualiser
                     </button>
@@ -339,12 +339,12 @@ include '../../../../includes/header.php';
 <div class="filters-card animate-fade-in animate-delay-1">
     <form method="GET" class="row g-3">
         <div class="col-md-2">
-            <label for="period" class="form-label">Période</label>
+            <label for="period" class="form-label">PÃ©riode</label>
             <select class="form-select" id="period" name="period" onchange="toggleCustomDates()">
                 <option value="week" <?php echo $period === 'week' ? 'selected' : ''; ?>>Cette semaine</option>
                 <option value="month" <?php echo $period === 'month' ? 'selected' : ''; ?>>Ce mois</option>
                 <option value="year" <?php echo $period === 'year' ? 'selected' : ''; ?>>Cette année</option>
-                <option value="custom" <?php echo $period === 'custom' ? 'selected' : ''; ?>>Personnalisée</option>
+                <option value="custom" <?php echo $period === 'custom' ? 'selected' : ''; ?>>PersonnalisÃ©e</option>
             </select>
         </div>
         
@@ -373,9 +373,9 @@ include '../../../../includes/header.php';
             <select class="form-select" id="status" name="status">
                 <option value="">Tous les statuts</option>
                 <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
-                <option value="approuve" <?php echo $status_filter === 'approuve' ? 'selected' : ''; ?>>Approuvé</option>
-                <option value="rejete" <?php echo $status_filter === 'rejete' ? 'selected' : ''; ?>>Rejeté</option>
-                <option value="complete" <?php echo $status_filter === 'complete' ? 'selected' : ''; ?>>Complété</option>
+                <option value="approuve" <?php echo $status_filter === 'approuve' ? 'selected' : ''; ?>>ApprouvÃ©</option>
+                <option value="rejete" <?php echo $status_filter === 'rejete' ? 'selected' : ''; ?>>RejetÃ©</option>
+                <option value="complete" <?php echo $status_filter === 'complete' ? 'selected' : ''; ?>>ComplÃ©tÃ©</option>
             </select>
         </div>
         
@@ -417,7 +417,7 @@ include '../../../../includes/header.php';
     <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
         <div class="stats-card danger">
             <span class="stat-number"><?php echo number_format($general_stats['sorties']); ?></span>
-            <span class="stat-label">Sorties définitives</span>
+            <span class="stat-label">Sorties dÃ©finitives</span>
             <i class="fas fa-graduation-cap stat-icon"></i>
         </div>
     </div>
@@ -425,7 +425,7 @@ include '../../../../includes/header.php';
     <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
         <div class="stats-card primary">
             <span class="stat-number"><?php echo number_format($general_stats['complete']); ?></span>
-            <span class="stat-label">Complétés</span>
+            <span class="stat-label">ComplÃ©tÃ©s</span>
             <i class="fas fa-check-circle stat-icon"></i>
         </div>
     </div>
@@ -441,7 +441,7 @@ include '../../../../includes/header.php';
     <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
         <div class="stats-card success">
             <span class="stat-number"><?php echo number_format($general_stats['total_payes']); ?></span>
-            <span class="stat-label">Frais payés (FC)</span>
+            <span class="stat-label">Frais payÃ©s (FC)</span>
             <i class="fas fa-credit-card stat-icon"></i>
         </div>
     </div>
@@ -452,7 +452,7 @@ include '../../../../includes/header.php';
 <div class="chart-card animate-fade-in animate-delay-3">
     <h5 class="mb-3">
         <i class="fas fa-chart-pie me-2"></i>
-        Répartition par statut
+        RÃ©partition par statut
     </h5>
     <div class="row">
         <?php foreach ($status_stats as $stat): ?>
@@ -495,7 +495,7 @@ include '../../../../includes/header.php';
         <div class="col-md-3">
             <div class="text-center">
                 <h4 class="text-success"><?php echo round($processing_time['avg_completion_days'], 1); ?></h4>
-                <p class="text-muted">Jours moyens pour complétion</p>
+                <p class="text-muted">Jours moyens pour complÃ©tion</p>
             </div>
         </div>
         <div class="col-md-3">
@@ -514,12 +514,12 @@ include '../../../../includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Évolution mensuelle -->
+<!-- Ã‰volution mensuelle -->
 <?php if (!empty($monthly_evolution)): ?>
 <div class="chart-card animate-fade-in animate-delay-3">
     <h5 class="mb-3">
         <i class="fas fa-chart-line me-2"></i>
-        Évolution mensuelle (12 derniers mois)
+        Ã‰volution mensuelle (12 derniers mois)
     </h5>
     <canvas id="monthlyChart" height="100"></canvas>
 </div>
@@ -587,10 +587,10 @@ include '../../../../includes/header.php';
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
-                    <th>Élève</th>
+                    <th>Ã‰lÃ¨ve</th>
                     <th>Type</th>
-                    <th>École origine</th>
-                    <th>École destination</th>
+                    <th>Ã‰cole origine</th>
+                    <th>Ã‰cole destination</th>
                     <th>Date demande</th>
                     <th>Statut</th>
                     <th>Frais</th>
@@ -620,21 +620,21 @@ include '../../../../includes/header.php';
                             <?php 
                             $status_labels = [
                                 'en_attente' => '<span class="badge bg-warning">En attente</span>',
-                                'approuve' => '<span class="badge bg-primary">Approuvé</span>',
-                                'rejete' => '<span class="badge bg-danger">Rejeté</span>',
-                                'complete' => '<span class="badge bg-success">Complété</span>'
+                                'approuve' => '<span class="badge bg-primary">ApprouvÃ©</span>',
+                                'rejete' => '<span class="badge bg-danger">RejetÃ©</span>',
+                                'complete' => '<span class="badge bg-success">ComplÃ©tÃ©</span>'
                             ];
                             echo $status_labels[$transfer['statut']] ?? $transfer['statut'];
                             ?>
                         </td>
                         <td>
                             <strong><?php echo number_format($transfer['frais_transfert']); ?> FC</strong><br>
-                            <small class="text-muted">Payé: <?php echo number_format($transfer['frais_payes']); ?> FC</small>
+                            <small class="text-muted">PayÃ©: <?php echo number_format($transfer['frais_payes']); ?> FC</small>
                         </td>
                         <td>
                             <button type="button" class="btn btn-sm btn-outline-primary" 
                                     onclick="viewTransferDetails(<?php echo $transfer['id']; ?>)" 
-                                    data-bs-toggle="tooltip" title="Voir les détails">
+                                    data-bs-toggle="tooltip" title="Voir les dÃ©tails">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </td>
@@ -646,18 +646,18 @@ include '../../../../includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Top des écoles -->
+<!-- Top des Ã©coles -->
 <?php if (!empty($top_schools)): ?>
 <div class="chart-card animate-fade-in animate-delay-4">
     <h5 class="mb-3">
         <i class="fas fa-school me-2"></i>
-        Écoles les plus fréquentes
+        Ã‰coles les plus frÃ©quentes
     </h5>
     <div class="table-responsive">
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>École</th>
+                    <th>Ã‰cole</th>
                     <th>Type de mouvement</th>
                     <th>Nombre de transferts</th>
                 </tr>
@@ -691,7 +691,7 @@ include '../../../../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Afficher/masquer les champs de dates personnalisées
+// Afficher/masquer les champs de dates personnalisÃ©es
 function toggleCustomDates() {
     const period = document.getElementById('period').value;
     const dateFromCol = document.getElementById('date-from-col');
@@ -706,7 +706,7 @@ function toggleCustomDates() {
     }
 }
 
-// Graphique d'évolution mensuelle
+// Graphique d'Ã©volution mensuelle
 <?php if (!empty($monthly_evolution)): ?>
 const monthlyData = <?php echo json_encode(array_reverse($monthly_evolution)); ?>;
 const ctx = document.getElementById('monthlyChart').getContext('2d');
@@ -772,12 +772,12 @@ function exportReport() {
     window.location.href = '../exports/movements.php?' + params.toString();
 }
 
-// Fonction pour afficher les détails d'un transfert
+// Fonction pour afficher les dÃ©tails d'un transfert
 function viewTransferDetails(transferId) {
     window.open('../view-transfer.php?id=' + transferId, '_blank');
 }
 
-// Fonction pour rafraîchir les données
+// Fonction pour rafraÃ®chir les donnÃ©es
 function refreshData() {
     window.location.reload();
 }
@@ -792,3 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

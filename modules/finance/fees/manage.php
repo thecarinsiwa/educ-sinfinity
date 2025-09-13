@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'fees', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion avancée des frais scolaires';
 
@@ -368,7 +366,7 @@ include '../../../includes/header.php';
                                     <td><?php echo htmlspecialchars($frais_item['libelle']); ?></td>
                                     <td>
                                         <strong class="text-success">
-                                            <?php echo formatMoney($frais_item['montant']); ?>
+                                            <?php echo number_format($frais_item['montant'], 0, ',', ' ') . ' ' . htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>
                                         </strong>
                                     </td>
                                     <td>
@@ -526,7 +524,7 @@ function showBulkAction(action) {
             title.textContent = 'Modifier le montant';
             body.innerHTML = `
                 <div class="mb-3">
-                    <label for="amount-input" class="form-label">Nouveau montant (FC)</label>
+                    <label for="amount-input" class="form-label">Nouveau montant (<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>)</label>
                     <input type="number" class="form-control" id="amount-input" min="0" step="0.01" required>
                 </div>
             `;
@@ -570,3 +568,4 @@ function executeBulkAction() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

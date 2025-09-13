@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Modification d'un dossier scolaire
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,25 +7,24 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+
+requirePagePermissionFromDB('students', 'records', 'edit', '../../../dashboard.php');
 
 $eleve_id = intval($_GET['id'] ?? 0);
 
 if (!$eleve_id) {
-    showMessage('error', 'ID d\'élève invalide.');
+    showMessage('error', 'ID d\'Ã©lÃ¨ve invalide.');
     redirectTo('index.php');
 }
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Récupérer les informations de l'élève
+// RÃ©cupÃ©rer les informations de l'Ã©lÃ¨ve
 try {
     $eleve = $database->query(
         "SELECT e.*, i.classe_id, c.nom as classe_nom
@@ -37,15 +36,15 @@ try {
     )->fetch();
 
     if (!$eleve) {
-        showMessage('error', 'Élève non trouvé ou non inscrit pour l\'année scolaire actuelle.');
+        showMessage('error', 'Ã‰lÃ¨ve non trouvÃ© ou non inscrit pour l\'année scolaire actuelle.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
-    showMessage('error', 'Erreur lors du chargement de l\'élève : ' . $e->getMessage());
+    showMessage('error', 'Erreur lors du chargement de l\'Ã©lÃ¨ve : ' . $e->getMessage());
     redirectTo('index.php');
 }
 
-// Récupérer les classes disponibles
+// RÃ©cupÃ©rer les classes disponibles
 try {
     $classes = $database->query(
         "SELECT id, nom, niveau, section FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
@@ -59,7 +58,7 @@ $errors = [];
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Récupérer et valider les données
+    // RÃ©cupÃ©rer et valider les donnÃ©es
     $nom = sanitizeInput($_POST['nom'] ?? '');
     $prenom = sanitizeInput($_POST['prenom'] ?? '');
     $sexe = $_POST['sexe'] ?? '';
@@ -78,12 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? 'actif';
     
     // Gestion de la photo
-    $photo_path = $eleve['photo']; // Garder la photo existante par défaut
+    $photo_path = $eleve['photo']; // Garder la photo existante par dÃ©faut
     
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = '../../../uploads/photos/';
         
-        // Créer le répertoire s'il n'existe pas
+        // CrÃ©er le rÃ©pertoire s'il n'existe pas
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
@@ -91,16 +90,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $file_info = pathinfo($_FILES['photo']['name']);
         $extension = strtolower($file_info['extension']);
         
-        // Vérifier l'extension
+        // VÃ©rifier l'extension
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
         if (!in_array($extension, $allowed_extensions)) {
-            $errors[] = 'Format de fichier non autorisé. Utilisez JPG, PNG ou GIF.';
+            $errors[] = 'Format de fichier non autorisÃ©. Utilisez JPG, PNG ou GIF.';
         } else {
-            // Vérifier la taille (max 5MB)
+            // VÃ©rifier la taille (max 5MB)
             if ($_FILES['photo']['size'] > 5 * 1024 * 1024) {
-                $errors[] = 'La taille du fichier ne doit pas dépasser 5MB.';
+                $errors[] = 'La taille du fichier ne doit pas dÃ©passer 5MB.';
             } else {
-                // Générer un nom unique
+                // GÃ©nÃ©rer un nom unique
                 $new_filename = 'eleve_' . $eleve_id . '_' . time() . '.' . $extension;
                 $upload_path = $upload_dir . $new_filename;
                 
@@ -111,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $photo_path = 'uploads/photos/' . $new_filename;
                 } else {
-                    $errors[] = 'Erreur lors du téléchargement de la photo.';
+                    $errors[] = 'Erreur lors du tÃ©lÃ©chargement de la photo.';
                 }
             }
         }
@@ -119,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validation
     if (empty($nom)) $errors[] = 'Le nom est obligatoire.';
-    if (empty($prenom)) $errors[] = 'Le prénom est obligatoire.';
+    if (empty($prenom)) $errors[] = 'Le prÃ©nom est obligatoire.';
     if (empty($sexe)) $errors[] = 'Le sexe est obligatoire.';
     if (!$classe_id) $errors[] = 'La classe est obligatoire.';
     
@@ -140,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $database->beginTransaction();
             
-            // Mettre à jour les informations de l'élève
+            // Mettre Ã  jour les informations de l'Ã©lÃ¨ve
             $database->execute(
                 "UPDATE eleves SET
                  nom = ?, prenom = ?, sexe = ?, date_naissance = ?, lieu_naissance = ?,
@@ -156,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]
             );
             
-            // Mettre à jour la classe si elle a changé
+            // Mettre Ã  jour la classe si elle a changÃ©
             if ($classe_id != $eleve['classe_id']) {
                 $database->execute(
                     "UPDATE inscriptions SET classe_id = ?, updated_at = NOW() 
@@ -166,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $database->commit();
-            showMessage('success', 'Dossier modifié avec succès.');
+            showMessage('success', 'Dossier modifiÃ© avec succÃ¨s.');
             redirectTo("view.php?id=$eleve_id");
             
         } catch (Exception $e) {
@@ -175,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 } else {
-    // Pré-remplir le formulaire avec les données existantes
+    // PrÃ©-remplir le formulaire avec les donnÃ©es existantes
     $_POST = [
         'nom' => $eleve['nom'],
         'prenom' => $eleve['prenom'],
@@ -210,7 +209,7 @@ include '../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="view.php?id=<?php echo $eleve_id; ?>" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour aux détails
+                Retour aux dÃ©tails
             </a>
         </div>
         <div class="btn-group">
@@ -222,27 +221,27 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Informations de l'élève -->
+<!-- Informations de l'Ã©lÃ¨ve -->
 <div class="alert alert-info mb-4">
     <div class="row">
         <div class="col-md-3">
-            <strong>Élève :</strong> <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?>
+            <strong>Ã‰lÃ¨ve :</strong> <?php echo htmlspecialchars($eleve['nom'] . ' ' . $eleve['prenom']); ?>
         </div>
         <div class="col-md-3">
             <strong>Classe actuelle :</strong> <?php echo htmlspecialchars($eleve['classe_nom']); ?>
         </div>
         <div class="col-md-3">
-            <strong>Créé le :</strong> <?php echo formatDate($eleve['created_at']); ?>
+            <strong>CrÃ©Ã© le :</strong> <?php echo formatDate($eleve['created_at']); ?>
         </div>
         <div class="col-md-3">
-            <strong>Modifié le :</strong> <?php echo $eleve['updated_at'] ? formatDate($eleve['updated_at']) : 'Jamais'; ?>
+            <strong>ModifiÃ© le :</strong> <?php echo $eleve['updated_at'] ? formatDate($eleve['updated_at']) : 'Jamais'; ?>
         </div>
     </div>
 </div>
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
-        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs détectées :</h6>
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs dÃ©tectÃ©es :</h6>
         <ul class="mb-0">
             <?php foreach ($errors as $error): ?>
                 <li><?php echo htmlspecialchars($error); ?></li>
@@ -268,25 +267,25 @@ include '../../../includes/header.php';
                            value="<?php echo htmlspecialchars($_POST['nom'] ?? ''); ?>" required>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                    <label for="prenom" class="form-label">PrÃ©nom <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="prenom" name="prenom" 
                            value="<?php echo htmlspecialchars($_POST['prenom'] ?? ''); ?>" required>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label for="sexe" class="form-label">Sexe <span class="text-danger">*</span></label>
                     <select class="form-select" id="sexe" name="sexe" required>
-                        <option value="">Sélectionner...</option>
+                        <option value="">SÃ©lectionner...</option>
                         <option value="M" <?php echo ($_POST['sexe'] ?? '') === 'M' ? 'selected' : ''; ?>>Masculin</option>
-                        <option value="F" <?php echo ($_POST['sexe'] ?? '') === 'F' ? 'selected' : ''; ?>>Féminin</option>
+                        <option value="F" <?php echo ($_POST['sexe'] ?? '') === 'F' ? 'selected' : ''; ?>>FÃ©minin</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="status" class="form-label">Statut de l'élève</label>
+                    <label for="status" class="form-label">Statut de l'Ã©lÃ¨ve</label>
                     <select class="form-select" id="status" name="status">
                         <option value="actif" <?php echo ($_POST['status'] ?? '') === 'actif' ? 'selected' : ''; ?>>Actif</option>
-                        <option value="transfere" <?php echo ($_POST['status'] ?? '') === 'transfere' ? 'selected' : ''; ?>>Transféré</option>
-                        <option value="abandonne" <?php echo ($_POST['status'] ?? '') === 'abandonne' ? 'selected' : ''; ?>>Abandonné</option>
-                        <option value="diplome" <?php echo ($_POST['status'] ?? '') === 'diplome' ? 'selected' : ''; ?>>Diplômé</option>
+                        <option value="transfere" <?php echo ($_POST['status'] ?? '') === 'transfere' ? 'selected' : ''; ?>>TransfÃ©rÃ©</option>
+                        <option value="abandonne" <?php echo ($_POST['status'] ?? '') === 'abandonne' ? 'selected' : ''; ?>>AbandonnÃ©</option>
+                        <option value="diplome" <?php echo ($_POST['status'] ?? '') === 'diplome' ? 'selected' : ''; ?>>DiplÃ´mÃ©</option>
                     </select>
                 </div>
             </div>
@@ -302,7 +301,7 @@ include '../../../includes/header.php';
                            value="<?php echo htmlspecialchars($_POST['lieu_naissance'] ?? ''); ?>">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="photo" class="form-label">Photo de l'élève</label>
+                    <label for="photo" class="form-label">Photo de l'Ã©lÃ¨ve</label>
                     <div class="d-flex align-items-center">
                         <?php if ($eleve['photo']): ?>
                             <div class="me-3">
@@ -312,7 +311,7 @@ include '../../../includes/header.php';
                         <?php endif; ?>
                         <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
                     </div>
-                    <small class="form-text text-muted">Formats acceptés : JPG, PNG, GIF. Taille max : 5MB</small>
+                    <small class="form-text text-muted">Formats acceptÃ©s : JPG, PNG, GIF. Taille max : 5MB</small>
                 </div>
             </div>
 
@@ -332,7 +331,7 @@ include '../../../includes/header.php';
                 <div class="col-md-6 mb-3">
                     <label for="classe_id" class="form-label">Classe <span class="text-danger">*</span></label>
                     <select class="form-select" id="classe_id" name="classe_id" required>
-                        <option value="">Sélectionner une classe...</option>
+                        <option value="">SÃ©lectionner une classe...</option>
                         <?php foreach ($classes as $classe): ?>
                             <option value="<?php echo $classe['id']; ?>" 
                                     <?php echo ($_POST['classe_id'] ?? '') == $classe['id'] ? 'selected' : ''; ?>>
@@ -362,7 +361,7 @@ include '../../../includes/header.php';
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="telephone" class="form-label">Téléphone de l'élève</label>
+                    <label for="telephone" class="form-label">TÃ©lÃ©phone de l'Ã©lÃ¨ve</label>
                     <input type="tel" class="form-control" id="telephone" name="telephone" 
                            value="<?php echo htmlspecialchars($_POST['telephone'] ?? ''); ?>">
                 </div>
@@ -386,31 +385,31 @@ include '../../../includes/header.php';
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="nom_pere" class="form-label">Nom du père</label>
+                    <label for="nom_pere" class="form-label">Nom du pÃ¨re</label>
                     <input type="text" class="form-control" id="nom_pere" name="nom_pere" 
                            value="<?php echo htmlspecialchars($_POST['nom_pere'] ?? ''); ?>">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="profession_pere" class="form-label">Profession du père</label>
+                    <label for="profession_pere" class="form-label">Profession du pÃ¨re</label>
                     <input type="text" class="form-control" id="profession_pere" name="profession_pere" 
                            value="<?php echo htmlspecialchars($_POST['profession_pere'] ?? ''); ?>">
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="nom_mere" class="form-label">Nom de la mère</label>
+                    <label for="nom_mere" class="form-label">Nom de la mÃ¨re</label>
                     <input type="text" class="form-control" id="nom_mere" name="nom_mere" 
                            value="<?php echo htmlspecialchars($_POST['nom_mere'] ?? ''); ?>">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="profession_mere" class="form-label">Profession de la mère</label>
+                    <label for="profession_mere" class="form-label">Profession de la mÃ¨re</label>
                     <input type="text" class="form-control" id="profession_mere" name="profession_mere" 
                            value="<?php echo htmlspecialchars($_POST['profession_mere'] ?? ''); ?>">
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="telephone_parent" class="form-label">Téléphone des parents</label>
+                    <label for="telephone_parent" class="form-label">TÃ©lÃ©phone des parents</label>
                     <input type="tel" class="form-control" id="telephone_parent" name="telephone_parent" 
                            value="<?php echo htmlspecialchars($_POST['telephone_parent'] ?? ''); ?>">
                 </div>
@@ -459,3 +458,7 @@ include '../../../includes/header.php';
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

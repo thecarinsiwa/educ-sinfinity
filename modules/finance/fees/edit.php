@@ -7,13 +7,17 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once 'types/functions.php';
+
+// Fonction utilitaire pour échapper correctement les caractères spéciaux
+function escapeHtml($string) {
+    return htmlspecialchars(html_entity_decode($string, ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+}
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'fees', 'edit', '../../dashboard.php');
 
 // Récupérer l'ID du frais
 $id = (int)($_GET['id'] ?? 0);
@@ -23,9 +27,10 @@ if (!$id) {
 }
 
 // Récupérer les informations du frais
-$sql = "SELECT f.*, c.nom as classe_nom, c.niveau
+$sql = "SELECT f.*, c.nom as classe_nom, c.niveau, tf.nom as type_frais_nom
         FROM frais_scolaires f
         JOIN classes c ON f.classe_id = c.id
+        LEFT JOIN type_frais tf ON f.type_frais_id = tf.id
         WHERE f.id = ?";
 
 $frais = $database->query($sql, [$id])->fetch();
@@ -35,7 +40,7 @@ if (!$frais) {
     redirectTo('index.php');
 }
 
-$page_title = 'Modifier le frais - ' . $frais['libelle'];
+$page_title = 'Modifier le frais - ' . escapeHtml($frais['libelle']);
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
@@ -51,22 +56,44 @@ $classes = $database->query(
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
+// Récupérer les types de frais actifs pour l'année scolaire actuelle
+$types_frais = [];
+if ($current_year && isset($current_year['id'])) {
+    $types_frais = $database->query(
+        "SELECT id, nom, description FROM type_frais WHERE annee_scolaire_id = ? AND actif = 1 ORDER BY nom",
+        [$current_year['id']]
+    )->fetchAll();
+}
+
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validation des données
     $classe_id = (int)($_POST['classe_id'] ?? 0);
-    $type_frais = sanitizeInput($_POST['type_frais'] ?? '');
-    $libelle = sanitizeInput($_POST['libelle'] ?? '');
+    $type_frais_id = (int)($_POST['type_frais_id'] ?? 0);
+    $libelle = cleanInputText(sanitizeInput($_POST['libelle'] ?? ''));
     $montant = (float)($_POST['montant'] ?? 0);
     $obligatoire = isset($_POST['obligatoire']) ? 1 : 0;
     $date_echeance = sanitizeInput($_POST['date_echeance'] ?? '');
-    $description = sanitizeInput($_POST['description'] ?? '');
+    $description = cleanInputText(sanitizeInput($_POST['description'] ?? ''));
+    
+    // Récupérer le nom du type de frais
+    $type_frais_info = null;
+    if ($type_frais_id) {
+        $type_frais_info = $database->query(
+            "SELECT nom FROM type_frais WHERE id = ? AND annee_scolaire_id = ? AND actif = 1",
+            [$type_frais_id, $current_year['id']]
+        )->fetch();
+        
+        if (!$type_frais_info) {
+            $errors[] = 'Le type de frais sélectionné n\'est pas valide ou n\'est pas actif.';
+        }
+    }
     
     // Validation des champs obligatoires
     if (!$classe_id) $errors[] = 'La classe est obligatoire.';
-    if (empty($type_frais)) $errors[] = 'Le type de frais est obligatoire.';
+    if (!$type_frais_id) $errors[] = 'Le type de frais est obligatoire.';
     if (empty($libelle)) $errors[] = 'Le libellé est obligatoire.';
-    if ($montant <= 0) $errors[] = 'Le montant doit être supérieur à 0.';
+    if ($montant <= 0) $errors[] = 'Le montant doit être supérieur à 0 (' . htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC') . ').';
     
     // Validation de la date d'échéance
     if (!empty($date_echeance) && !isValidDate($date_echeance)) {
@@ -74,15 +101,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Validation du montant
-    if ($montant > 10000000) { // 10 millions FC max
-        $errors[] = 'Le montant ne peut pas dépasser 10 000 000 FC.';
+    if ($montant > 10000000) { // 10 millions max
+        $errors[] = 'Le montant ne peut pas dépasser 10 000 000 ' . htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC') . '.';
     }
     
     // Vérifier si ce type de frais existe déjà pour cette classe (sauf pour le frais actuel)
-    if (empty($errors)) {
+    if (empty($errors) && $type_frais_info) {
         $existing = $database->query(
-            "SELECT id FROM frais_scolaires WHERE classe_id = ? AND type_frais = ? AND annee_scolaire_id = ? AND id != ?",
-            [$classe_id, $type_frais, $current_year['id'], $id]
+            "SELECT id FROM frais_scolaires WHERE classe_id = ? AND type_frais_id = ? AND annee_scolaire_id = ? AND id != ?",
+            [$classe_id, $type_frais_id, $current_year['id'], $id]
         )->fetch();
         
         if ($existing) {
@@ -100,8 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $existing_columns = array_column($columns, 'Field');
             
             // Construire la requête dynamiquement
-            $update_fields = ['classe_id = ?', 'type_frais = ?', 'libelle = ?', 'montant = ?'];
-            $update_values = [$classe_id, $type_frais, $libelle, $montant];
+            $update_fields = ['classe_id = ?', 'type_frais_id = ?', 'libelle = ?', 'montant = ?'];
+            $update_values = [$classe_id, $type_frais_id, $libelle, $montant];
             
             if (in_array('obligatoire', $existing_columns)) {
                 $update_fields[] = 'obligatoire = ?';
@@ -197,10 +224,10 @@ include '../../../includes/header.php';
                 <div class="row">
                     <div class="col-md-6">
                         <p><strong>Classe actuelle :</strong> <?php echo htmlspecialchars($frais['classe_nom']); ?></p>
-                        <p><strong>Type actuel :</strong> <?php echo ucfirst($frais['type_frais']); ?></p>
+                        <p><strong>Type actuel :</strong> <?php echo escapeHtml(ucfirst($frais['type_frais_nom'] ?? 'Non défini')); ?></p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Montant actuel :</strong> <?php echo formatMoney($frais['montant']); ?></p>
+                        <p><strong>Montant actuel :</strong> <?php echo number_format($frais['montant'], 0, ',', ' ') . ' ' . htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></p>
                         <p><strong>Dernière modification :</strong> <?php echo formatDate($frais['updated_at'] ?? $frais['created_at']); ?></p>
                     </div>
                 </div>
@@ -237,36 +264,39 @@ include '../../../includes/header.php';
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="type_frais" class="form-label">
+                            <label for="type_frais_id" class="form-label">
                                 Type de frais <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select" id="type_frais" name="type_frais" required>
+                            <select class="form-select" id="type_frais_id" name="type_frais_id" required>
                                 <option value="">Sélectionner le type</option>
-                                <option value="inscription" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'inscription') ? 'selected' : ''; ?>>
-                                    Frais d'inscription
-                                </option>
-                                <option value="mensualite" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'mensualite') ? 'selected' : ''; ?>>
-                                    Mensualité
-                                </option>
-                                <option value="examen" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'examen') ? 'selected' : ''; ?>>
-                                    Frais d'examen
-                                </option>
-                                <option value="uniforme" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'uniforme') ? 'selected' : ''; ?>>
-                                    Uniforme scolaire
-                                </option>
-                                <option value="transport" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'transport') ? 'selected' : ''; ?>>
-                                    Transport scolaire
-                                </option>
-                                <option value="cantine" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'cantine') ? 'selected' : ''; ?>>
-                                    Cantine
-                                </option>
-                                <option value="autre" <?php echo (($_POST['type_frais'] ?? $frais['type_frais']) === 'autre') ? 'selected' : ''; ?>>
-                                    Autre
-                                </option>
+                                <?php foreach ($types_frais as $type): ?>
+                                    <option value="<?php echo $type['id']; ?>" 
+                                            <?php 
+                                            $current_type_id = null;
+                                            // Trouver l'ID du type de frais actuel
+                                            foreach ($types_frais as $t) {
+                                                if ($t['nom'] === $frais['type_frais_nom']) {
+                                                    $current_type_id = $t['id'];
+                                                    break;
+                                                }
+                                            }
+                                            echo (($_POST['type_frais_id'] ?? $current_type_id) == $type['id']) ? 'selected' : ''; 
+                                            ?>>
+                                        <?php echo htmlspecialchars($type['nom']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">
                                 Veuillez sélectionner un type de frais.
                             </div>
+                            <?php if (empty($types_frais)): ?>
+                                <div class="form-text">
+                                    <a href="types/index.php" class="text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Aucun type de frais configuré. Cliquez ici pour en créer.
+                                    </a>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -279,7 +309,7 @@ include '../../../includes/header.php';
                                    class="form-control" 
                                    id="libelle" 
                                    name="libelle" 
-                                   value="<?php echo htmlspecialchars($_POST['libelle'] ?? $frais['libelle']); ?>"
+                                   value="<?php echo escapeHtml($_POST['libelle'] ?? $frais['libelle']); ?>"
                                    required>
                             <div class="invalid-feedback">
                                 Veuillez saisir un libellé.
@@ -288,7 +318,7 @@ include '../../../includes/header.php';
                         
                         <div class="col-md-4 mb-3">
                             <label for="montant" class="form-label">
-                                Montant (FC) <span class="text-danger">*</span>
+                                Montant (<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>) <span class="text-danger">*</span>
                             </label>
                             <input type="number" 
                                    class="form-control" 
@@ -300,7 +330,7 @@ include '../../../includes/header.php';
                                    step="0.01" 
                                    required>
                             <div class="invalid-feedback">
-                                Veuillez saisir un montant valide.
+                                Veuillez saisir un montant valide (<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>).
                             </div>
                         </div>
                     </div>
@@ -336,7 +366,7 @@ include '../../../includes/header.php';
                         <textarea class="form-control" 
                                   id="description" 
                                   name="description" 
-                                  rows="3"><?php echo htmlspecialchars($_POST['description'] ?? $frais['description']); ?></textarea>
+                                  rows="3"><?php echo prepareFormText($_POST['description'] ?? $frais['description']); ?></textarea>
                     </div>
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">

@@ -1,24 +1,22 @@
-<?php
+﻿<?php
 /**
  * Module Recouvrement - Export des rapports
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('recouvrement_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('recouvrement', 'reports', 'read', '../../../dashboard.php');
 
-// Obtenir l'année scolaire actuelle
+// Obtenir l'annÃ©e scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Paramètres d'export
+// ParamÃ¨tres d'export
 $format = $_GET['format'] ?? 'excel';
 $type = $_GET['type'] ?? 'general';
 $period = $_GET['period'] ?? 'month';
@@ -27,7 +25,7 @@ $classe_filter = $_GET['classe'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 
-// Définir les dates selon la période
+// DÃ©finir les dates selon la pÃ©riode
 switch ($period) {
     case 'week':
         $date_from = $date_from ?: date('Y-m-d', strtotime('-7 days'));
@@ -68,9 +66,11 @@ function formatMontant($montant) {
     return number_format($montant, 0, ',', ' ') . ' FC';
 }
 
-// Fonction pour formater les dates
-function formatDate($date) {
-    return date('d/m/Y', strtotime($date));
+// Fonction pour formater les dates (utilise la fonction globale si disponible)
+if (!function_exists('formatDate')) {
+    function formatDate($date) {
+        return date('d/m/Y', strtotime($date));
+    }
 }
 
 // Fonction pour formater les pourcentages
@@ -78,10 +78,10 @@ function formatPourcentage($valeur, $total) {
     return $total > 0 ? round(($valeur / $total) * 100, 1) . '%' : '0%';
 }
 
-// Préparer les données selon le type d'export
+// PrÃ©parer les donnÃ©es selon le type d'export
 switch ($type) {
     case 'debitors':
-        // Liste des débiteurs
+        // Liste des dÃ©biteurs
         $data = $database->query(
             "SELECT 
                 e.nom,
@@ -93,8 +93,8 @@ switch ($type) {
                 dette.montant_du,
                 DATEDIFF(CURDATE(), i.date_inscription) as jours_inscription,
                 CASE 
-                    WHEN dette.montant_du > 200000 THEN 'Très élevée'
-                    WHEN dette.montant_du > 100000 THEN 'Élevée'
+                    WHEN dette.montant_du > 200000 THEN 'TrÃ¨s Ã©levÃ©e'
+                    WHEN dette.montant_du > 100000 THEN 'Ã‰levÃ©e'
                     WHEN dette.montant_du > 50000 THEN 'Moyenne'
                     ELSE 'Faible'
                 END as niveau_dette
@@ -109,8 +109,9 @@ switch ($type) {
                  JOIN inscriptions i ON e.id = i.eleve_id
                  JOIN classes c ON i.classe_id = c.id
                  JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
                  LEFT JOIN paiements p ON e.id = p.eleve_id 
-                     AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                     AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                      AND p.annee_scolaire_id = fs.annee_scolaire_id
                  WHERE $where_clause AND fs.annee_scolaire_id = ?
                  GROUP BY e.id
@@ -122,8 +123,8 @@ switch ($type) {
         )->fetchAll();
         
         $filename = "debitors_" . date('Y-m-d') . ".$format";
-        $title = "Liste des débiteurs - " . date('d/m/Y');
-        $headers = ['Nom', 'Prénom', 'Téléphone', 'Email', 'Classe', 'Niveau', 'Dette (FC)', 'Jours inscription', 'Niveau dette'];
+        $title = "Liste des dÃ©biteurs - " . date('d/m/Y');
+        $headers = ['Nom', 'PrÃ©nom', 'TÃ©lÃ©phone', 'Email', 'Classe', 'Niveau', 'Dette (FC)', 'Jours inscription', 'Niveau dette'];
         break;
         
     case 'niveau':
@@ -147,8 +148,9 @@ switch ($type) {
                  JOIN inscriptions i ON e.id = i.eleve_id
                  JOIN classes c ON i.classe_id = c.id
                  JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
                  LEFT JOIN paiements p ON e.id = p.eleve_id 
-                     AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                     AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                      AND p.annee_scolaire_id = fs.annee_scolaire_id
                  WHERE $where_clause AND fs.annee_scolaire_id = ?
                  GROUP BY e.id
@@ -161,7 +163,7 @@ switch ($type) {
         
         $filename = "dettes_par_niveau_" . date('Y-m-d') . ".$format";
         $title = "Dettes par niveau - " . date('d/m/Y');
-        $headers = ['Niveau', 'Total élèves', 'Débiteurs', 'Total dettes (FC)', 'Dette moyenne (FC)', '% Débiteurs'];
+        $headers = ['Niveau', 'Total Ã©lÃ¨ves', 'DÃ©biteurs', 'Total dettes (FC)', 'Dette moyenne (FC)', '% DÃ©biteurs'];
         break;
         
     case 'classe':
@@ -185,8 +187,9 @@ switch ($type) {
                  JOIN inscriptions i ON e.id = i.eleve_id
                  JOIN classes c ON i.classe_id = c.id
                  JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
                  LEFT JOIN paiements p ON e.id = p.eleve_id 
-                     AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                     AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                      AND p.annee_scolaire_id = fs.annee_scolaire_id
                  WHERE $where_clause AND fs.annee_scolaire_id = ?
                  GROUP BY e.id
@@ -199,11 +202,11 @@ switch ($type) {
         
         $filename = "dettes_par_classe_" . date('Y-m-d') . ".$format";
         $title = "Dettes par classe - " . date('d/m/Y');
-        $headers = ['Classe', 'Niveau', 'Total élèves', 'Débiteurs', 'Total dettes (FC)', 'Dette moyenne (FC)'];
+        $headers = ['Classe', 'Niveau', 'Total Ã©lÃ¨ves', 'DÃ©biteurs', 'Total dettes (FC)', 'Dette moyenne (FC)'];
         break;
         
     case 'paiements':
-        // Évolution des paiements
+        // Ã‰volution des paiements
         $data = $database->query(
             "SELECT 
                 DATE_FORMAT(p.date_paiement, '%Y-%m') as mois,
@@ -220,12 +223,12 @@ switch ($type) {
         )->fetchAll();
         
         $filename = "evolution_paiements_" . date('Y-m-d') . ".$format";
-        $title = "Évolution des paiements - " . date('d/m/Y');
+        $title = "Ã‰volution des paiements - " . date('d/m/Y');
         $headers = ['Mois', 'Nombre payeurs', 'Total paiements (FC)', 'Nombre transactions', 'Montant moyen (FC)'];
         break;
         
     default:
-        // Rapport général
+        // Rapport gÃ©nÃ©ral
         $data = $database->query(
             "SELECT 
                 c.niveau,
@@ -240,8 +243,9 @@ switch ($type) {
              JOIN inscriptions i ON e.id = i.eleve_id
              JOIN classes c ON i.classe_id = c.id
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
                  AND p.date_paiement BETWEEN ? AND ?
              JOIN (
@@ -252,8 +256,9 @@ switch ($type) {
                  JOIN inscriptions i ON e.id = i.eleve_id
                  JOIN classes c ON i.classe_id = c.id
                  JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
                  LEFT JOIN paiements p ON e.id = p.eleve_id 
-                     AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                     AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
                      AND p.annee_scolaire_id = fs.annee_scolaire_id
                  WHERE $where_clause AND fs.annee_scolaire_id = ?
                  GROUP BY e.id
@@ -266,11 +271,11 @@ switch ($type) {
         
         $filename = "rapport_recouvrement_" . date('Y-m-d') . ".$format";
         $title = "Rapport de recouvrement - " . date('d/m/Y');
-        $headers = ['Niveau', 'Classe', 'Total élèves', 'Débiteurs', 'Total dettes (FC)', 'Dette moyenne (FC)', 'Paiements (FC)', 'Taux recouvrement (%)'];
+        $headers = ['Niveau', 'Classe', 'Total Ã©lÃ¨ves', 'DÃ©biteurs', 'Total dettes (FC)', 'Dette moyenne (FC)', 'Paiements (FC)', 'Taux recouvrement (%)'];
         break;
 }
 
-// Préparer les données pour l'export
+// PrÃ©parer les donnÃ©es pour l'export
 $export_data = [];
 foreach ($data as $row) {
     $export_row = [];
@@ -298,13 +303,13 @@ if ($format === 'excel') {
     // BOM pour Excel
     echo "\xEF\xBB\xBF";
     
-    // En-tête du fichier
+    // En-tÃªte du fichier
     echo $title . "\n\n";
     
-    // En-têtes des colonnes
+    // En-tÃªtes des colonnes
     echo implode("\t", $headers) . "\n";
     
-    // Données
+    // DonnÃ©es
     foreach ($export_data as $row) {
         echo implode("\t", $row) . "\n";
     }
@@ -317,13 +322,13 @@ if ($format === 'excel') {
     // BOM pour Excel
     echo "\xEF\xBB\xBF";
     
-    // En-tête du fichier
+    // En-tÃªte du fichier
     echo $title . "\n\n";
     
-    // En-têtes des colonnes
+    // En-tÃªtes des colonnes
     echo implode(";", $headers) . "\n";
     
-    // Données
+    // DonnÃ©es
     foreach ($export_data as $row) {
         echo implode(";", $row) . "\n";
     }
@@ -350,7 +355,7 @@ if ($format === 'excel') {
     <body>
         <div class="header">
             <h1>' . $title . '</h1>
-            <p>Généré le ' . date('d/m/Y à H:i') . '</p>
+            <p>GÃ©nÃ©rÃ© le ' . date('d/m/Y Ã  H:i') . '</p>
         </div>
         
         <table>
@@ -381,3 +386,5 @@ if ($format === 'excel') {
 
 exit;
 ?>
+
+

@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('personnel') && !checkPermission('personnel_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('personnel', 'view', 'read', '../../dashboard.php');
 
 // Récupérer l'ID du membre
 $id = (int)($_GET['id'] ?? 0);
@@ -23,9 +21,10 @@ if (!$id) {
 }
 
 // Récupérer les informations du membre
-$sql = "SELECT p.*, u.username, u.email as user_email, u.role, u.status as user_status
+$sql = "SELECT p.*, u.username, u.email as user_email, r.nom as role_nom, u.status as user_status
         FROM personnel p 
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN roles r ON u.role_id = r.id
         WHERE p.id = ?";
 
 $membre = $database->query($sql, [$id])->fetch();
@@ -88,7 +87,7 @@ include '../../includes/header.php';
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour à la liste
             </a>
-            <?php if (checkPermission('personnel')): ?>
+            <?php if (checkPagePermission('personnel')): ?>
                 <a href="edit.php?id=<?php echo $membre['id']; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
                     Modifier
@@ -108,7 +107,7 @@ include '../../includes/header.php';
                     <i class="fas fa-print me-2"></i>Imprimer
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
-                <?php if (checkPermission('personnel')): ?>
+                <?php if (checkPagePermission('personnel')): ?>
                     <li><a class="dropdown-item text-danger" href="delete.php?id=<?php echo $membre['id']; ?>" 
                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')">
                         <i class="fas fa-trash me-2"></i>Supprimer
@@ -373,7 +372,7 @@ include '../../includes/header.php';
                                 <td class="fw-bold">Rôle :</td>
                                 <td>
                                     <span class="badge bg-primary">
-                                        <?php echo ucfirst($membre['role']); ?>
+                                        <?php echo ucfirst($membre['role_nom'] ?? 'Non défini'); ?>
                                     </span>
                                 </td>
                             </tr>
@@ -387,7 +386,7 @@ include '../../includes/header.php';
                             </tr>
                         </table>
                         
-                        <?php if (checkPermission('admin')): ?>
+                        <?php if (checkPagePermission('admin')): ?>
                             <div class="mt-3">
                                 <a href="../../admin/users.php?edit=<?php echo $membre['user_id']; ?>" 
                                    class="btn btn-sm btn-outline-primary">
@@ -409,7 +408,7 @@ include '../../includes/header.php';
                     <div class="card-body text-center">
                         <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun compte utilisateur associé</p>
-                        <?php if (checkPermission('personnel')): ?>
+                        <?php if (checkPagePermission('personnel')): ?>
                             <a href="create-account.php?id=<?php echo $membre['id']; ?>" 
                                class="btn btn-sm btn-primary">
                                 <i class="fas fa-plus me-1"></i>

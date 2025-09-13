@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Notifications aux parents - Absences et retards
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,16 +7,16 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'attendance', 'read', '../../../../dashboard.php');
 
 $page_title = "Notifications aux parents";
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement des actions
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $custom_message = sanitizeInput($_POST['custom_message'] ?? '');
             
             if (empty($selected_absences)) {
-                throw new Exception('Aucune absence sélectionnée');
+                throw new Exception('Aucune absence sÃ©lectionnÃ©e');
             }
             
             $sent_count = 0;
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             foreach ($selected_absences as $absence_id) {
                 try {
-                    // Récupérer les informations de l'absence et du parent
+                    // RÃ©cupÃ©rer les informations de l'absence et du parent
                     $absence_info = $database->query(
                         "SELECT a.*, e.nom as eleve_nom, e.prenom as eleve_prenom,
                                 c.nom as classe_nom, p.nom as parent_nom, p.prenom as parent_prenom,
@@ -53,11 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     )->fetch();
                     
                     if (!$absence_info) {
-                        $errors[] = "Absence ID $absence_id non trouvée";
+                        $errors[] = "Absence ID $absence_id non trouvÃ©e";
                         continue;
                     }
                     
-                    // Préparer le message
+                    // PrÃ©parer le message
                     $message = $custom_message ?: generateDefaultMessage($absence_info);
                     
                     // Envoyer la notification
@@ -84,11 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logUserAction(
                 'send_parent_notifications',
                 'attendance',
-                "Notifications envoyées - Type: $notification_type, Envoyées: $sent_count, Erreurs: " . count($errors),
+                "Notifications envoyÃ©es - Type: $notification_type, EnvoyÃ©es: $sent_count, Erreurs: " . count($errors),
                 null
             );
             
-            $message = "$sent_count notification(s) envoyée(s) avec succès";
+            $message = "$sent_count notification(s) envoyÃ©e(s) avec succÃ¨s";
             if (!empty($errors)) {
                 $message .= ". " . count($errors) . " erreur(s)";
             }
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'email' => $email_template
             ];
             
-            showMessage('success', 'Templates de notification sauvegardés');
+            showMessage('success', 'Templates de notification sauvegardÃ©s');
         }
         
     } catch (Exception $e) {
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les absences récentes non notifiées
+// RÃ©cupÃ©rer les absences rÃ©centes non notifiÃ©es
 $recent_absences = $database->query(
     "SELECT a.*, e.nom as eleve_nom, e.prenom as eleve_prenom, e.numero_matricule,
             c.nom as classe_nom, c.niveau, i.classe_id,
@@ -149,16 +149,16 @@ $notification_stats = $database->query(
      WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
 )->fetch();
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT * FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
-// Templates par défaut
+// Templates par dÃ©faut
 $default_templates = [
-    'sms' => "Cher parent, votre enfant {eleve_nom} de la classe {classe_nom} a été {type_absence} le {date_absence}. École Sinfinity.",
-    'email' => "Cher(e) {parent_nom},\n\nNous vous informons que votre enfant {eleve_nom} {eleve_prenom} de la classe {classe_nom} a été marqué(e) comme {type_absence} le {date_absence}.\n\nMotif: {motif}\n\nCordialement,\nÉcole Sinfinity"
+    'sms' => "Cher parent, votre enfant {eleve_nom} de la classe {classe_nom} a Ã©tÃ© {type_absence} le {date_absence}. Ã‰cole Sinfinity.",
+    'email' => "Cher(e) {parent_nom},\n\nNous vous informons que votre enfant {eleve_nom} {eleve_prenom} de la classe {classe_nom} a Ã©tÃ© marquÃ©(e) comme {type_absence} le {date_absence}.\n\nMotif: {motif}\n\nCordialement,\nÃ‰cole Sinfinity"
 ];
 
 // Fonctions utilitaires
@@ -166,29 +166,29 @@ function generateDefaultMessage($absence_info) {
     $type_labels = [
         'absence' => 'absent(e)',
         'retard' => 'en retard',
-        'absence_justifiee' => 'absent(e) (justifié)',
-        'retard_justifie' => 'en retard (justifié)'
+        'absence_justifiee' => 'absent(e) (justifiÃ©)',
+        'retard_justifie' => 'en retard (justifiÃ©)'
     ];
     
     $type_label = $type_labels[$absence_info['type_absence']] ?? $absence_info['type_absence'];
     
     return "Cher parent, votre enfant {$absence_info['eleve_nom']} {$absence_info['eleve_prenom']} " .
-           "de la classe {$absence_info['classe_nom']} a été $type_label le " .
-           date('d/m/Y à H:i', strtotime($absence_info['date_absence'])) . ". École Sinfinity.";
+           "de la classe {$absence_info['classe_nom']} a Ã©tÃ© $type_label le " .
+           date('d/m/Y Ã  H:i', strtotime($absence_info['date_absence'])) . ". Ã‰cole Sinfinity.";
 }
 
 function sendNotification($absence_info, $message, $type) {
     // Simulation d'envoi de notification
-    // Dans un vrai système, ici on intégrerait avec un service SMS/Email
+    // Dans un vrai systÃ¨me, ici on intÃ©grerait avec un service SMS/Email
     
     if ($type === 'sms') {
         if (empty($absence_info['telephone'])) {
-            return ['success' => false, 'message' => 'Numéro de téléphone manquant'];
+            return ['success' => false, 'message' => 'NumÃ©ro de téléphone manquant'];
         }
         
         // Simulation envoi SMS
         // $result = sendSMS($absence_info['telephone'], $message);
-        return ['success' => true, 'message' => 'SMS envoyé'];
+        return ['success' => true, 'message' => 'SMS envoyÃ©'];
         
     } elseif ($type === 'email') {
         if (empty($absence_info['email'])) {
@@ -197,10 +197,10 @@ function sendNotification($absence_info, $message, $type) {
         
         // Simulation envoi Email
         // $result = sendEmail($absence_info['email'], 'Notification absence', $message);
-        return ['success' => true, 'message' => 'Email envoyé'];
+        return ['success' => true, 'message' => 'Email envoyÃ©'];
     }
     
-    return ['success' => false, 'message' => 'Type de notification non supporté'];
+    return ['success' => false, 'message' => 'Type de notification non supportÃ©'];
 }
 
 include '../../../../includes/header.php';
@@ -225,7 +225,7 @@ include '../../../../includes/header.php';
             </button>
             <button type="button" class="btn btn-success" onclick="sendSelectedNotifications()">
                 <i class="fas fa-paper-plane me-1"></i>
-                Envoyer sélectionnées
+                Envoyer sÃ©lectionnÃ©es
             </button>
         </div>
     </div>
@@ -255,7 +255,7 @@ include '../../../../includes/header.php';
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4 class="mb-0"><?php echo number_format($notification_stats['sent_notifications'] ?? 0); ?></h4>
-                        <p class="mb-0">Envoyées</p>
+                        <p class="mb-0">EnvoyÃ©es</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-check-circle fa-2x"></i>
@@ -303,12 +303,12 @@ include '../../../../includes/header.php';
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Absences récentes (7 derniers jours)
+            Absences rÃ©centes (7 derniers jours)
         </h5>
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
             <label class="form-check-label" for="selectAll">
-                Tout sélectionner
+                Tout sÃ©lectionner
             </label>
         </div>
     </div>
@@ -324,7 +324,7 @@ include '../../../../includes/header.php';
                                 <th width="50">
                                     <input type="checkbox" id="selectAllHeader" onchange="toggleSelectAll()">
                                 </th>
-                                <th>Élève</th>
+                                <th>Ã‰lÃ¨ve</th>
                                 <th>Classe</th>
                                 <th>Type</th>
                                 <th>Date/Heure</th>
@@ -386,9 +386,9 @@ include '../../../../includes/header.php';
                                             <?php
                                             $type_labels = [
                                                 'absence' => 'Absence',
-                                                'absence_justifiee' => 'Absence justifiée',
+                                                'absence_justifiee' => 'Absence justifiÃ©e',
                                                 'retard' => 'Retard',
-                                                'retard_justifie' => 'Retard justifié'
+                                                'retard_justifie' => 'Retard justifiÃ©'
                                             ];
                                             echo $type_labels[$absence['type_absence']] ?? $absence['type_absence'];
                                             ?>
@@ -408,7 +408,7 @@ include '../../../../includes/header.php';
                                                 <strong><?php echo htmlspecialchars($absence['parent_nom'] . ' ' . $absence['parent_prenom']); ?></strong>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-muted">Non renseigné</span>
+                                            <span class="text-muted">Non renseignÃ©</span>
                                         <?php endif; ?>
                                     </td>
 
@@ -441,7 +441,7 @@ include '../../../../includes/header.php';
                                         <?php if ($notification_sent): ?>
                                             <span class="badge bg-success">
                                                 <i class="fas fa-check me-1"></i>
-                                                Envoyée
+                                                EnvoyÃ©e
                                             </span>
                                         <?php elseif (!$has_phone && !$has_email): ?>
                                             <span class="badge bg-danger">
@@ -477,7 +477,7 @@ include '../../../../includes/header.php';
                     </table>
                 </div>
 
-                <!-- Actions groupées -->
+                <!-- Actions groupÃ©es -->
                 <div class="row mt-3">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -491,21 +491,21 @@ include '../../../../includes/header.php';
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="custom_message" class="form-label">Message personnalisé (optionnel)</label>
+                            <label for="custom_message" class="form-label">Message personnalisÃ© (optionnel)</label>
                             <textarea class="form-control" id="custom_message" name="custom_message"
-                                      rows="2" placeholder="Laisser vide pour utiliser le message par défaut"></textarea>
+                                      rows="2" placeholder="Laisser vide pour utiliser le message par dÃ©faut"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div>
-                        <span id="selectedCount" class="text-muted">0 absence(s) sélectionnée(s)</span>
+                        <span id="selectedCount" class="text-muted">0 absence(s) sÃ©lectionnÃ©e(s)</span>
                     </div>
                     <div>
                         <button type="button" class="btn btn-secondary me-2" onclick="resetSelection()">
                             <i class="fas fa-undo me-1"></i>
-                            Réinitialiser
+                            RÃ©initialiser
                         </button>
                         <button type="submit" class="btn btn-success" id="sendButton" disabled>
                             <i class="fas fa-paper-plane me-1"></i>
@@ -517,7 +517,7 @@ include '../../../../includes/header.php';
         <?php else: ?>
             <div class="text-center py-5">
                 <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Aucune absence récente trouvée.</p>
+                <p class="text-muted">Aucune absence rÃ©cente trouvÃ©e.</p>
                 <a href="../index.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
                     Ajouter une absence
@@ -546,8 +546,8 @@ include '../../../../includes/header.php';
                         <div class="row">
                             <div class="col-md-6">
                                 <ul class="list-unstyled small">
-                                    <li><code>{eleve_nom}</code> - Nom de l'élève</li>
-                                    <li><code>{eleve_prenom}</code> - Prénom de l'élève</li>
+                                    <li><code>{eleve_nom}</code> - Nom de l'Ã©lÃ¨ve</li>
+                                    <li><code>{eleve_prenom}</code> - PrÃ©nom de l'Ã©lÃ¨ve</li>
                                     <li><code>{classe_nom}</code> - Nom de la classe</li>
                                     <li><code>{parent_nom}</code> - Nom du parent</li>
                                 </ul>
@@ -566,7 +566,7 @@ include '../../../../includes/header.php';
                         <label for="sms_template" class="form-label">Template SMS</label>
                         <textarea class="form-control" id="sms_template" name="sms_template" rows="3"
                                   placeholder="Template pour les SMS..."><?php echo $_SESSION['notification_templates']['sms'] ?? $default_templates['sms']; ?></textarea>
-                        <div class="form-text">Maximum 160 caractères recommandé pour les SMS</div>
+                        <div class="form-text">Maximum 160 caractÃ¨res recommandÃ© pour les SMS</div>
                     </div>
 
                     <div class="mb-3">
@@ -647,7 +647,7 @@ include '../../../../includes/header.php';
 let selectedAbsences = [];
 let currentSingleAbsenceId = null;
 
-// Gestion de la sélection
+// Gestion de la sÃ©lection
 function toggleSelectAll() {
     const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.absence-checkbox:not([disabled])');
@@ -665,7 +665,7 @@ function updateSelectedCount() {
     const checkboxes = document.querySelectorAll('.absence-checkbox:checked');
     const count = checkboxes.length;
 
-    document.getElementById('selectedCount').textContent = `${count} absence(s) sélectionnée(s)`;
+    document.getElementById('selectedCount').textContent = `${count} absence(s) sÃ©lectionnÃ©e(s)`;
     document.getElementById('sendButton').disabled = count === 0;
 
     selectedAbsences = Array.from(checkboxes).map(cb => cb.value);
@@ -709,7 +709,7 @@ function filterAbsences() {
             row.classList.remove('filtered-out');
         } else {
             row.classList.add('filtered-out');
-            // Décocher si filtré
+            // DÃ©cocher si filtrÃ©
             const checkbox = row.querySelector('.absence-checkbox');
             if (checkbox) {
                 checkbox.checked = false;
@@ -724,7 +724,7 @@ function filterAbsences() {
 function sendSingleNotification(absenceId) {
     currentSingleAbsenceId = absenceId;
 
-    // Préparer le message par défaut
+    // PrÃ©parer le message par dÃ©faut
     const row = document.querySelector(`input[value="${absenceId}"]`).closest('tr');
     const eleveName = row.querySelector('h6').textContent;
     const type = row.dataset.type;
@@ -736,12 +736,12 @@ function sendSingleNotification(absenceId) {
     modal.show();
 }
 
-// Envoyer les notifications sélectionnées
+// Envoyer les notifications sÃ©lectionnÃ©es
 function sendSelectedNotifications() {
     const selected = document.querySelectorAll('.absence-checkbox:checked');
 
     if (selected.length === 0) {
-        alert('Veuillez sélectionner au moins une absence');
+        alert('Veuillez sÃ©lectionner au moins une absence');
         return;
     }
 
@@ -752,7 +752,7 @@ function sendSelectedNotifications() {
     document.getElementById('notificationForm').submit();
 }
 
-// Réinitialiser la sélection
+// RÃ©initialiser la sÃ©lection
 function resetSelection() {
     document.querySelectorAll('.absence-checkbox').forEach(cb => cb.checked = false);
     document.getElementById('selectAll').checked = false;
@@ -786,7 +786,7 @@ document.getElementById('singleNotificationForm').addEventListener('submit', fun
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Notification envoyée avec succès');
+            alert('Notification envoyÃ©e avec succÃ¨s');
             location.reload();
         } else {
             alert('Erreur: ' + data.message);
@@ -800,12 +800,12 @@ document.getElementById('singleNotificationForm').addEventListener('submit', fun
     bootstrap.Modal.getInstance(document.getElementById('singleNotificationModal')).hide();
 });
 
-// Événements
+// Ã‰vÃ©nements
 document.addEventListener('DOMContentLoaded', function() {
-    // Mettre à jour le compteur au chargement
+    // Mettre Ã  jour le compteur au chargement
     updateSelectedCount();
 
-    // Écouter les changements de sélection
+    // Ã‰couter les changements de sÃ©lection
     document.querySelectorAll('.absence-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', updateSelectedCount);
     });
@@ -830,7 +830,7 @@ document.getElementById('notificationForm').addEventListener('submit', function(
 
     if (selected.length === 0) {
         e.preventDefault();
-        alert('Veuillez sélectionner au moins une absence');
+        alert('Veuillez sÃ©lectionner au moins une absence');
         return false;
     }
 
@@ -873,8 +873,8 @@ document.getElementById('notificationForm').addEventListener('submit', function(
                     <option value="">Tous les types</option>
                     <option value="absence">Absences</option>
                     <option value="retard">Retards</option>
-                    <option value="absence_justifiee">Absences justifiées</option>
-                    <option value="retard_justifie">Retards justifiés</option>
+                    <option value="absence_justifiee">Absences justifiÃ©es</option>
+                    <option value="retard_justifie">Retards justifiÃ©s</option>
                 </select>
             </div>
             
@@ -882,8 +882,8 @@ document.getElementById('notificationForm').addEventListener('submit', function(
                 <label for="filter_notification" class="form-label">Statut notification</label>
                 <select class="form-select" id="filter_notification" onchange="filterAbsences()">
                     <option value="">Tous</option>
-                    <option value="not_sent">Non envoyées</option>
-                    <option value="sent">Envoyées</option>
+                    <option value="not_sent">Non envoyÃ©es</option>
+                    <option value="sent">EnvoyÃ©es</option>
                 </select>
             </div>
             
@@ -899,3 +899,7 @@ document.getElementById('notificationForm').addEventListener('submit', function(
         </div>
     </div>
 </div>
+
+
+
+

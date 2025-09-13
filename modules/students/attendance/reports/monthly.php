@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Rapport mensuel des absences et retards
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,16 +7,15 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'reports', 'read', '../../../dashboard.php');
 
 $page_title = "Rapport mensuel des absences";
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Paramètres de filtrage
@@ -32,13 +31,13 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     header('Cache-Control: max-age=0');
 }
 
-// Récupérer les classes
+// RÃ©cupÃ©rer les classes
 $classes = $database->query(
     "SELECT * FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
-// Construire la requête de base
+// Construire la requÃªte de base
 $where_conditions = ["YEAR(a.date_absence) = YEAR(?) AND MONTH(a.date_absence) = MONTH(?)"];
 $params = [$selected_month . '-01', $selected_month . '-01'];
 
@@ -115,7 +114,7 @@ $top_students_query = "
 
 $top_students = $database->query($top_students_query, $params)->fetchAll();
 
-// Évolution quotidienne du mois
+// Ã‰volution quotidienne du mois
 $daily_evolution_query = "
     SELECT 
         DATE(a.date_absence) as date_incident,
@@ -142,7 +141,7 @@ logUserAction(
     null
 );
 
-// Si c'est un export, afficher seulement les données
+// Si c'est un export, afficher seulement les donnÃ©es
 if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     include 'monthly_export.php';
     exit;
@@ -208,26 +207,26 @@ include '../../../../includes/header.php';
             <div class="col-md-4">
                 <label for="type" class="form-label">Type de rapport</label>
                 <select class="form-select" id="type" name="type">
-                    <option value="summary" <?php echo $report_type === 'summary' ? 'selected' : ''; ?>>Résumé</option>
-                    <option value="detailed" <?php echo $report_type === 'detailed' ? 'selected' : ''; ?>>Détaillé</option>
+                    <option value="summary" <?php echo $report_type === 'summary' ? 'selected' : ''; ?>>RÃ©sumÃ©</option>
+                    <option value="detailed" <?php echo $report_type === 'detailed' ? 'selected' : ''; ?>>DÃ©taillÃ©</option>
                 </select>
             </div>
             
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-search me-1"></i>
-                    Générer le rapport
+                    GÃ©nÃ©rer le rapport
                 </button>
                 <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
                     <i class="fas fa-undo me-1"></i>
-                    Réinitialiser
+                    RÃ©initialiser
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Statistiques générales améliorées -->
+<!-- Statistiques générales amÃ©liorÃ©es -->
 <div class="row mb-5">
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="card border-0 shadow-sm animate-slide-up"
@@ -334,7 +333,7 @@ include '../../../../includes/header.php';
                             <?php echo number_format($monthly_stats['total_justifies'] ?? 0); ?>
                         </h2>
                         <p class="mb-0 opacity-90" style="font-size: 1rem; font-weight: 500;">
-                            Justifiés
+                            JustifiÃ©s
                         </p>
                     </div>
                     <div class="text-end">
@@ -369,13 +368,13 @@ include '../../../../includes/header.php';
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>Élève</th>
+                                <th>Ã‰lÃ¨ve</th>
                                 <th>Matricule</th>
                                 <th>Classe</th>
                                 <th>Total</th>
                                 <th>Absences</th>
                                 <th>Retards</th>
-                                <th>Justifiés</th>
+                                <th>JustifiÃ©s</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -415,7 +414,7 @@ include '../../../../includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Évolution quotidienne -->
+<!-- Ã‰volution quotidienne -->
 <?php if (!empty($daily_evolution) && $report_type === 'detailed'): ?>
 <div class="row mb-4">
     <div class="col-12">
@@ -423,7 +422,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-line me-2"></i>
-                    Évolution quotidienne du mois
+                    Ã‰volution quotidienne du mois
                 </h5>
             </div>
             <div class="card-body">
@@ -456,7 +455,7 @@ include '../../../../includes/header.php';
     }
 }
 
-/* Styles supplémentaires pour améliorer l'apparence */
+/* Styles supplÃ©mentaires pour amÃ©liorer l'apparence */
 .table tbody tr:hover {
     background-color: rgba(0,123,255,0.05) !important;
     transform: translateX(5px);
@@ -500,14 +499,14 @@ include '../../../../includes/header.php';
     animation: slideInUp 0.6s ease-out;
 }
 
-/* Amélioration des couleurs des badges */
+/* AmÃ©lioration des couleurs des badges */
 .badge.bg-primary { background: linear-gradient(135deg, #007bff, #0056b3) !important; }
 .badge.bg-danger { background: linear-gradient(135deg, #dc3545, #c82333) !important; }
 .badge.bg-warning { background: linear-gradient(135deg, #ffc107, #e0a800) !important; }
 .badge.bg-success { background: linear-gradient(135deg, #28a745, #1e7e34) !important; }
 .badge.bg-info { background: linear-gradient(135deg, #17a2b8, #138496) !important; }
 
-/* Responsive amélioré */
+/* Responsive amÃ©liorÃ© */
 @media (max-width: 768px) {
     .table-responsive {
         border-radius: 10px;
@@ -526,7 +525,7 @@ include '../../../../includes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Données pour les graphiques
+// DonnÃ©es pour les graphiques
 const monthlyData = {
     absences: <?php echo $monthly_stats['total_absences'] ?? 0; ?>,
     retards: <?php echo $monthly_stats['total_retards'] ?? 0; ?>,
@@ -540,11 +539,11 @@ const ctx = document.getElementById('incidentChart').getContext('2d');
 const incidentChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-        labels: ['Absences', 'Retards', 'Justifiés'],
+        labels: ['Absences', 'Retards', 'JustifiÃ©s'],
         datasets: [{
             data: [
-                monthlyData.absences - (monthlyData.justifies * 0.6), // Approximation absences non justifiées
-                monthlyData.retards - (monthlyData.justifies * 0.4), // Approximation retards non justifiés
+                monthlyData.absences - (monthlyData.justifies * 0.6), // Approximation absences non justifiÃ©es
+                monthlyData.retards - (monthlyData.justifies * 0.4), // Approximation retards non justifiÃ©s
                 monthlyData.justifies
             ],
             backgroundColor: [
@@ -566,7 +565,7 @@ const incidentChart = new Chart(ctx, {
     }
 });
 
-// Graphique d'évolution quotidienne
+// Graphique d'Ã©volution quotidienne
 <?php if (!empty($daily_evolution) && $report_type === 'detailed'): ?>
 const dailyCtx = document.getElementById('dailyChart').getContext('2d');
 const dailyChart = new Chart(dailyCtx, {
@@ -667,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <i class="fas fa-graduation-cap me-2"></i>Classe
                                     </th>
                                     <th class="border-0 py-3 px-4" style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        <i class="fas fa-users me-2"></i>Élèves
+                                        <i class="fas fa-users me-2"></i>Ã‰lÃ¨ves
                                     </th>
                                     <th class="border-0 py-3 px-4" style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                                         <i class="fas fa-exclamation-triangle me-2"></i>Incidents
@@ -679,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <i class="fas fa-clock me-2"></i>Retards
                                     </th>
                                     <th class="border-0 py-3 px-4" style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        <i class="fas fa-check-circle me-2"></i>Justifiés
+                                        <i class="fas fa-check-circle me-2"></i>JustifiÃ©s
                                     </th>
                                     <th class="border-0 py-3 px-4" style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                                         <i class="fas fa-chart-bar me-2"></i>Taux
@@ -760,59 +759,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 <?php else: ?>
                     <div class="text-center py-4">
                         <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Aucune donnée disponible pour la période sélectionnée.</p>
+                        <p class="text-muted">Aucune donnÃ©e disponible pour la période sÃ©lectionnÃ©e.</p>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
     
-    <!-- Informations complémentaires -->
+    <!-- Informations complÃ©mentaires -->
     <div class="col-lg-4">
         <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px;">
             <div class="card-header text-white" style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%); border-radius: 15px 15px 0 0;">
                 <h5 class="mb-0 fw-bold">
                     <i class="fas fa-chart-pie me-2"></i>
-                    Résumé du mois
+                    RÃ©sumÃ© du mois
                 </h5>
             </div>
             <div class="card-body p-4">
-                <!-- Période -->
+                <!-- PÃ©riode -->
                 <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                     <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
                          style="width: 50px; height: 50px;">
                         <i class="fas fa-calendar-alt text-white"></i>
                     </div>
                     <div>
-                        <h6 class="mb-1 text-muted fw-bold" style="font-size: 0.8rem; text-transform: uppercase;">Période</h6>
+                        <h6 class="mb-1 text-muted fw-bold" style="font-size: 0.8rem; text-transform: uppercase;">PÃ©riode</h6>
                         <h5 class="mb-0 fw-bold text-dark">
                             <?php echo date('F Y', strtotime($selected_month . '-01')); ?>
                         </h5>
                     </div>
                 </div>
 
-                <!-- Élèves concernés -->
+                <!-- Ã‰lÃ¨ves concernÃ©s -->
                 <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);">
                     <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3"
                          style="width: 50px; height: 50px;">
                         <i class="fas fa-users text-white"></i>
                     </div>
                     <div>
-                        <h6 class="mb-1 text-muted fw-bold" style="font-size: 0.8rem; text-transform: uppercase;">Élèves concernés</h6>
+                        <h6 class="mb-1 text-muted fw-bold" style="font-size: 0.8rem; text-transform: uppercase;">Ã‰lÃ¨ves concernÃ©s</h6>
                         <h4 class="mb-0 fw-bold text-warning">
                             <?php echo number_format($monthly_stats['eleves_concernes'] ?? 0); ?>
                         </h4>
                     </div>
                 </div>
 
-                <!-- Classes concernées -->
+                <!-- Classes concernÃ©es -->
                 <div class="d-flex align-items-center p-3 mb-3 rounded-3" style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);">
                     <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3"
                          style="width: 50px; height: 50px;">
                         <i class="fas fa-school text-white"></i>
                     </div>
                     <div>
-                        <h6 class="mb-1 text-muted fw-bold" style="font-size: 0.8rem; text-transform: uppercase;">Classes concernées</h6>
+                        <h6 class="mb-1 text-muted fw-bold" style="font-size: 0.8rem; text-transform: uppercase;">Classes concernÃ©es</h6>
                         <h4 class="mb-0 fw-bold text-info">
                             <?php echo number_format($monthly_stats['classes_concernees'] ?? 0); ?>
                         </h4>
@@ -861,7 +860,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-header text-white" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); border-radius: 15px 15px 0 0;">
                 <h5 class="mb-0 fw-bold">
                     <i class="fas fa-chart-pie me-2"></i>
-                    Répartition des incidents
+                    RÃ©partition des incidents
                 </h5>
             </div>
             <div class="card-body p-4 text-center">
@@ -871,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="mt-3">
                     <small class="text-muted">
                         <i class="fas fa-info-circle me-1"></i>
-                        Cliquez sur les segments pour plus de détails
+                        Cliquez sur les segments pour plus de dÃ©tails
                     </small>
                 </div>
             </div>
@@ -880,3 +879,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

@@ -6,7 +6,10 @@
 
 require_once '../../config/config.php';
 require_once '../../includes/functions.php';
+require_once '../includes/permissions-pages.php';
 requireLogin();
+
+requirePagePermissionFromDB('cartes_eleves', 'download', 'read', '../dashboard.php');
 
 $carte_id = $_GET['id'] ?? 0;
 
@@ -72,3 +75,4 @@ header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
 imagepng($image);
 imagedestroy($image);
 ?>
+

@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('internat') && !checkPermission('internat_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'internat', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de l\'Internat';
 
@@ -122,7 +121,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('internat')): ?>
+        <?php if (checkPagePermission('internat')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -387,7 +386,7 @@ include '../../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun nouveau résident ce mois</p>
-                        <?php if (checkPermission('internat')): ?>
+                        <?php if (checkPagePermission('internat')): ?>
                             <a href="residents/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Ajouter un résident
@@ -556,7 +555,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('internat')): ?>
+<?php if (checkPagePermission('internat')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -618,3 +617,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

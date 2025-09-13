@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Modifier une absence/retard
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,12 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
 
 $page_title = "Modifier une absence/retard";
 $absence_id = (int)($_GET['id'] ?? 0);
@@ -22,7 +22,7 @@ if (!$absence_id) {
     redirectTo('index.php');
 }
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement du formulaire
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = $_POST['action'] ?? '';
         
         if ($action === 'update') {
-            // Mise à jour des informations de base
+            // Mise Ã  jour des informations de base
             $type_absence = sanitizeInput($_POST['type_absence'] ?? '');
             $date_absence = sanitizeInput($_POST['date_absence'] ?? '');
             $heure_absence = sanitizeInput($_POST['heure_absence'] ?? '');
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $database->beginTransaction();
             
             try {
-                // Mettre à jour l'absence
+                // Mettre Ã  jour l'absence
                 $database->execute(
                     "UPDATE absences SET 
                      type_absence = ?, date_absence = ?, motif = ?, updated_at = NOW()
@@ -73,13 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logUserAction(
                     'update_absence',
                     'attendance',
-                    'Absence modifiée - Type: ' . $type_absence . ', Date: ' . formatDateTime($datetime_absence) .
+                    'Absence modifiÃ©e - Type: ' . $type_absence . ', Date: ' . formatDateTime($datetime_absence) .
                     ($motif ? ', Motif: ' . $motif : ''),
                     $absence_id
                 );
                 
                 $database->commit();
-                showMessage('success', 'Absence modifiée avec succès');
+                showMessage('success', 'Absence modifiÃ©e avec succÃ¨s');
                 
             } catch (Exception $e) {
                 $database->rollback();
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $database->beginTransaction();
             
             try {
-                // Déterminer le nouveau type d'absence justifiée
+                // DÃ©terminer le nouveau type d'absence justifiÃ©e
                 $absence_info = $database->query("SELECT type_absence FROM absences WHERE id = ?", [$absence_id])->fetch();
                 $new_type = $absence_info['type_absence'];
                 
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $new_type = 'retard_justifie';
                 }
                 
-                // Mettre à jour l'absence avec justification
+                // Mettre Ã  jour l'absence avec justification
                 $database->execute(
                     "UPDATE absences SET 
                      type_absence = ?, justification = ?, document_justificatif = ?, 
@@ -134,13 +134,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logUserAction(
                     'justify_absence',
                     'attendance',
-                    'Absence justifiée' . ($justification ? ' - Justification: ' . substr($justification, 0, 100) : '') .
+                    'Absence justifiÃ©e' . ($justification ? ' - Justification: ' . substr($justification, 0, 100) : '') .
                     ($document_justificatif ? ' - Document: ' . $document_justificatif : ''),
                     $absence_id
                 );
                 
                 $database->commit();
-                showMessage('success', 'Absence justifiée avec succès');
+                showMessage('success', 'Absence justifiÃ©e avec succÃ¨s');
                 
             } catch (Exception $e) {
                 $database->rollback();
@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les informations de l'absence
+// RÃ©cupÃ©rer les informations de l'absence
 $absence = $database->query(
     "SELECT a.*, e.nom as eleve_nom, e.prenom as eleve_prenom, e.numero_matricule,
             c.nom as classe_nom, c.niveau, i.classe_id,
@@ -168,11 +168,11 @@ $absence = $database->query(
 )->fetch();
 
 if (!$absence) {
-    showMessage('error', 'Absence non trouvée');
+    showMessage('error', 'Absence non trouvÃ©e');
     redirectTo('index.php');
 }
 
-// Récupérer l'historique des actions sur cette absence
+// RÃ©cupÃ©rer l'historique des actions sur cette absence
 $history = $database->query(
     "SELECT ual.*, u.nom as user_nom, u.prenom as user_prenom, u.username
      FROM user_actions_log ual
@@ -182,7 +182,7 @@ $history = $database->query(
     [$absence_id]
 )->fetchAll();
 
-// Déterminer si l'absence est justifiée
+// DÃ©terminer si l'absence est justifiÃ©e
 $is_justified = in_array($absence['type_absence'], ['absence_justifiee', 'retard_justifie']);
 
 include '../../../includes/header.php';
@@ -197,7 +197,7 @@ include '../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour à la liste
+                Retour Ã  la liste
             </a>
         </div>
         <div class="btn-group">
@@ -210,13 +210,13 @@ include '../../../includes/header.php';
 </div>
 
 <div class="row">
-    <!-- Informations de l'élève -->
+    <!-- Informations de l'Ã©lÃ¨ve -->
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-user me-2"></i>
-                    Informations de l'élève
+                    Informations de l'Ã©lÃ¨ve
                 </h5>
             </div>
             <div class="card-body">
@@ -264,9 +264,9 @@ include '../../../includes/header.php';
                         ];
                         $type_labels = [
                             'absence' => 'Absence',
-                            'absence_justifiee' => 'Absence justifiée',
+                            'absence_justifiee' => 'Absence justifiÃ©e',
                             'retard' => 'Retard',
-                            'retard_justifie' => 'Retard justifié'
+                            'retard_justifie' => 'Retard justifiÃ©'
                         ];
                         $badge_color = $type_badges[$absence['type_absence']] ?? 'secondary';
                         $type_label = $type_labels[$absence['type_absence']] ?? $absence['type_absence'];
@@ -291,7 +291,7 @@ include '../../../includes/header.php';
                 
                 <?php if ($is_justified): ?>
                 <div class="mb-3">
-                    <label class="form-label">Validé par</label>
+                    <label class="form-label">ValidÃ© par</label>
                     <p class="mb-0">
                         <?php 
                         if ($absence['valide_par_nom']) {
@@ -300,7 +300,7 @@ include '../../../includes/header.php';
                                 echo '<br><small class="text-muted">Le ' . formatDateTime($absence['date_validation']) . '</small>';
                             }
                         } else {
-                            echo '<span class="text-muted">Non spécifié</span>';
+                            echo '<span class="text-muted">Non spÃ©cifiÃ©</span>';
                         }
                         ?>
                     </p>
@@ -360,7 +360,7 @@ include '../../../includes/header.php';
                                     <div class="form-check mt-4">
                                         <input class="form-check-input" type="checkbox" id="justifiee" name="justifiee" <?php echo $is_justified ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="justifiee">
-                                            Justifiée
+                                            JustifiÃ©e
                                         </label>
                                     </div>
                                 </div>
@@ -420,7 +420,7 @@ include '../../../includes/header.php';
                                 <label for="justification" class="form-label">Justification <span class="text-danger">*</span></label>
                                 <textarea class="form-control" id="justification" name="justification" rows="4"
                                           placeholder="Expliquez les raisons de cette absence/retard..." required></textarea>
-                                <div class="form-text">Décrivez les circonstances qui justifient cette absence ou ce retard.</div>
+                                <div class="form-text">DÃ©crivez les circonstances qui justifient cette absence ou ce retard.</div>
                             </div>
 
                             <div class="mb-3">
@@ -428,7 +428,7 @@ include '../../../includes/header.php';
                                 <input type="file" class="form-control" id="document_justificatif" name="document_justificatif"
                                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                                 <div class="form-text">
-                                    Formats acceptés : PDF, JPG, PNG, DOC, DOCX (max 5MB)
+                                    Formats acceptÃ©s : PDF, JPG, PNG, DOC, DOCX (max 5MB)
                                 </div>
                             </div>
 
@@ -476,7 +476,7 @@ include '../../../includes/header.php';
                                                     <h6 class="mb-1">
                                                         <?php
                                                         $action_labels = [
-                                                            'create_absence' => 'Création',
+                                                            'create_absence' => 'CrÃ©ation',
                                                             'update_absence' => 'Modification',
                                                             'justify_absence' => 'Justification',
                                                             'view_absence_history' => 'Consultation historique'
@@ -511,14 +511,14 @@ include '../../../includes/header.php';
     </div>
 </div>
 
-<!-- Modal d'historique détaillé -->
+<!-- Modal d'historique dÃ©taillÃ© -->
 <div class="modal fade" id="historyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-history me-2"></i>
-                    Historique détaillé
+                    Historique dÃ©taillÃ©
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -589,7 +589,7 @@ include '../../../includes/header.php';
 function showHistory() {
     $('#historyModal').modal('show');
 
-    // Charger l'historique détaillé via AJAX
+    // Charger l'historique dÃ©taillÃ© via AJAX
     fetch('get-absence-history.php?id=<?php echo $absence_id; ?>')
         .then(response => response.json())
         .then(data => {
@@ -612,7 +612,7 @@ function displayDetailedHistory(data) {
     html += '<div class="card">';
     html += '<div class="card-body">';
     html += '<div class="row">';
-    html += '<div class="col-md-6"><strong>Élève:</strong> ' + data.absence_info.student_name + '</div>';
+    html += '<div class="col-md-6"><strong>Ã‰lÃ¨ve:</strong> ' + data.absence_info.student_name + '</div>';
     html += '<div class="col-md-6"><strong>Classe:</strong> ' + data.absence_info.class_name + '</div>';
     html += '<div class="col-md-6"><strong>Type:</strong> <span class="badge bg-' + getTypeBadgeColor(data.absence_info.type) + '">' + data.absence_info.type + '</span></div>';
     html += '<div class="col-md-6"><strong>Date:</strong> ' + data.absence_info.date + '</div>';
@@ -667,7 +667,7 @@ function getActionIcon(action) {
 
 function getActionLabel(action) {
     const labels = {
-        'create_absence': 'Création',
+        'create_absence': 'CrÃ©ation',
         'update_absence': 'Modification',
         'justify_absence': 'Justification',
         'view_absence_history': 'Consultation'
@@ -690,17 +690,17 @@ document.getElementById('justifyForm')?.addEventListener('submit', function(e) {
     const justification = document.getElementById('justification').value.trim();
     if (justification.length < 10) {
         e.preventDefault();
-        alert('La justification doit contenir au moins 10 caractères.');
+        alert('La justification doit contenir au moins 10 caractÃ¨res.');
         return false;
     }
 
-    if (!confirm('Êtes-vous sûr de vouloir justifier cette absence ? Cette action ne peut pas être annulée.')) {
+    if (!confirm('ÃŠtes-vous sÃ»r de vouloir justifier cette absence ? Cette action ne peut pas Ãªtre annulÃ©e.')) {
         e.preventDefault();
         return false;
     }
 });
 
-// Validation du fichier uploadé
+// Validation du fichier uploadÃ©
 document.getElementById('document_justificatif')?.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -714,7 +714,7 @@ document.getElementById('document_justificatif')?.addEventListener('change', fun
         }
 
         if (!allowedTypes.includes(file.type)) {
-            alert('Type de fichier non autorisé. Formats acceptés : PDF, JPG, PNG, DOC, DOCX');
+            alert('Type de fichier non autorisÃ©. Formats acceptÃ©s : PDF, JPG, PNG, DOC, DOCX');
             e.target.value = '';
             return;
         }
@@ -723,7 +723,7 @@ document.getElementById('document_justificatif')?.addEventListener('change', fun
 
 // Enregistrer l'action de consultation de l'historique
 document.addEventListener('DOMContentLoaded', function() {
-    // Log de la consultation de la page d'édition
+    // Log de la consultation de la page d'Ã©dition
     fetch('log-action.php', {
         method: 'POST',
         headers: {
@@ -733,10 +733,14 @@ document.addEventListener('DOMContentLoaded', function() {
             action: 'view_absence_edit',
             module: 'attendance',
             target_id: <?php echo $absence_id; ?>,
-            details: 'Consultation de la page d\'édition de l\'absence ID <?php echo $absence_id; ?>'
+            details: 'Consultation de la page d\'Ã©dition de l\'absence ID <?php echo $absence_id; ?>'
         })
     }).catch(error => console.log('Log error:', error));
 });
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

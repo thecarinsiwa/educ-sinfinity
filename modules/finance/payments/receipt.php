@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
 
 // Récupérer l'ID du paiement
 $id = (int)($_GET['id'] ?? 0);
@@ -28,11 +26,13 @@ $sql = "SELECT p.*,
                c.nom as classe_nom, c.niveau,
                u.username as enregistre_par,
                a.annee as annee_scolaire,
-               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom,
+               tf.nom as type_frais
         FROM paiements p
         JOIN eleves e ON p.eleve_id = e.id
         JOIN inscriptions i ON e.id = i.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
         JOIN classes c ON i.classe_id = c.id
+        JOIN type_frais tf ON p.type_frais_id = tf.id
         LEFT JOIN users u ON p.user_id = u.id
         JOIN annees_scolaires a ON p.annee_scolaire_id = a.id
         LEFT JOIN devises d ON p.devise_id = d.id
@@ -254,12 +254,12 @@ include '../../../includes/header.php';
                                             'cantine' => 'Cantine',
                                             'autre' => 'Autre'
                                         ];
-                                        echo $types[$paiement['type_paiement']] ?? ucfirst($paiement['type_paiement']);
+                                        echo htmlspecialchars($paiement['type_frais']);
                                         ?>
                                     </strong>
                                 </td>
                                 <td>
-                                    <?php echo htmlspecialchars($paiement['observation'] ?: 'Paiement de ' . $types[$paiement['type_paiement']]); ?>
+                                    <?php echo htmlspecialchars($paiement['observation'] ?: 'Paiement de ' . $paiement['type_frais']); ?>
                                 </td>
                                 <td>
                                     <?php

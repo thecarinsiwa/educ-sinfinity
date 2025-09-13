@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('library')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('library', 'books', 'create', '../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

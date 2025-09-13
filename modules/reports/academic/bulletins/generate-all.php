@@ -1,25 +1,23 @@
-<?php
+﻿<?php
 /**
- * Module Rapports Académiques - Génération de tous les bulletins
- * Application de gestion scolaire - République Démocratique du Congo
+ * Module Rapports AcadÃ©miques - GÃ©nÃ©ration de tous les bulletins
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('reports') && !checkPermission('academic')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('reports', 'academic', 'read', '../../../../dashboard.php');
 
-$page_title = 'Génération des bulletins';
+$page_title = 'GÃ©nÃ©ration des bulletins';
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year) {
-    showMessage('error', 'Aucune année scolaire active.');
+    showMessage('error', 'Aucune annÃ©e scolaire active.');
     redirectTo('../../../index.php');
 }
 
@@ -27,7 +25,7 @@ $errors = [];
 $success = false;
 $generated_count = 0;
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT c.id, c.nom, c.niveau, c.section,
             COUNT(DISTINCT i.eleve_id) as nb_eleves
@@ -39,20 +37,20 @@ $classes = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// Récupérer les périodes disponibles
+// RÃ©cupÃ©rer les pÃ©riodes disponibles
 $periodes = $database->query(
     "SELECT DISTINCT periode FROM evaluations 
      WHERE annee_scolaire_id = ? 
      ORDER BY 
         CASE periode 
             WHEN '1er trimestre' THEN 1 
-            WHEN '2ème trimestre' THEN 2 
-            WHEN '3ème trimestre' THEN 3 
+            WHEN '2Ã¨me trimestre' THEN 2 
+            WHEN '3Ã¨me trimestre' THEN 3 
         END",
     [$current_year['id']]
 )->fetchAll();
 
-// Traitement de la génération
+// Traitement de la gÃ©nÃ©ration
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $classe_id = (int)($_POST['classe_id'] ?? 0);
     $periode = sanitizeInput($_POST['periode'] ?? '');
@@ -62,15 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validation
     if (!$classe_id) {
-        $errors[] = 'Veuillez sélectionner une classe.';
+        $errors[] = 'Veuillez sÃ©lectionner une classe.';
     }
     
     if (empty($periode)) {
-        $errors[] = 'Veuillez sélectionner une période.';
+        $errors[] = 'Veuillez sÃ©lectionner une pÃ©riode.';
     }
     
     if (empty($errors)) {
-        // Récupérer tous les élèves de la classe
+        // RÃ©cupÃ©rer tous les Ã©lÃ¨ves de la classe
         $eleves = $database->query(
             "SELECT e.id, e.nom, e.prenom, e.numero_matricule,
                     c.nom as classe_nom, c.niveau, c.section
@@ -83,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->fetchAll();
         
         if (empty($eleves)) {
-            $errors[] = 'Aucun élève trouvé dans cette classe.';
+            $errors[] = 'Aucun Ã©lÃ¨ve trouvÃ© dans cette classe.';
         } else {
             $generated_count = count($eleves);
             $success = true;
             
             // Enregistrer l'action
-            logAction('reports', "Génération de $generated_count bulletins pour la classe " . $classes[array_search($classe_id, array_column($classes, 'id'))]['nom'] . " - Période: $periode");
+            logAction('reports', "GÃ©nÃ©ration de $generated_count bulletins pour la classe " . $classes[array_search($classe_id, array_column($classes, 'id'))]['nom'] . " - PÃ©riode: $periode");
         }
     }
 }
@@ -100,7 +98,7 @@ include '../../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-file-pdf me-2"></i>
-        Génération des bulletins
+        GÃ©nÃ©ration des bulletins
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -114,7 +112,7 @@ include '../../../../includes/header.php';
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
-        <h5><i class="fas fa-exclamation-triangle me-2"></i>Erreurs détectées :</h5>
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>Erreurs dÃ©tectÃ©es :</h5>
         <ul class="mb-0">
             <?php foreach ($errors as $error): ?>
                 <li><?php echo htmlspecialchars($error); ?></li>
@@ -125,9 +123,9 @@ include '../../../../includes/header.php';
 
 <?php if ($success): ?>
     <div class="alert alert-success">
-        <h5><i class="fas fa-check-circle me-2"></i>Génération réussie !</h5>
+        <h5><i class="fas fa-check-circle me-2"></i>GÃ©nÃ©ration rÃ©ussie !</h5>
         <p class="mb-0">
-            <?php echo $generated_count; ?> bulletin(s) généré(s) avec succès pour la période <?php echo htmlspecialchars($periode); ?>.
+            <?php echo $generated_count; ?> bulletin(s) gÃ©nÃ©rÃ©(s) avec succÃ¨s pour la pÃ©riode <?php echo htmlspecialchars($periode); ?>.
         </p>
     </div>
 <?php endif; ?>
@@ -138,7 +136,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-cog me-2"></i>
-                    Paramètres de génération
+                    ParamÃ¨tres de gÃ©nÃ©ration
                 </h5>
             </div>
             <div class="card-body">
@@ -150,13 +148,13 @@ include '../../../../includes/header.php';
                                     Classe <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-select" id="classe_id" name="classe_id" required>
-                                    <option value="">Sélectionner une classe</option>
+                                    <option value="">SÃ©lectionner une classe</option>
                                     <?php foreach ($classes as $classe): ?>
                                         <option value="<?php echo $classe['id']; ?>" 
                                                 <?php echo isset($_POST['classe_id']) && $_POST['classe_id'] == $classe['id'] ? 'selected' : ''; ?>>
                                             <?php echo htmlspecialchars($classe['nom']); ?>
                                             (<?php echo ucfirst($classe['niveau']); ?>)
-                                            - <?php echo $classe['nb_eleves']; ?> élève(s)
+                                            - <?php echo $classe['nb_eleves']; ?> Ã©lÃ¨ve(s)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -165,10 +163,10 @@ include '../../../../includes/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="periode" class="form-label">
-                                    Période <span class="text-danger">*</span>
+                                    PÃ©riode <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-select" id="periode" name="periode" required>
-                                    <option value="">Sélectionner une période</option>
+                                    <option value="">SÃ©lectionner une pÃ©riode</option>
                                     <?php foreach ($periodes as $p): ?>
                                         <option value="<?php echo htmlspecialchars($p['periode']); ?>" 
                                                 <?php echo isset($_POST['periode']) && $_POST['periode'] === $p['periode'] ? 'selected' : ''; ?>>
@@ -219,7 +217,7 @@ include '../../../../includes/header.php';
                         </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-download me-1"></i>
-                            Générer les bulletins
+                            GÃ©nÃ©rer les bulletins
                         </button>
                     </div>
                 </form>
@@ -238,7 +236,7 @@ include '../../../../includes/header.php';
             </div>
             <div class="card-body">
                 <p class="mb-2">
-                    <strong>Année scolaire :</strong><br>
+                    <strong>AnnÃ©e scolaire :</strong><br>
                     <?php echo htmlspecialchars($current_year['annee']); ?>
                 </p>
                 <p class="mb-2">
@@ -246,8 +244,8 @@ include '../../../../includes/header.php';
                     <?php echo count($classes); ?> classe(s)
                 </p>
                 <p class="mb-0">
-                    <strong>Périodes disponibles :</strong><br>
-                    <?php echo count($periodes); ?> période(s)
+                    <strong>PÃ©riodes disponibles :</strong><br>
+                    <?php echo count($periodes); ?> pÃ©riode(s)
                 </p>
             </div>
         </div>
@@ -264,7 +262,7 @@ include '../../../../includes/header.php';
                 <div class="d-grid gap-2">
                     <a href="../index.php" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-chart-bar me-1"></i>
-                        Rapports académiques
+                        Rapports acadÃ©miques
                     </a>
                     <a href="../../evaluations/notes/index.php" class="btn btn-outline-info btn-sm">
                         <i class="fas fa-sticky-note me-1"></i>
@@ -272,7 +270,7 @@ include '../../../../includes/header.php';
                     </a>
                     <a href="../../students/index.php" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-users me-1"></i>
-                        Liste des élèves
+                        Liste des Ã©lÃ¨ves
                     </a>
                 </div>
             </div>
@@ -286,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const periodeSelect = document.getElementById('periode');
     const submitBtn = document.querySelector('button[type="submit"]');
     
-    // Validation en temps réel
+    // Validation en temps rÃ©el
     function validateForm() {
         const classeValid = classeSelect.value !== '';
         const periodeValid = periodeSelect.value !== '';
@@ -303,3 +301,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+

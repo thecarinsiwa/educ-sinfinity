@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('finance', 'fees', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Frais Scolaires';
 
@@ -65,10 +63,12 @@ try {
 
     if ($table_check) {
         $sql = "SELECT f.*, c.nom as classe_nom, c.niveau,
-                       d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
+                       d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom,
+                       tf.nom as type_frais_nom
                 FROM frais_scolaires f
                 JOIN classes c ON f.classe_id = c.id
                 LEFT JOIN devises d ON f.devise_id = d.id
+                LEFT JOIN type_frais tf ON f.type_frais_id = tf.id
                 WHERE f.annee_scolaire_id = ?";
 
         $params = [$current_year['id'] ?? 0];
@@ -79,11 +79,11 @@ try {
         }
 
         if (!empty($type_filter)) {
-            $sql .= " AND f.type_frais = ?";
+            $sql .= " AND tf.nom = ?";
             $params[] = $type_filter;
         }
 
-        $sql .= " ORDER BY c.niveau, c.nom, f.type_frais";
+        $sql .= " ORDER BY c.niveau, c.nom, tf.nom";
 
         $frais = $database->query($sql, $params)->fetchAll();
     }
@@ -119,8 +119,8 @@ foreach ($frais as $frais_item) {
     }
     $frais_par_niveau[$niveau]['count']++;
     $frais_par_niveau[$niveau]['total'] += $frais_item['montant_devise_par_defaut'] ?? $frais_item['montant'];
-    $frais_par_niveau[$niveau]['types'][$frais_item['type_frais']] = 
-        ($frais_par_niveau[$niveau]['types'][$frais_item['type_frais']] ?? 0) + ($frais_item['montant_devise_par_defaut'] ?? $frais_item['montant']);
+    $frais_par_niveau[$niveau]['types'][$frais_item['type_frais_nom']] = 
+        ($frais_par_niveau[$niveau]['types'][$frais_item['type_frais_nom']] ?? 0) + ($frais_item['montant_devise_par_defaut'] ?? $frais_item['montant']);
 }
 
 include '../../../includes/header.php';
@@ -146,7 +146,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('finance')): ?>
+        <?php if (checkPagePermission('finance')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -277,13 +277,30 @@ include '../../../includes/header.php';
                 <label for="type" class="form-label">Type de frais</label>
                 <select class="form-select" id="type" name="type">
                     <option value="">Tous les types</option>
-                    <option value="inscription" <?php echo $type_filter === 'inscription' ? 'selected' : ''; ?>>Inscription</option>
-                    <option value="mensualite" <?php echo $type_filter === 'mensualite' ? 'selected' : ''; ?>>Mensualité</option>
-                    <option value="examen" <?php echo $type_filter === 'examen' ? 'selected' : ''; ?>>Examen</option>
-                    <option value="uniforme" <?php echo $type_filter === 'uniforme' ? 'selected' : ''; ?>>Uniforme</option>
-                    <option value="transport" <?php echo $type_filter === 'transport' ? 'selected' : ''; ?>>Transport</option>
-                    <option value="cantine" <?php echo $type_filter === 'cantine' ? 'selected' : ''; ?>>Cantine</option>
-                    <option value="autre" <?php echo $type_filter === 'autre' ? 'selected' : ''; ?>>Autre</option>
+                    <?php
+                    // Récupérer les types de frais disponibles
+                    try {
+                        $types_frais = $database->query(
+                            "SELECT DISTINCT tf.nom FROM type_frais tf 
+                             JOIN frais_scolaires f ON tf.id = f.type_frais_id 
+                             WHERE f.annee_scolaire_id = ? 
+                             ORDER BY tf.nom",
+                            [$current_year['id'] ?? 0]
+                        )->fetchAll();
+                        
+                        foreach ($types_frais as $type) {
+                            $selected = $type_filter === $type['nom'] ? 'selected' : '';
+                            echo "<option value=\"{$type['nom']}\" {$selected}>{$type['nom']}</option>";
+                        }
+                    } catch (Exception $e) {
+                        // En cas d'erreur, afficher les options par défaut
+                        $default_types = ['Inscription', 'Mensualité', 'Examen', 'Uniforme', 'Transport', 'Cantine', 'Autre'];
+                        foreach ($default_types as $type) {
+                            $selected = $type_filter === $type ? 'selected' : '';
+                            echo "<option value=\"{$type}\" {$selected}>{$type}</option>";
+                        }
+                    }
+                    ?>
                 </select>
             </div>
             <div class="col-md-4">
@@ -345,18 +362,19 @@ include '../../../includes/header.php';
                                 <td>
                                     <?php
                                     $type_colors = [
-                                        'inscription' => 'primary',
-                                        'mensualite' => 'success',
-                                        'examen' => 'warning',
-                                        'uniforme' => 'info',
-                                        'transport' => 'secondary',
-                                        'cantine' => 'dark',
-                                        'autre' => 'light'
+                                        'Inscription' => 'primary',
+                                        'Mensualité' => 'success',
+                                        'Examen' => 'warning',
+                                        'Uniforme' => 'info',
+                                        'Transport' => 'secondary',
+                                        'Cantine' => 'dark',
+                                        'Autre' => 'light',
+                                        'Trimerstriel' => 'info'
                                     ];
-                                    $color = $type_colors[$frais_item['type_frais']] ?? 'secondary';
+                                    $color = $type_colors[$frais_item['type_frais_nom']] ?? 'secondary';
                                     ?>
                                     <span class="badge bg-<?php echo $color; ?>">
-                                        <?php echo ucfirst($frais_item['type_frais']); ?>
+                                        <?php echo htmlspecialchars($frais_item['type_frais_nom']); ?>
                                     </span>
                                 </td>
                                 <td>
@@ -409,7 +427,7 @@ include '../../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('finance')): ?>
+                                        <?php if (checkPagePermission('finance')): ?>
                                             <a href="edit.php?id=<?php echo $frais_item['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
@@ -458,7 +476,7 @@ include '../../../includes/header.php';
                         } ?>
                     <?php endif; ?>
                 </p>
-                <?php if (checkPermission('finance')): ?>
+                <?php if (checkPagePermission('finance')): ?>
                     <div class="mt-3">
                         <a href="add.php" class="btn btn-primary me-2">
                             <i class="fas fa-plus me-1"></i>
@@ -528,7 +546,7 @@ include '../../../includes/header.php';
 <?php endif; ?>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('finance')): ?>
+<?php if (checkPagePermission('finance')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -545,6 +563,14 @@ include '../../../includes/header.php';
                             <a href="add.php" class="btn btn-outline-primary">
                                 <i class="fas fa-plus me-2"></i>
                                 Nouveau frais
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <div class="d-grid">
+                            <a href="types/index.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-tags me-2"></i>
+                                Types de frais
                             </a>
                         </div>
                     </div>

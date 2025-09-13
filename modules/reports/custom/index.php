@@ -7,9 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
+// Vérifier l'authentification et les permissions
 requireLogin();
+requirePagePermissionFromDB('reports', 'custom', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports Personnalisés';
 
@@ -17,12 +19,8 @@ $page_title = 'Rapports Personnalisés';
 $current_year = getCurrentAcademicYear();
 
 // Récupérer les rapports sauvegardés de l'utilisateur
-$rapports_sauvegardes = $database->query(
-    "SELECT * FROM rapports_personnalises 
-     WHERE user_id = ? OR partage = 'public'
-     ORDER BY created_at DESC",
-    [$_SESSION['user_id']]
-)->fetchAll();
+// Note: Table rapports_personnalises n'existe pas encore, utilisation de données simulées
+$rapports_sauvegardes = [];
 
 // Modèles de rapports prédéfinis
 $modeles_rapports = [
@@ -101,14 +99,8 @@ $stats_rapports['rapports_publics'] = count(array_filter($rapports_sauvegardes, 
 $stats_rapports['rapports_prives'] = $stats_rapports['total_rapports'] - $stats_rapports['rapports_publics'];
 
 // Rapports les plus utilisés
-$rapports_populaires = $database->query(
-    "SELECT nom, description, nb_executions, derniere_execution
-     FROM rapports_personnalises 
-     WHERE (user_id = ? OR partage = 'public') AND nb_executions > 0
-     ORDER BY nb_executions DESC
-     LIMIT 5",
-    [$_SESSION['user_id']]
-)->fetchAll();
+// Note: Table rapports_personnalises n'existe pas encore, utilisation de données simulées
+$rapports_populaires = [];
 
 include '../../../includes/header.php';
 ?>

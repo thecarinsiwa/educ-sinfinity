@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('academic') && !checkPermission('academic_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('academic', 'classes', 'read', '../../../dashboard.php', 'view');
 
 // Récupérer l'ID de la classe
 $id = (int)($_GET['id'] ?? 0);
@@ -110,7 +108,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour
             </a>
-            <?php if (checkPermission('academic')): ?>
+            <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
                 <a href="edit.php?id=<?php echo $classe['id']; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
                     Modifier
@@ -246,7 +244,7 @@ include '../../../includes/header.php';
                         <i class="fas fa-users me-2"></i>
                         Élèves inscrits (<?php echo $stats['nb_eleves']; ?>)
                     </h5>
-                    <?php if (checkPermission('students')): ?>
+                    <?php if (hasPagePermissionFromDB('students', 'index', 'read')): ?>
                         <a href="../../students/add.php?classe_id=<?php echo $classe['id']; ?>" 
                            class="btn btn-sm btn-primary">
                             <i class="fas fa-plus me-1"></i>
@@ -290,7 +288,7 @@ include '../../../includes/header.php';
                                                        title="Voir détails">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <?php if (checkPermission('evaluations')): ?>
+                                                    <?php if (hasPagePermissionFromDB('academic', 'evaluations', 'read')): ?>
                                                         <a href="../../evaluations/student.php?id=<?php echo $eleve['id']; ?>" 
                                                            class="btn btn-outline-success" 
                                                            title="Notes">
@@ -309,7 +307,7 @@ include '../../../includes/header.php';
                             <i class="fas fa-user-plus fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">Aucun élève inscrit</h6>
                             <p class="text-muted">Cette classe n'a encore aucun élève inscrit.</p>
-                            <?php if (checkPermission('students')): ?>
+                            <?php if (hasPagePermissionFromDB('students', 'index', 'read')): ?>
                                 <a href="../../students/add.php?classe_id=<?php echo $classe['id']; ?>" 
                                    class="btn btn-primary">
                                     <i class="fas fa-plus me-1"></i>
@@ -328,7 +326,7 @@ include '../../../includes/header.php';
                         <i class="fas fa-calendar-alt me-2"></i>
                         Emploi du temps
                     </h5>
-                    <?php if (checkPermission('academic')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
                         <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
                            class="btn btn-sm btn-warning">
                             <i class="fas fa-edit me-1"></i>
@@ -379,7 +377,7 @@ include '../../../includes/header.php';
                             <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">Aucun emploi du temps configuré</h6>
                             <p class="text-muted">L'emploi du temps de cette classe n'a pas encore été défini.</p>
-                            <?php if (checkPermission('academic')): ?>
+                            <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
                                 <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
                                    class="btn btn-warning">
                                     <i class="fas fa-plus me-1"></i>
@@ -456,7 +454,7 @@ include '../../../includes/header.php';
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <?php if (checkPermission('students')): ?>
+                        <?php if (hasPagePermissionFromDB('students', 'index', 'read')): ?>
                             <a href="../../students/add.php?classe_id=<?php echo $classe['id']; ?>" 
                                class="btn btn-outline-primary">
                                 <i class="fas fa-user-plus me-2"></i>
@@ -464,7 +462,7 @@ include '../../../includes/header.php';
                             </a>
                         <?php endif; ?>
                         
-                        <?php if (checkPermission('academic')): ?>
+                        <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
                             <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
                                class="btn btn-outline-warning">
                                 <i class="fas fa-calendar me-2"></i>
@@ -472,7 +470,7 @@ include '../../../includes/header.php';
                             </a>
                         <?php endif; ?>
                         
-                        <?php if (checkPermission('evaluations')): ?>
+                        <?php if (hasPagePermissionFromDB('academic', 'evaluations', 'read')): ?>
                             <a href="../../evaluations/class.php?id=<?php echo $classe['id']; ?>" 
                                class="btn btn-outline-success">
                                 <i class="fas fa-chart-line me-2"></i>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost
--- Généré le : mar. 02 sep. 2025 à 21:05
+-- Généré le : jeu. 11 sep. 2025 à 10:09
 -- Version du serveur : 8.0.30
 -- Version de PHP : 8.1.10
 
@@ -43,19 +43,6 @@ CREATE TABLE `absences` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `absences`
---
-
-INSERT INTO `absences` (`id`, `eleve_id`, `classe_id`, `date_absence`, `type_absence`, `motif`, `duree_retard`, `justification`, `document_justificatif`, `valide_par`, `date_validation`, `created_at`, `updated_at`) VALUES
-(4, 1, 1, '2025-08-08', 'absence', 'n,h,n,n,', NULL, NULL, NULL, NULL, NULL, '2025-08-08 18:14:57', NULL),
-(6, 1, 1, '2025-08-07', 'absence_justifiee', 'Maladie', NULL, 'hghghghghghgvbfdfdfdf', '', 1, '2025-08-08 18:34:08', '2025-08-08 18:28:44', '2025-08-08 18:34:08'),
-(7, 2, 2, '2025-08-06', 'retard', 'Rendez-vous médical', NULL, NULL, NULL, NULL, NULL, '2025-08-08 18:28:44', NULL),
-(8, 3, 3, '2025-08-05', 'absence_justifiee', 'Problème de transport', NULL, NULL, NULL, NULL, NULL, '2025-08-08 18:28:44', NULL),
-(9, 4, 4, '2025-08-04', 'retard_justifie', 'Urgence familiale', NULL, NULL, NULL, NULL, NULL, '2025-08-08 18:28:44', NULL),
-(10, 5, 5, '2025-08-03', 'absence', 'Retard réveil', NULL, NULL, NULL, NULL, NULL, '2025-08-08 18:28:44', NULL),
-(12, 8, 1, '2025-08-08', 'absence', 'k_yfeeddddfggghhh', NULL, NULL, NULL, NULL, NULL, '2025-08-08 19:22:23', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -72,14 +59,6 @@ CREATE TABLE `annees_scolaires` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Déchargement des données de la table `annees_scolaires`
---
-
-INSERT INTO `annees_scolaires` (`id`, `annee`, `date_debut`, `date_fin`, `status`, `created_at`, `updated_at`) VALUES
-(1, '2023-2024', '2023-09-01', '2024-07-31', 'fermee', '2025-08-08 13:07:50', '2025-09-02 17:15:40'),
-(2, '2025-2026', '2025-09-01', '2026-07-31', 'active', '2025-08-08 23:34:15', '2025-09-02 18:40:18'),
-(3, '2026-2027', '2026-09-01', '2027-07-31', 'fermee', '2025-09-02 16:59:15', '2025-09-02 18:40:18');
 
 -- --------------------------------------------------------
 
@@ -106,14 +85,23 @@ CREATE TABLE `annonces` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `annonces`
+-- Structure de la table `caisses`
 --
 
-INSERT INTO `annonces` (`id`, `titre`, `contenu`, `auteur_id`, `type_annonce`, `cible`, `classe_id`, `date_publication`, `date_expiration`, `epinglee`, `active`, `couleur`, `fichiers_joints`, `vues`, `created_at`, `updated_at`) VALUES
-(1, 'Rentrée scolaire 2024-2025', 'La rentrée scolaire aura lieu le lundi 2 septembre 2024 à 8h00. Tous les élèves doivent se présenter avec leur matériel scolaire complet.', 1, 'generale', 'tous', NULL, '2025-08-09 20:16:12', '2025-09-08 20:16:12', 1, 1, '#007bff', NULL, 0, '2025-08-09 19:16:12', NULL),
-(2, 'Réunion des parents', 'Une réunion générale des parents d\'élèves aura lieu le samedi 15 septembre à 9h00 dans la salle de conférence.', 1, 'evenement', 'parents', NULL, '2025-08-09 20:16:12', '2025-08-24 20:16:12', 0, 1, '#28a745', NULL, 0, '2025-08-09 19:16:12', NULL),
-(3, 'Examens du premier trimestre', 'Les examens du premier trimestre se dérouleront du 25 novembre au 2 décembre 2024. Planning détaillé disponible au secrétariat.', 1, 'pedagogique', 'eleves', NULL, '2025-08-09 20:16:12', '2025-10-08 20:16:12', 0, 1, '#ffc107', NULL, 0, '2025-08-09 19:16:12', NULL);
+CREATE TABLE `caisses` (
+  `id` int NOT NULL,
+  `nom` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `solde_initial` decimal(15,2) DEFAULT '0.00',
+  `devise_id` int NOT NULL,
+  `statut` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `annee_scolaire_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -159,16 +147,6 @@ CREATE TABLE `campagnes_recouvrement` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `campagnes_recouvrement`
---
-
-INSERT INTO `campagnes_recouvrement` (`id`, `nom`, `description`, `type_cible`, `montant_min`, `montant_max`, `date_debut`, `date_fin`, `strategie`, `budget`, `annee_scolaire_id`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'Campagne de rappel g├®n├®ral', 'Rappel g├®n├®ral pour tous les d├®biteurs', 'tous', NULL, NULL, '2025-08-01', '2025-08-31', 'mixte', 50000.00, 1, 'active', 1, '2025-08-14 13:36:55', NULL),
-(2, 'Campagne gros d├®biteurs', 'Focus sur les dettes sup├®rieures ├á 100,000 FC', 'montant', 100000.00, NULL, '2025-08-15', '2025-09-15', 'visite_domicile', 75000.00, 1, 'active', 1, '2025-08-14 13:36:55', NULL),
-(3, 'Campagne primaire', 'R├®cup├®ration sp├®cifique niveau primaire', 'niveau', NULL, NULL, '2025-08-10', '2025-08-25', 'sms', 25000.00, 1, 'completed', 1, '2025-08-14 13:36:55', NULL),
-(4, 'Chargeur Samsung', 'sdsdsd', 'tous', 1000.00, 1000.00, '2025-08-18', '2025-08-31', 'sms', 1000.00, 1, 'active', 1, '2025-08-18 18:18:00', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -190,12 +168,48 @@ CREATE TABLE `cartes_eleves` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `cartes_eleves`
+-- Structure de la table `carte_eleve`
 --
 
-INSERT INTO `cartes_eleves` (`id`, `eleve_id`, `numero_carte`, `type_carte`, `status`, `date_emission`, `date_expiration`, `montant_limite`, `montant_utilise`, `observations`, `created_at`, `updated_at`) VALUES
-(1, 1, 'CARD20250001', 'standard', 'active', '2025-08-14', NULL, 50000.00, 0.00, NULL, '2025-08-14 08:25:58', NULL);
+CREATE TABLE `carte_eleve` (
+  `id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `annee_scolaire_id` int NOT NULL,
+  `annee_scolaire` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Année scolaire (ex: 2025-2026)',
+  `numero_carte` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `qr_code` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `qr_data` text COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Données encodées dans le QR code',
+  `qr_code_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Chemin vers le fichier PNG du QR code',
+  `statut` enum('active','expiree','suspendue','archivée') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `date_generation` datetime NOT NULL,
+  `date_expiration` datetime NOT NULL,
+  `date_archivage` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `carte_eleve_historique`
+--
+
+CREATE TABLE `carte_eleve_historique` (
+  `id` int NOT NULL,
+  `carte_id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `annee_scolaire_id` int NOT NULL,
+  `numero_carte` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `qr_code` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `statut` enum('active','expiree','suspendue','archivée') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `date_generation` datetime NOT NULL,
+  `date_expiration` datetime NOT NULL,
+  `date_archivage` datetime NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -212,27 +226,6 @@ CREATE TABLE `categories_livres` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `actif` tinyint(1) DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `categories_livres`
---
-
-INSERT INTO `categories_livres` (`id`, `nom`, `description`, `couleur`, `created_at`, `updated_at`, `actif`) VALUES
-(1, 'Roman', 'Romans et littérature générale', '#e74c3c', '2025-08-09 17:42:45', NULL, 1),
-(2, 'Sciences', 'Livres scientifiques et techniques', '#3498db', '2025-08-09 17:42:45', NULL, 1),
-(3, 'Histoire', 'Livres d\'histoire et géographie', '#f39c12', '2025-08-09 17:42:45', NULL, 1),
-(4, 'Mathématiques', 'Manuels et livres de mathématiques', '#9b59b6', '2025-08-09 17:42:45', NULL, 1),
-(5, 'Langues', 'Dictionnaires et livres de langues', '#2ecc71', '2025-08-09 17:42:45', NULL, 1),
-(6, 'Philosophie', 'Livres de philosophie et religion', '#34495e', '2025-08-09 17:42:45', NULL, 1),
-(7, 'Arts', 'Livres d\'art et de culture', '#e67e22', '2025-08-09 17:42:45', NULL, 1),
-(8, 'Jeunesse', 'Livres pour enfants et adolescents', '#f1c40f', '2025-08-09 17:42:45', NULL, 1),
-(9, 'Référence', 'Encyclopédies et ouvrages de référence', '#750000', '2025-08-09 17:42:45', '2025-08-09 18:43:15', 1),
-(10, 'Périodiques', 'Magazines et journaux', '#1abc9c', '2025-08-09 17:42:45', NULL, 1),
-(11, 'Littérature', 'Romans, nouvelles, poésie', '#28a745', '2025-08-18 18:31:27', NULL, 1),
-(12, 'Géographie', 'Géographie physique et humaine', '#6f42c1', '2025-08-18 18:31:27', NULL, 1),
-(13, 'Technologie', 'Informatique, électronique', '#20c997', '2025-08-18 18:31:27', NULL, 1),
-(14, 'Religion', 'Textes religieux et spirituels', '#495057', '2025-08-18 18:31:27', NULL, 1),
-(15, 'Autres', 'Autres catégories', '#dee2e6', '2025-08-18 18:31:27', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -255,27 +248,6 @@ CREATE TABLE `classes` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `classes`
---
-
-INSERT INTO `classes` (`id`, `nom`, `niveau`, `section`, `salle`, `description`, `titulaire_id`, `capacite_max`, `frais_inscription`, `frais_mensuel`, `annee_scolaire_id`, `created_at`, `updated_at`) VALUES
-(1, '1ère Primaire A', 'primaire', 'A', NULL, NULL, NULL, 30, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(2, '1ère Primaire B', 'primaire', 'B', NULL, NULL, NULL, 30, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(3, '2ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 28, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(4, '3ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 32, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(5, '4ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 25, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(6, '5ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 27, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(7, '6ème Primaire A', 'primaire', 'A', NULL, NULL, NULL, 24, 50000.00, 25000.00, 1, '2025-08-08 14:29:52', NULL),
-(8, '2ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 30, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(9, '2ème Primaire B', 'primaire', NULL, NULL, NULL, NULL, 30, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(10, '3ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 28, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(11, '4ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 32, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(12, '5ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 25, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(13, '6ème Primaire A', 'primaire', NULL, NULL, NULL, NULL, 27, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(14, '1ère Secondaire Secondaire A', 'primaire', NULL, NULL, NULL, NULL, 24, 50000.00, 25000.00, 2, '2025-09-02 13:43:36', '2025-09-02 13:43:36'),
-(15, '1ère Primaire', 'primaire', NULL, 'Salle 201', 'Classe debutante', 1, 30, 0.00, 0.00, 3, '2025-09-02 17:18:37', NULL);
 
 -- --------------------------------------------------------
 
@@ -318,16 +290,6 @@ CREATE TABLE `criteres_admission` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `criteres_admission`
---
-
-INSERT INTO `criteres_admission` (`id`, `annee_scolaire_id`, `niveau`, `age_min`, `age_max`, `capacite_max`, `note_min`, `documents_requis`, `conditions_speciales`, `actif`, `created_at`, `updated_at`) VALUES
-(1, 1, 'maternelle', 3, 6, 25, 0.00, 'Acte de naissance, Carnet de vaccination, Photo 4x4', 'Enfant propre et autonome', 1, '2025-08-14 13:07:53', NULL),
-(2, 1, 'primaire', 6, 12, 35, 10.00, 'Acte de naissance, Certificat de fin de maternelle, Photo 4x4', 'Test d\'├®valuation obligatoire', 1, '2025-08-14 13:07:53', NULL),
-(3, 1, 'secondaire', 12, 18, 40, 12.00, 'Acte de naissance, Certificat de fin de primaire, Photo 4x4', 'Entretien avec les parents', 1, '2025-08-14 13:07:53', NULL),
-(4, 1, 'superieur', 18, 25, 30, 14.00, 'Acte de naissance, Dipl├┤me de fin de secondaire, Photo 4x4', 'Test d\'admission et entretien', 1, '2025-08-14 13:07:53', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -344,19 +306,6 @@ CREATE TABLE `criteres_admission_classes` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `criteres_admission_classes`
---
-
-INSERT INTO `criteres_admission_classes` (`id`, `annee_scolaire_id`, `classe_id`, `capacite_max`, `note_min`, `actif`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 30, 10.00, 1, '2025-08-14 13:07:53', NULL),
-(2, 1, 2, 30, 10.00, 1, '2025-08-14 13:07:53', NULL),
-(3, 1, 3, 28, 10.00, 1, '2025-08-14 13:07:53', NULL),
-(4, 1, 4, 32, 10.00, 1, '2025-08-14 13:07:53', NULL),
-(5, 1, 5, 25, 10.00, 1, '2025-08-14 13:07:53', NULL),
-(6, 1, 6, 27, 10.00, 1, '2025-08-14 13:07:53', NULL),
-(7, 1, 7, 24, 10.00, 1, '2025-08-14 13:07:53', NULL);
 
 -- --------------------------------------------------------
 
@@ -445,19 +394,6 @@ CREATE TABLE `demandes_admission` (
   `commentaire_traitement` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Commentaire du traitement'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `demandes_admission`
---
-
-INSERT INTO `demandes_admission` (`id`, `numero_demande`, `annee_scolaire_id`, `classe_demandee_id`, `nom_eleve`, `prenom_eleve`, `date_naissance`, `lieu_naissance`, `sexe`, `adresse`, `telephone`, `email`, `nom_pere`, `nom_mere`, `profession_pere`, `profession_mere`, `telephone_parent`, `personne_contact`, `telephone_contact`, `relation_contact`, `ecole_precedente`, `classe_precedente`, `annee_precedente`, `moyenne_precedente`, `certificat_naissance`, `bulletin_precedent`, `certificat_medical`, `photo_identite`, `autres_documents`, `motif_demande`, `besoins_speciaux`, `allergies_medicales`, `status`, `priorite`, `date_entretien`, `notes_entretien`, `decision_motif`, `traite_par`, `date_traitement`, `frais_inscription`, `frais_scolarite`, `reduction_accordee`, `observations`, `created_at`, `updated_at`, `note_evaluation`, `commentaire_evaluation`, `recommandation`, `evalue_par`, `date_evaluation`, `verifie_par`, `date_verification`, `commentaire_documents`, `eleve_cree_id`, `date_inscription`, `commentaire_traitement`) VALUES
-(1, 'ADM2025001', 1, 1, 'DEMANDE ghghghg', 'Test1', '2017-06-17', 'Kinshasa', 'M', '', '', '', 'DEMANDE Père', 'DEMANDE Mère', '', '', '+243 123 456 789', '', '', '', 'École Maternelle Saint-Pierre', '', '', NULL, 'fourni', '', '', '', '', 'Demande d&amp;#039;admission standard', '', '', 'inscrit', 'normale', NULL, NULL, NULL, 1, '2025-08-09 22:12:55', 0.00, 0.00, 0.00, '', '2025-08-08 16:11:20', '2025-09-02 20:44:52', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', 1, '2025-08-09 17:28:46', 'sdsdsd', 16, '2025-09-02', NULL),
-(2, 'ADM2025002', 1, 2, 'CANDIDAT', 'Marie', '2010-07-22', 'Lubumbashi', 'F', NULL, NULL, NULL, 'CANDIDAT Papa', 'CANDIDAT Maman', NULL, NULL, '+243 987 654 321', NULL, NULL, NULL, 'École Primaire Notre-Dame', NULL, NULL, NULL, '', '', '', '', NULL, 'Demande d\'admission standard', NULL, NULL, 'inscrit', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-08-08 16:11:20', '2025-09-02 20:44:52', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 15, '2025-09-02', NULL),
-(3, 'ADM2025003', 1, 3, 'URGENT', 'Paul', '2011-01-10', 'Goma', 'M', NULL, NULL, NULL, 'URGENT Père', 'URGENT Mère', NULL, NULL, '+243 555 666 777', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', '', '', '', NULL, 'Déménagement urgent de la famille', NULL, NULL, 'inscrit', 'urgente', NULL, NULL, NULL, 1, '2025-08-08 16:39:17', 0.00, 0.00, 0.00, NULL, '2025-08-08 16:11:20', '2025-09-02 20:30:04', 12.00, 'scdsdsd', 'accepter', 2, '2025-09-02 20:30:04', NULL, NULL, NULL, 17, '2025-09-02', NULL),
-(7, 'ADM2025004', 2, 14, 'SDSDSD', 'DSDSDS', '2014-06-02', 'Goma', 'M', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 'Carin Mumbere Siwa', 'DSDSD', 'SDSDSDSDSD', 12.00, 'non_fourni', '', '', 'non_fourni', '', '', 'SDSDSDSD', 'DSDSDSD', 'inscrit', 'normale', NULL, NULL, NULL, 2, '2025-09-02 16:36:47', 5000.00, 5000.00, 0.00, 'DSDSDSD', '2025-09-02 16:31:03', '2025-09-02 20:44:52', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 14, '2025-09-02', NULL),
-(8, 'TEST001', 1, 1, 'CANDIDAT', 'Test Accepté', '2010-01-01', NULL, 'M', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'non_fourni', 'non_fourni', 'non_fourni', 'non_fourni', NULL, NULL, NULL, NULL, 'inscrit', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-09-02 19:21:13', '2025-09-02 21:02:39', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 20, '2025-09-02', NULL),
-(9, 'TEST002', 1, 2, 'CANDIDATE', 'Test Acceptée', '2011-02-02', NULL, 'F', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'non_fourni', 'non_fourni', 'non_fourni', 'non_fourni', NULL, NULL, NULL, NULL, 'inscrit', 'normale', NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, '2025-09-02 19:21:19', '2025-09-02 21:02:34', NULL, NULL, 'accepter', 2, '2025-09-02 20:44:52', NULL, NULL, NULL, 19, '2025-09-02', NULL),
-(10, 'ADM2025007', 2, 8, 'fdvcvcv', 'vcvcvcv', '2019-06-03', 'vvcvcv', 'M', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 'Carin Mumbere Siwa', 'DSDSDdddcx', 'SDSDSDSDSDcccdgttt', 17.00, '', 'non_fourni', '', '', 'dfdfdf', 'fdfdf', 'dfdf', 'fdfdf', 'inscrit', 'urgente', '2025-10-28 12:30:00', NULL, NULL, 2, '2025-09-02 20:43:04', 0.00, 0.00, 0.00, 'fdfdf', '2025-09-02 20:37:03', '2025-09-02 21:02:31', 15.00, 'DSDSD', 'accepter', 2, '2025-09-02 20:44:17', NULL, NULL, NULL, 18, '2025-09-02', '');
-
 -- --------------------------------------------------------
 
 --
@@ -469,6 +405,8 @@ CREATE TABLE `depenses` (
   `libelle` varchar(255) NOT NULL,
   `description` text,
   `montant` decimal(10,2) NOT NULL,
+  `devise_id` int NOT NULL DEFAULT '1',
+  `montant_devise_par_defaut` decimal(10,2) NOT NULL DEFAULT '0.00',
   `type_depense` enum('salaires','fournitures','maintenance','utilities','transport','autre') DEFAULT NULL,
   `date_depense` date NOT NULL,
   `fournisseur` varchar(255) DEFAULT NULL,
@@ -481,12 +419,24 @@ CREATE TABLE `depenses` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `depenses`
+-- Structure de la table `devises`
 --
 
-INSERT INTO `depenses` (`id`, `libelle`, `description`, `montant`, `type_depense`, `date_depense`, `fournisseur`, `numero_facture`, `mode_paiement`, `statut`, `annee_scolaire_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(1, 'Achat de matériel de bureau', 'dfdfdfdfdfdfd', 120000.00, 'autre', '2025-08-09', 'Yhug Hung Chine', '00SDEEEE', 'especes', 'en_attente', 1, 1, '2025-08-09 17:33:09', NULL);
+CREATE TABLE `devises` (
+  `id` int NOT NULL,
+  `code` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nom` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `symbole` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `taux_conversion` decimal(15,6) NOT NULL DEFAULT '1.000000',
+  `devise_par_defaut` tinyint(1) DEFAULT '0',
+  `active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- --------------------------------------------------------
 
@@ -540,27 +490,6 @@ CREATE TABLE `documents_eleves` (
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `documents_eleves`
---
-
-INSERT INTO `documents_eleves` (`id`, `eleve_id`, `type_document`, `nom_document`, `nom_fichier`, `chemin_fichier`, `taille_fichier`, `type_mime`, `description`, `date_ajout`, `ajoute_par`, `date_verification`, `verifie_par`, `statut_verification`, `commentaire_verification`, `obligatoire`, `date_expiration`, `numero_document`, `organisme_delivrance`, `created_at`, `updated_at`) VALUES
-(1, 1, 'certificat_naissance', 'Certificat de naissance - MUKENDI Jean', NULL, NULL, NULL, NULL, 'Document de test pour MUKENDI Jean', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(2, 1, 'photo_identite', 'Photo d\'identité - MUKENDI Jean', NULL, NULL, NULL, NULL, 'Document de test pour MUKENDI Jean', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(3, 1, 'bulletin_precedent', 'Bulletin de l\'année précédente - MUKENDI Jean', NULL, NULL, NULL, NULL, 'Document de test pour MUKENDI Jean', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(4, 2, 'certificat_naissance', 'Certificat de naissance - KABILA Marie', NULL, NULL, NULL, NULL, 'Document de test pour KABILA Marie', '2025-08-08 19:05:50', NULL, NULL, NULL, 'verifie', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(5, 2, 'photo_identite', 'Photo d\'identité - KABILA Marie', NULL, NULL, NULL, NULL, 'Document de test pour KABILA Marie', '2025-08-08 19:05:50', NULL, NULL, NULL, 'verifie', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(6, 2, 'bulletin_precedent', 'Bulletin de l\'année précédente - KABILA Marie', NULL, NULL, NULL, NULL, 'Document de test pour KABILA Marie', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(7, 3, 'certificat_naissance', 'Certificat de naissance - TSHISEKEDI Paul', NULL, NULL, NULL, NULL, 'Document de test pour TSHISEKEDI Paul', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(8, 3, 'photo_identite', 'Photo d\'identité - TSHISEKEDI Paul', NULL, NULL, NULL, NULL, 'Document de test pour TSHISEKEDI Paul', '2025-08-08 19:05:50', NULL, NULL, NULL, 'verifie', NULL, 1, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(9, 4, 'certificat_naissance', 'Certificat de naissance - MBUYI Grace', NULL, NULL, NULL, NULL, 'Document de test pour MBUYI Grace', '2025-08-08 19:05:50', NULL, NULL, NULL, 'verifie', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(10, 4, 'photo_identite', 'Photo d\'identité - MBUYI Grace', NULL, NULL, NULL, NULL, 'Document de test pour MBUYI Grace', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 1, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(11, 4, 'bulletin_precedent', 'Bulletin de l\'année précédente - MBUYI Grace', NULL, NULL, NULL, NULL, 'Document de test pour MBUYI Grace', '2025-08-08 19:05:50', NULL, NULL, NULL, 'en_attente', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(12, 5, 'certificat_naissance', 'Certificat de naissance - KASONGO David', NULL, NULL, NULL, NULL, 'Document de test pour KASONGO David', '2025-08-08 19:05:50', NULL, NULL, NULL, 'verifie', NULL, 1, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(13, 5, 'photo_identite', 'Photo d\'identité - KASONGO David', NULL, NULL, NULL, NULL, 'Document de test pour KASONGO David', '2025-08-08 19:05:50', NULL, NULL, NULL, 'verifie', NULL, 0, NULL, NULL, NULL, '2025-08-08 17:05:50', '2025-08-08 17:05:50'),
-(14, 12, 'certificat_medical', 'jhjhjh', NULL, NULL, NULL, NULL, 'nvbvbvbvbv', '2025-08-08 19:35:36', 1, '2025-08-14 11:16:33', 1, 'en_attente', 'kjjhjhjhjhhvgfgfgf', 0, NULL, NULL, NULL, '2025-08-08 17:35:36', '2025-08-14 09:16:33'),
-(15, 13, 'certificat_naissance', 'jhjhjh', NULL, NULL, NULL, NULL, 'ezee', '2025-08-26 08:30:39', 1, '2025-08-26 08:58:54', 1, 'verifie', 'ez', 0, NULL, NULL, NULL, '2025-08-26 06:30:39', '2025-08-26 06:58:54');
-
 -- --------------------------------------------------------
 
 --
@@ -591,63 +520,12 @@ CREATE TABLE `eleves` (
   `classe_id` int DEFAULT NULL,
   `annee_scolaire_id` int DEFAULT NULL,
   `photo` varchar(255) DEFAULT NULL,
-  `status` enum('actif','transfere','abandonne','diplome') DEFAULT 'actif',
+  `status` enum('actif','transfere','abandonne','diplome','non-evalue','admis','evalue','non-admis','inscrit') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'non-admis',
   `date_inscription` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `email_parent` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Informations des ├®l├¿ves avec relations aux classes et ann├®es scolaires';
-
---
--- Déchargement des données de la table `eleves`
---
-
-INSERT INTO `eleves` (`id`, `numero_eleve`, `numero_matricule`, `parent_id`, `nom`, `prenom`, `sexe`, `date_naissance`, `lieu_naissance`, `adresse`, `telephone`, `email`, `nom_pere`, `nom_mere`, `profession_pere`, `profession_mere`, `telephone_parent`, `personne_contact`, `telephone_contact`, `relation_contact`, `classe_id`, `annee_scolaire_id`, `photo`, `status`, `date_inscription`, `created_at`, `updated_at`, `email_parent`) VALUES
-(1, '', 'MAT2024001', 1, 'MUKENDI', 'Jean', 'M', '2010-05-15', 'Kinshasa', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
-(2, '', 'MAT2024002', 2, 'KABILA', 'Marie', 'F', '2011-03-22', 'Lubumbashi', '', '', '', 'DSD', 'DSD', 'DSD', 'DSD', '45555555', NULL, NULL, NULL, NULL, NULL, 'uploads/photos/eleve_2_1755540852.jpg', 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-18 18:14:12', NULL),
-(3, '', 'MAT2024003', 3, 'TSHISEKEDI', 'Paul', 'M', '2010-08-10', 'Mbuji-Mayi', '', '', '', '', '', '', '', '', NULL, NULL, NULL, NULL, NULL, 'uploads/photos/eleve_3_1755163116.png', 'diplome', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-14 09:18:36', NULL),
-(4, '', 'MAT2024004', 4, 'MBUYI', 'Grace', 'F', '2011-01-18', 'Kananga', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-09-02 13:48:00', NULL),
-(5, '', 'MAT2024005', 5, 'KASONGO', 'David', 'M', '2010-12-05', 'Kisangani', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', '2025-08-08 18:59:25', NULL),
-(6, '', 'MAT2024006', NULL, 'NGOZI', 'Sarah', 'F', '2011-07-30', 'Goma', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(7, '', 'MAT2024007', NULL, 'LUMUMBA', 'Patrick', 'M', '2010-09-12', 'Kinshasa', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(8, '', 'MAT2024008', NULL, 'KALONJI', 'Esther', 'F', '2011-02-28', 'Mbuji-Mayi', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(9, '', 'MAT2024009', NULL, 'MOBUTU', 'Joseph', 'M', '2010-11-03', 'Gbadolite', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(10, '', 'MAT2024010', NULL, 'KIMBANGU', 'Ruth', 'F', '2011-06-14', 'Nkamba', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'actif', '2025-08-08 14:36:40', '2025-08-08 16:36:40', NULL, NULL),
-(12, '', 'AUTO20250808170719', NULL, 'BARAKA BIGEGA', 'ESPOIR', 'M', '2011-06-15', 'Goma', '123 Avenue de la Paix, Kinshasa', '+243 123 456 789', 'bigega@gmail.com', 'BIGEGA', 'BARAKA', 'Ingénieur', 'Enseignante', '+243 987 654 321', 'AUTOTEST Contact', '+243 111 222 333', NULL, NULL, NULL, 'uploads/photos/eleve_12_1756191509.jpg', 'actif', '2025-08-08 16:07:19', '2025-08-08 18:07:19', '2025-08-26 06:58:29', NULL),
-(13, '20250001', 'STU20253643', NULL, 'KAMBALE MBOKANI', 'ISAAC', 'M', '1998-02-26', 'Goma', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '+243975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '+243975579097', '+243975579097', '+243975579097', NULL, NULL, NULL, '68ad5330239c5.jpg', 'actif', '2025-08-26 06:24:48', '2025-08-26 08:24:48', '2025-08-26 06:28:56', NULL),
-(14, '20250002', 'MAT2025001', NULL, 'SDSDSD', 'DSDSDS', 'M', '2014-06-02', 'Goma', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 14, 2, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:46:13', NULL, NULL),
-(15, '20250003', 'MAT2025002', NULL, 'CANDIDAT', 'Marie', 'F', '2010-07-22', 'Lubumbashi', NULL, NULL, NULL, 'CANDIDAT Papa', 'CANDIDAT Maman', NULL, NULL, '+243 987 654 321', NULL, NULL, NULL, 3, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:49:11', NULL, NULL),
-(16, '20250004', 'MAT2025003', NULL, 'DEMANDE ghghghg', 'Test1', 'M', '2017-06-17', 'Kinshasa', '', '', '', 'DEMANDE Père', 'DEMANDE Mère', '', '', '+243 123 456 789', '', '', '', 1, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:50:05', NULL, NULL),
-(17, '20250005', 'MAT2025004', NULL, 'URGENT', 'Paul', 'M', '2011-01-10', 'Goma', NULL, NULL, NULL, 'URGENT Père', 'URGENT Mère', NULL, NULL, '+243 555 666 777', NULL, NULL, NULL, 3, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 20:50:09', NULL, NULL),
-(18, '20250006', 'MAT2025005', NULL, 'fdvcvcv', 'vcvcvcv', 'M', '2019-06-03', 'vvcvcv', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI\r\nAV. ITEBERO N°100 Q/ MABANGA NOR', '0975579097', 'thecarinsiwa@gmail.com', 'Carin Mumbere Siwa', 'Carin Mumbere Siwa', 'Commerçant', 'Enseignante', '0975579097', 'Carin Mumbere Siwa', '0975579097', 'DSDS', 8, 2, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 23:02:31', NULL, NULL),
-(19, '20250007', 'MAT2025006', NULL, 'CANDIDATE', 'Test Acceptée', 'F', '2011-02-02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 23:02:34', NULL, NULL),
-(20, '20250008', 'MAT2025007', NULL, 'CANDIDAT', 'Test Accepté', 'M', '2010-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, 'actif', '2025-09-01 22:00:00', '2025-09-02 23:02:39', NULL, NULL);
-
--- --------------------------------------------------------
-
---
--- Structure de la table `emplois_temps`
---
-
-CREATE TABLE `emplois_temps` (
-  `id` int NOT NULL,
-  `classe_id` int NOT NULL,
-  `matiere_id` int NOT NULL,
-  `enseignant_id` int NOT NULL,
-  `jour_semaine` enum('lundi','mardi','mercredi','jeudi','vendredi','samedi') NOT NULL,
-  `heure_debut` time NOT NULL,
-  `heure_fin` time NOT NULL,
-  `salle` varchar(50) DEFAULT NULL,
-  `annee_scolaire_id` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `emplois_temps`
---
-
-INSERT INTO `emplois_temps` (`id`, `classe_id`, `matiere_id`, `enseignant_id`, `jour_semaine`, `heure_debut`, `heure_fin`, `salle`, `annee_scolaire_id`, `created_at`) VALUES
-(1, 1, 1, 1, 'mardi', '09:00:00', '15:00:00', 'Salle 201', 1, '2025-08-08 23:56:40');
 
 -- --------------------------------------------------------
 
@@ -673,55 +551,6 @@ CREATE TABLE `emploi_temps` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `emploi_temps`
---
-
-INSERT INTO `emploi_temps` (`id`, `classe_id`, `matiere_id`, `enseignant_id`, `jour_semaine`, `heure_debut`, `heure_fin`, `salle`, `recurrence`, `date_debut`, `date_fin`, `status`, `notes`, `annee_scolaire_id`, `created_at`, `updated_at`) VALUES
-(3, 7, 1, 1, 'Lundi', '08:00:00', '09:00:00', 'Salle 005', 'unique', '2025-08-09', '2025-08-29', 'actif', NULL, 1, '2025-08-08 23:45:14', NULL),
-(46, 1, 1, 1, 'Lundi', '08:00:00', '09:00:00', 'Salle 1', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(47, 1, 1, 1, 'Lundi', '09:00:00', '10:00:00', 'Salle 2', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(48, 1, 1, 1, 'Lundi', '10:00:00', '11:00:00', 'Salle 3', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(49, 1, 1, 1, 'Lundi', '11:00:00', '12:00:00', 'Salle 4', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(50, 1, 1, 1, 'Lundi', '13:00:00', '14:00:00', 'Salle 5', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(51, 1, 1, 1, 'Lundi', '14:00:00', '15:00:00', 'Salle 6', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(52, 1, 1, 1, 'Lundi', '15:00:00', '16:00:00', 'Salle 7', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(53, 1, 1, 1, 'Mardi', '08:00:00', '09:00:00', 'Salle 1', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(54, 1, 1, 1, 'Mardi', '09:00:00', '10:00:00', 'Salle 2', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(55, 1, 1, 1, 'Mardi', '10:00:00', '11:00:00', 'Salle 3', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(56, 1, 1, 1, 'Mardi', '11:00:00', '12:00:00', 'Salle 4', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(57, 1, 1, 1, 'Mardi', '13:00:00', '14:00:00', 'Salle 5', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(58, 1, 1, 1, 'Mardi', '14:00:00', '15:00:00', 'Salle 6', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(59, 1, 1, 1, 'Mardi', '15:00:00', '16:00:00', 'Salle 7', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(60, 1, 1, 1, 'Mercredi', '08:00:00', '09:00:00', 'Salle 1', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(61, 1, 1, 1, 'Mercredi', '09:00:00', '10:00:00', 'Salle 2', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(62, 1, 1, 1, 'Mercredi', '10:00:00', '11:00:00', 'Salle 3', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(63, 1, 1, 1, 'Mercredi', '11:00:00', '12:00:00', 'Salle 4', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(64, 1, 1, 1, 'Mercredi', '13:00:00', '14:00:00', 'Salle 5', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(65, 1, 1, 1, 'Mercredi', '14:00:00', '15:00:00', 'Salle 6', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(66, 1, 1, 1, 'Mercredi', '15:00:00', '16:00:00', 'Salle 7', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(67, 1, 1, 1, 'Jeudi', '08:00:00', '09:00:00', 'Salle 1', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(68, 1, 1, 1, 'Jeudi', '09:00:00', '10:00:00', 'Salle 2', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(69, 1, 1, 1, 'Jeudi', '10:00:00', '11:00:00', 'Salle 3', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(70, 1, 1, 1, 'Jeudi', '11:00:00', '12:00:00', 'Salle 4', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(71, 1, 1, 1, 'Jeudi', '13:00:00', '14:00:00', 'Salle 5', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(72, 1, 1, 1, 'Jeudi', '14:00:00', '15:00:00', 'Salle 6', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(73, 1, 1, 1, 'Jeudi', '15:00:00', '16:00:00', 'Salle 7', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(74, 1, 1, 1, 'Vendredi', '08:00:00', '09:00:00', 'Salle 1', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(75, 1, 1, 1, 'Vendredi', '09:00:00', '10:00:00', 'Salle 2', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(76, 1, 1, 1, 'Vendredi', '10:00:00', '11:00:00', 'Salle 3', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(77, 1, 1, 1, 'Vendredi', '11:00:00', '12:00:00', 'Salle 4', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(78, 1, 1, 1, 'Vendredi', '13:00:00', '14:00:00', 'Salle 5', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(79, 1, 1, 1, 'Vendredi', '14:00:00', '15:00:00', 'Salle 6', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(80, 1, 1, 1, 'Vendredi', '15:00:00', '16:00:00', 'Salle 7', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(81, 1, 1, 1, 'Samedi', '08:00:00', '09:00:00', 'Salle 1', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(82, 1, 1, 1, 'Samedi', '09:00:00', '10:00:00', 'Salle 2', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(83, 1, 1, 1, 'Samedi', '10:00:00', '11:00:00', 'Salle 3', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(84, 1, 1, 1, 'Samedi', '11:00:00', '12:00:00', 'Salle 4', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(85, 1, 1, 1, 'Samedi', '13:00:00', '14:00:00', 'Salle 5', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(86, 1, 1, 1, 'Samedi', '14:00:00', '15:00:00', 'Salle 6', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL),
-(87, 1, 1, 1, 'Samedi', '15:00:00', '16:00:00', 'Salle 7', 'hebdomadaire', NULL, NULL, 'actif', NULL, 1, '2025-08-14 09:40:02', NULL);
 
 -- --------------------------------------------------------
 
@@ -765,17 +594,6 @@ CREATE TABLE `emprunts_livres` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `emprunts_livres`
---
-
-INSERT INTO `emprunts_livres` (`id`, `livre_id`, `emprunteur_type`, `emprunteur_id`, `date_emprunt`, `date_retour_prevue`, `date_retour_effective`, `duree_jours`, `status`, `notes_emprunt`, `notes_retour`, `penalite`, `traite_par`, `rendu_par`, `created_at`, `updated_at`) VALUES
-(1, 1, 'personnel', 12, '2025-08-18', '2025-08-23', NULL, 5, 'en_cours', 'nbnbn', NULL, 0.00, 1, NULL, '2025-08-18 18:59:04', NULL),
-(2, 1, 'personnel', 2122, '2025-08-18', '2025-08-28', NULL, 10, 'en_cours', 'GHGHGHG', NULL, 0.00, 1, NULL, '2025-08-18 19:03:18', NULL),
-(3, 1, 'eleve', 56565, '2025-08-18', '2025-09-01', NULL, 14, 'en_cours', 'GHHGsdsdsd', NULL, 0.00, 1, NULL, '2025-08-18 19:05:47', NULL),
-(4, 1, 'eleve', 45455, '2025-08-18', '2025-09-01', NULL, 14, 'en_cours', 'GHGHGHGHBVYTT', NULL, 0.00, 1, NULL, '2025-08-18 19:07:35', NULL),
-(5, 1, 'personnel', 565656, '2025-08-18', '2025-09-08', NULL, 21, 'en_cours', 'JJHJHJ', NULL, 0.00, 1, NULL, '2025-08-18 19:09:51', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -795,13 +613,6 @@ CREATE TABLE `etablissements` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Déchargement des données de la table `etablissements`
---
-
-INSERT INTO `etablissements` (`id`, `nom`, `adresse`, `telephone`, `email`, `directeur`, `code_etablissement`, `province`, `ville`, `created_at`) VALUES
-(1, 'École Sinfinity', 'Avenue de la Paix, Kinshasa', '+243 123 456 789', 'contact@sinfinity-school.cd', NULL, 'SINF001', 'Kinshasa', 'Kinshasa', '2025-08-08 13:07:49');
-
 -- --------------------------------------------------------
 
 --
@@ -816,42 +627,6 @@ CREATE TABLE `etapes_admission` (
   `status` enum('active','inactive') DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `etapes_admission`
---
-
-INSERT INTO `etapes_admission` (`id`, `nom`, `description`, `ordre`, `status`, `created_at`) VALUES
-(1, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:06:00'),
-(2, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:06:00'),
-(3, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:06:00'),
-(4, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:06:00'),
-(5, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:06:00'),
-(6, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:06:00'),
-(7, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:08:53'),
-(8, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:08:53'),
-(9, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:08:53'),
-(10, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:08:53'),
-(11, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:08:53'),
-(12, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:08:53'),
-(13, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:10:15'),
-(14, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:10:15'),
-(15, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:10:15'),
-(16, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:10:15'),
-(17, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:10:15'),
-(18, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:10:15'),
-(19, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:24:19'),
-(20, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:24:19'),
-(21, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:24:19'),
-(22, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:24:19'),
-(23, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:24:19'),
-(24, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:24:19'),
-(25, 'Demande d\'admission', 'Enregistrement des informations de base et génération du numéro de dossier', 1, 'active', '2025-09-02 20:25:47'),
-(26, 'Vérification des documents', 'Contrôle et validation des pièces jointes', 2, 'active', '2025-09-02 20:25:47'),
-(27, 'Évaluation', 'Tests, entretiens et examens d\'admission', 3, 'active', '2025-09-02 20:25:47'),
-(28, 'Décision d\'admission', 'Acceptation, refus ou acceptation conditionnelle', 4, 'active', '2025-09-02 20:25:47'),
-(29, 'Inscription', 'Finalisation de l\'inscription et paiement des frais', 5, 'active', '2025-09-02 20:25:47'),
-(30, 'Intégration', 'Accueil et intégration dans la classe', 6, 'active', '2025-09-02 20:25:47');
 
 -- --------------------------------------------------------
 
@@ -883,15 +658,6 @@ CREATE TABLE `evaluations` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `evaluations`
---
-
-INSERT INTO `evaluations` (`id`, `nom`, `description`, `type`, `classe_id`, `matiere_id`, `type_evaluation`, `enseignant_id`, `date_evaluation`, `heure_debut`, `heure_fin`, `duree_minutes`, `note_max`, `bareme`, `consignes`, `status`, `coefficient`, `periode`, `annee_scolaire_id`, `user_id`, `created_at`, `updated_at`) VALUES
-(2, 'Interrogation - Tables de multiplication', 'Évaluation des tables de multiplication de 1 à 10', 'interrogation', 1, 1, 'interrogation', 1, '2024-10-15', '08:00:00', '09:00:00', 60, 20.00, '20 questions à 1 point chacune', 'Calculer les multiplications sans calculatrice. Écrire lisiblement.gfgfgfgfgf', 'terminee', 1.00, '1er_trimestre', 1, 1, '2025-08-09 00:25:04', '2025-08-09 00:42:37'),
-(3, 'Devoir - Conjugaison', 'Évaluation sur la conjugaison des verbes du 1er groupe', 'devoir', 2, 1, 'interrogation', 1, '2024-10-20', '10:00:00', '11:30:00', 90, 20.00, 'Exercice 1: 8 pts, Exercice 2: 7 pts, Exercice 3: 5 pts', 'Conjuguer les verbes aux temps demandés. Attention à l\'orthographe.', 'terminee', 2.00, '1er_trimestre', 1, 1, '2025-08-09 00:25:04', NULL),
-(4, 'Examen - Sciences naturelles', 'Examen sur le corps humain et la digestion', 'examen', 3, 1, 'interrogation', 1, '2024-11-05', '14:00:00', '16:00:00', 120, 20.00, 'QCM: 10 pts, Questions ouvertes: 10 pts', 'Répondre à toutes les questions. Justifier les réponses ouvertes.', 'programmee', 3.00, '1er_trimestre', 1, 1, '2025-08-09 00:25:04', NULL);
 
 -- --------------------------------------------------------
 
@@ -967,19 +733,6 @@ CREATE TABLE `frais_eleves` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `frais_eleves`
---
-
-INSERT INTO `frais_eleves` (`id`, `eleve_id`, `annee_scolaire_id`, `frais_inscription`, `frais_scolarite`, `reduction_accordee`, `montant_total`, `montant_paye`, `solde`, `status`, `created_at`, `updated_at`) VALUES
-(1, 14, 2, 5000.00, 5000.00, 0.00, 10000.00, 0.00, 0.00, 'impaye', '2025-09-02 18:46:13', NULL),
-(2, 15, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 18:49:11', NULL),
-(3, 16, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 18:50:05', NULL),
-(4, 17, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 18:50:09', NULL),
-(5, 18, 2, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 21:02:31', NULL),
-(6, 19, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 21:02:34', NULL),
-(7, 20, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'impaye', '2025-09-02 21:02:39', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -989,9 +742,11 @@ INSERT INTO `frais_eleves` (`id`, `eleve_id`, `annee_scolaire_id`, `frais_inscri
 CREATE TABLE `frais_scolaires` (
   `id` int NOT NULL,
   `classe_id` int NOT NULL,
-  `type_frais` enum('inscription','mensualite','examen','uniforme','transport','cantine','autre') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type_frais_id` int NOT NULL COMMENT 'ID du type de frais (clé étrangère vers type_frais.id)',
   `libelle` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `montant` decimal(10,2) NOT NULL,
+  `devise_id` int DEFAULT NULL,
+  `montant_devise_par_defaut` decimal(15,2) DEFAULT NULL,
   `obligatoire` tinyint(1) DEFAULT '1',
   `date_echeance` date DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -999,18 +754,6 @@ CREATE TABLE `frais_scolaires` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `frais_scolaires`
---
-
-INSERT INTO `frais_scolaires` (`id`, `classe_id`, `type_frais`, `libelle`, `montant`, `obligatoire`, `date_echeance`, `description`, `annee_scolaire_id`, `created_at`, `updated_at`) VALUES
-(1, 1, 'inscription', 'Frais d\'inscription 1ère Primaire A', 50000.00, 1, NULL, 'Frais d\'inscription pour l\'année scolaire', 1, '2025-08-09 02:55:41', NULL),
-(2, 1, 'mensualite', 'Mensualité 1ère Primaire A', 25000.00, 1, NULL, 'Frais de scolarité mensuelle', 1, '2025-08-09 02:55:41', NULL),
-(3, 2, 'inscription', 'Frais d\'inscription 1ère Primaire B', 50000.00, 1, NULL, 'Frais d\'inscription pour l\'année scolaire', 1, '2025-08-09 02:55:41', NULL),
-(4, 2, 'mensualite', 'Mensualité 1ère Primaire B', 25000.00, 1, NULL, 'Frais de scolarité mensuelle', 1, '2025-08-09 02:55:41', NULL),
-(5, 3, 'inscription', 'Frais d\'inscription 2ème Primaire A', 50000.00, 1, NULL, 'Frais d\'inscription pour l\'année scolaire', 1, '2025-08-09 02:55:41', NULL),
-(6, 3, 'mensualite', 'Mensualité 2ème Primaire A', 25000.00, 1, NULL, 'Frais de scolarité mensuelle', 1, '2025-08-09 02:55:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -1034,13 +777,6 @@ CREATE TABLE `incidents` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `incidents`
---
-
-INSERT INTO `incidents` (`id`, `eleve_id`, `classe_id`, `rapporte_par`, `date_incident`, `lieu`, `description`, `temoins`, `gravite`, `status`, `notes_internes`, `created_at`, `updated_at`) VALUES
-(1, 8, 1, 1, '2025-08-09 21:00:00', 'oioioioioi', 'yuyuyuyuy', 'jhjhjhjhjhj', 'grave', 'nouveau', NULL, '2025-08-09 20:01:14', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -1054,29 +790,10 @@ CREATE TABLE `inscriptions` (
   `annee_scolaire_id` int NOT NULL,
   `date_inscription` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `frais_inscription_paye` decimal(10,2) DEFAULT '0.00',
-  `status` enum('inscrit','transfere','abandonne') DEFAULT 'inscrit',
+  `status` enum('inscrit','en_attente','transfere','abandonne') DEFAULT 'en_attente',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `inscriptions`
---
-
-INSERT INTO `inscriptions` (`id`, `eleve_id`, `classe_id`, `annee_scolaire_id`, `date_inscription`, `frais_inscription_paye`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(2, 2, 2, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(3, 3, 3, 1, '2025-08-08 14:36:40', 50000.00, 'transfere', '2025-08-08 14:36:40', '2025-08-08 21:00:10'),
-(4, 4, 4, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(5, 5, 5, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(6, 6, 6, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(7, 7, 7, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(8, 8, 1, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(9, 9, 2, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(10, 10, 3, 1, '2025-08-08 14:36:40', 50000.00, 'inscrit', '2025-08-08 14:36:40', NULL),
-(11, 12, 1, 1, '2025-08-08 16:07:19', 50000.00, 'inscrit', '2025-08-08 16:07:19', NULL),
-(12, 13, 7, 1, '2025-08-25 22:00:00', 0.00, 'inscrit', '2025-08-26 06:24:48', NULL),
-(13, 4, 11, 2, '2025-09-02 13:48:00', 0.00, 'inscrit', '2025-09-02 13:48:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -1136,12 +853,23 @@ CREATE TABLE `livres` (
   `notes` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `livres`
+-- Structure de la table `logs_scan_carte`
 --
 
-INSERT INTO `livres` (`id`, `titre`, `auteur`, `isbn`, `editeur`, `annee_publication`, `categorie_id`, `categorie`, `nombre_pages`, `langue`, `resume`, `nombre_exemplaires`, `exemplaires_disponibles`, `nombre_disponibles`, `emplacement`, `status`, `created_at`, `prix_achat`, `date_acquisition`, `etat`, `cote`, `notes`) VALUES
-(1, 'Brevet du Professionnalisme', 'qs', 'dfdfd', 'fdfdf', '2002', 2, NULL, 12, 'Anglais', 'SQS', 16, 16, 16, 'S', 'disponible', '2025-08-18 18:33:29', 222200.00, '2025-08-06', 'bon', 'fdfdf', 'SDSD');
+CREATE TABLE `logs_scan_carte` (
+  `id` int NOT NULL,
+  `carte_id` int NOT NULL,
+  `eleve_id` int NOT NULL,
+  `type_scan` enum('presence','solde','autre') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `donnees_scan` text COLLATE utf8mb4_unicode_ci COMMENT 'Données extraites du QR code',
+  `resultat` text COLLATE utf8mb4_unicode_ci COMMENT 'Résultat de l''action effectuée',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1161,13 +889,6 @@ CREATE TABLE `matieres` (
   `description` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `matieres`
---
-
-INSERT INTO `matieres` (`id`, `nom`, `code`, `coefficient`, `volume_horaire`, `objectifs`, `niveau`, `type`, `description`, `created_at`) VALUES
-(1, 'Mathématiques', NULL, 4, 6, 'dsdsd', 'primaire', 'obligatoire', 'dsdsd', '2025-08-08 22:07:02');
 
 -- --------------------------------------------------------
 
@@ -1196,12 +917,46 @@ CREATE TABLE `messages` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `messages`
+-- Structure de la table `modeles_frais`
 --
 
-INSERT INTO `messages` (`id`, `expediteur_id`, `destinataire_id`, `destinataire_type`, `destinataires_custom`, `sujet`, `contenu`, `type_message`, `priorite`, `date_envoi`, `programme`, `date_programmee`, `status`, `lu_par`, `accuse_reception`, `fichiers_joints`, `created_at`, `updated_at`) VALUES
-(1, 1, 0, 'all_students', '', 'Convocation - {eleve_nom}', 'Chers(es) parents,\r\nNous vous prions de bien vouloir vous présenter à l\'établissement le 12/08/2025 à 20:00 pour un entretien concernant vos enfants.\r\nMotif: \r\n\r\nCordialement,\r\nL\'administration', 'urgent', 'haute', '2025-08-09 21:48:15', 0, NULL, 'envoye', NULL, 1, NULL, '2025-08-09 20:48:15', NULL);
+CREATE TABLE `modeles_frais` (
+  `id` int NOT NULL,
+  `nom` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `niveau` enum('maternelle','primaire','secondaire','tous') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type_etablissement` enum('public','prive','tous') COLLATE utf8mb4_unicode_ci DEFAULT 'tous',
+  `frais_data` json NOT NULL,
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `is_active` tinyint(1) DEFAULT '1',
+  `usage_count` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `mouvements_caisse`
+--
+
+CREATE TABLE `mouvements_caisse` (
+  `id` int NOT NULL,
+  `session_caisse_id` int NOT NULL,
+  `type_mouvement` enum('entree','sortie') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `categorie` enum('paiement_eleve','don','subvention','depense_ecole','retrait','versement','autre') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `libelle` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `montant` decimal(15,2) NOT NULL,
+  `devise_id` int NOT NULL,
+  `reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `date_mouvement` datetime NOT NULL,
+  `user_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1217,17 +972,6 @@ CREATE TABLE `notes` (
   `observation` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `notes`
---
-
-INSERT INTO `notes` (`id`, `evaluation_id`, `eleve_id`, `note`, `observation`, `created_at`) VALUES
-(1, 2, 1, 11.00, '', '2025-08-09 00:25:04'),
-(2, 2, 8, 10.00, 'Excellent', '2025-08-09 00:25:04'),
-(3, 2, 12, 15.00, 'Bien présenté', '2025-08-09 00:25:04'),
-(4, 3, 2, 15.00, '', '2025-08-09 00:25:04'),
-(5, 3, 9, 10.00, 'Très bon travail', '2025-08-09 00:25:04');
 
 -- --------------------------------------------------------
 
@@ -1288,13 +1032,6 @@ CREATE TABLE `notifications_parents` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `notifications_parents`
---
-
-INSERT INTO `notifications_parents` (`id`, `absence_id`, `parent_id`, `type_notification`, `message`, `status`, `sent_at`, `error_message`, `created_by`, `created_at`, `updated_at`) VALUES
-(2, 4, 1, 'email', 'Notification pour MUKENDI Jean - absence', 'sent', '2025-08-08 19:09:54', NULL, 1, '2025-08-08 19:09:54', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -1313,15 +1050,6 @@ CREATE TABLE `notifications_recouvrement` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `notifications_recouvrement`
---
-
-INSERT INTO `notifications_recouvrement` (`id`, `type_notification`, `sujet`, `message`, `campagne_id`, `annee_scolaire_id`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'sms', 'Rappel paiement', 'Bonjour {nom_parent}, votre enfant {nom_eleve} a une dette de {montant} FC. Merci de r├®gulariser.', 1, 1, 'sent', 1, '2025-08-14 13:36:55', NULL),
-(2, 'email', 'Lettre de rappel', 'Madame, Monsieur, nous vous rappelons que votre enfant {nom_eleve} a une dette de {montant} FC.', 1, 1, 'sent', 1, '2025-08-14 13:36:55', NULL),
-(3, 'lettre', 'Mise en demeure', 'Suite ├á nos relances, nous vous mettons en demeure de r├®gulariser la dette de {montant} FC.', 2, 1, 'pending', 1, '2025-08-14 13:36:55', NULL);
 
 -- --------------------------------------------------------
 
@@ -1353,8 +1081,10 @@ CREATE TABLE `notifications_suivi` (
 CREATE TABLE `paiements` (
   `id` int NOT NULL,
   `eleve_id` int NOT NULL,
-  `type_paiement` enum('inscription','mensualite','examen','autre') NOT NULL,
+  `type_frais_id` int NOT NULL,
   `montant` decimal(10,2) NOT NULL,
+  `devise_id` int DEFAULT NULL,
+  `montant_devise_par_defaut` decimal(15,2) DEFAULT NULL,
   `status` enum('en_attente','valide','annule') DEFAULT 'valide',
   `date_paiement` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `mois_concerne` varchar(20) DEFAULT NULL,
@@ -1368,13 +1098,6 @@ CREATE TABLE `paiements` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Déchargement des données de la table `paiements`
---
-
-INSERT INTO `paiements` (`id`, `eleve_id`, `type_paiement`, `montant`, `status`, `date_paiement`, `mois_concerne`, `annee_scolaire_id`, `recu_numero`, `mode_paiement`, `reference`, `observation`, `user_id`, `created_at`, `updated_at`) VALUES
-(1, 9, 'inscription', 15000.00, 'valide', '2025-08-09 21:00:00', '', 1, 'REC20250001', 'mobile_money', NULL, 'jhgjjjjjjjjjjjjjjggj', 1, '2025-08-09 02:17:50', '2025-08-09 02:32:19');
-
 -- --------------------------------------------------------
 
 --
@@ -1385,6 +1108,8 @@ CREATE TABLE `paiements_cartes` (
   `id` int NOT NULL,
   `carte_id` int NOT NULL,
   `montant` decimal(10,2) NOT NULL,
+  `devise_id` int DEFAULT NULL,
+  `montant_devise_par_defaut` decimal(15,2) DEFAULT NULL,
   `type_paiement` enum('especes','carte_bancaire','mobile_money','virement') COLLATE utf8mb4_unicode_ci NOT NULL,
   `reference` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('en_attente','valide','annule','refuse') COLLATE utf8mb4_unicode_ci DEFAULT 'en_attente',
@@ -1393,6 +1118,23 @@ CREATE TABLE `paiements_cartes` (
   `observations` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `parametres_admission`
+--
+
+CREATE TABLE `parametres_admission` (
+  `id` int NOT NULL,
+  `annee_scolaire_id` int NOT NULL,
+  `delai_traitement` int NOT NULL DEFAULT '7' COMMENT 'Délai de traitement en jours',
+  `auto_refus` int NOT NULL DEFAULT '30' COMMENT 'Délai avant refus automatique en jours',
+  `notifications_email` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Notifications par email activées',
+  `validation_auto` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Validation automatique activée',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Paramètres généraux pour les admissions';
 
 -- --------------------------------------------------------
 
@@ -1409,22 +1151,28 @@ CREATE TABLE `parametres_bibliotheque` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `parametres_bibliotheque`
+-- Structure de la table `parametres_cartes`
 --
 
-INSERT INTO `parametres_bibliotheque` (`id`, `cle`, `valeur`, `description`, `type`, `updated_at`) VALUES
-(1, 'duree_emprunt_eleve', '14', 'Durée d\'emprunt par défaut pour les élèves (en jours)', 'number', NULL),
-(2, 'duree_emprunt_personnel', '21', 'Durée d\'emprunt par défaut pour le personnel (en jours)', 'number', NULL),
-(3, 'max_emprunts_eleve', '3', 'Nombre maximum d\'emprunts simultanés pour un élève', 'number', NULL),
-(4, 'max_emprunts_personnel', '5', 'Nombre maximum d\'emprunts simultanés pour le personnel', 'number', NULL),
-(5, 'penalite_retard_jour', '100', 'Pénalité par jour de retard (en FC)', 'number', NULL),
-(6, 'penalite_perte', '5000', 'Pénalité pour perte d\'un livre (en FC)', 'number', NULL),
-(7, 'duree_reservation', '7', 'Durée de validité d\'une réservation (en jours)', 'number', NULL),
-(8, 'notifications_actives', '1', 'Activer les notifications de rappel', 'boolean', NULL),
-(9, 'rappel_avant_echeance', '3', 'Nombre de jours avant échéance pour envoyer un rappel', 'number', NULL),
-(10, 'bibliothecaire_principal', '1', 'ID de l\'utilisateur bibliothécaire principal', 'number', NULL),
-(11, 'amende_retard', '100', 'Montant de l\'amende par jour de retard (en FC)', 'text', NULL);
+CREATE TABLE `parametres_cartes` (
+  `id` int NOT NULL,
+  `nom_ecole` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'École Sinfinity',
+  `logo_ecole` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `couleur_principale` varchar(7) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#1e40af',
+  `couleur_secondaire` varchar(7) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#3b82f6',
+  `couleur_texte` varchar(7) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#1f2937',
+  `format_carte` enum('pvc','pdf') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pdf',
+  `dimensions` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '85.6x54mm',
+  `qr_code_size` int NOT NULL DEFAULT '100',
+  `include_photo` tinyint(1) NOT NULL DEFAULT '1',
+  `include_qr_code` tinyint(1) NOT NULL DEFAULT '1',
+  `include_barcode` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1441,20 +1189,6 @@ CREATE TABLE `parametres_recouvrement` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `parametres_recouvrement`
---
-
-INSERT INTO `parametres_recouvrement` (`id`, `cle`, `valeur`, `description`, `type`, `created_at`, `updated_at`) VALUES
-(1, 'prefixe_carte', 'CARD', 'Préfixe pour les numéros de cartes', 'string', '2025-08-14 07:55:26', NULL),
-(2, 'montant_limite_defaut', '50000', 'Montant limite par défaut des cartes (en FC)', 'number', '2025-08-14 07:55:26', NULL),
-(3, 'duree_validite', '365', 'Durée de validité des cartes en jours', 'number', '2025-08-14 07:55:26', NULL),
-(4, 'frais_emission', '5000', 'Frais d\'émission de carte (en FC)', 'number', '2025-08-14 07:55:26', NULL),
-(5, 'frais_recharge', '1000', 'Frais de recharge de carte (en FC)', 'number', '2025-08-14 07:55:26', NULL),
-(6, 'seuil_alerte', '10000', 'Seuil d\'alerte pour solde faible (en FC)', 'number', '2025-08-14 07:55:26', NULL),
-(7, 'activer_notifications', 'true', 'Activer les notifications SMS/Email', 'boolean', '2025-08-14 07:55:26', NULL),
-(8, 'mode_maintenance', 'false', 'Mode maintenance du système de cartes', 'boolean', '2025-08-14 07:55:26', NULL);
 
 -- --------------------------------------------------------
 
@@ -1473,17 +1207,6 @@ CREATE TABLE `parents` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `parents`
---
-
-INSERT INTO `parents` (`id`, `nom`, `prenom`, `telephone`, `email`, `adresse`, `profession`, `created_at`, `updated_at`) VALUES
-(1, 'MUKENDI', 'Joseph', '0812345678', 'joseph.mukendi@email.com', 'Kinshasa, Gombe', 'Parent d\'élève', '2025-08-08 18:59:25', NULL),
-(2, 'KASONGO', 'Marie', '0823456789', 'marie.kasongo@email.com', 'Kinshasa, Lemba', 'Parent d\'élève', '2025-08-08 18:59:25', NULL),
-(3, 'TSHISEKEDI', 'Pierre', '0834567890', 'pierre.tshisekedi@email.com', 'Kinshasa, Kintambo', 'Parent d\'élève', '2025-08-08 18:59:25', NULL),
-(4, 'KABILA', 'Françoise', '0845678901', 'francoise.kabila@email.com', 'Kinshasa, Ngaliema', 'Parent d\'élève', '2025-08-08 18:59:25', NULL),
-(5, 'MBUYI', 'André', '0856789012', 'andre.mbuyi@email.com', 'Kinshasa, Kalamu', 'Parent d\'élève', '2025-08-08 18:59:25', NULL);
 
 -- --------------------------------------------------------
 
@@ -1532,13 +1255,6 @@ CREATE TABLE `personnel` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Déchargement des données de la table `personnel`
---
-
-INSERT INTO `personnel` (`id`, `matricule`, `nom`, `prenom`, `sexe`, `date_naissance`, `lieu_naissance`, `adresse`, `telephone`, `email`, `fonction`, `specialite`, `diplome`, `date_embauche`, `salaire_base`, `status`, `user_id`, `created_at`) VALUES
-(1, 'EMP20259771', 'Siwa', 'Carin', 'M', '1998-07-09', 'Goma', 'AV. ITEBERO N°100 Q/ MABANGA NORD C/ KARISIMBI', '+243975579097', 'thecarinsiwa@gmail.com', 'enseignant', 'dfdf', 'fdfdf', '2025-08-08', 2000000.00, 'actif', NULL, '2025-08-08 19:48:45');
-
 -- --------------------------------------------------------
 
 --
@@ -1580,13 +1296,6 @@ CREATE TABLE `recompenses` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `recompenses`
---
-
-INSERT INTO `recompenses` (`id`, `eleve_id`, `classe_id`, `type_recompense`, `motif`, `date_recompense`, `attribuee_par`, `valeur_points`, `description`, `parent_informe`, `date_information_parent`, `created_at`, `updated_at`) VALUES
-(1, 2, 2, 'felicitations', 'lklklk', '2025-08-09', 1, 20, 'kjkjkjjk', 1, NULL, '2025-08-09 20:00:29', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -1606,6 +1315,23 @@ CREATE TABLE `reservations_livres` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` int NOT NULL,
+  `nom` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `actif` tinyint(1) DEFAULT '1' COMMENT '1=actif, 0=inactif',
+  `date_creation` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `date_modification` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `permissions` json DEFAULT NULL COMMENT 'Permissions granulaires au format JSON'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- --------------------------------------------------------
 
@@ -1639,36 +1365,26 @@ CREATE TABLE `sections` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `sections`
+-- Structure de la table `sessions_caisse`
 --
 
-INSERT INTO `sections` (`id`, `nom`, `niveau`, `description`, `created_at`) VALUES
-(1, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:06:00'),
-(2, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
-(3, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
-(4, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
-(5, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:06:00'),
-(6, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:08:53'),
-(7, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
-(8, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
-(9, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
-(10, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:08:53'),
-(11, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:10:15'),
-(12, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
-(13, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
-(14, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
-(15, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:10:15'),
-(16, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:24:19'),
-(17, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
-(18, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
-(19, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
-(20, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:24:19'),
-(21, 'Générale', 'primaire', 'Section générale pour l\'enseignement primaire', '2025-09-02 20:25:47'),
-(22, 'Scientifique', 'secondaire', 'Section scientifique pour l\'enseignement secondaire', '2025-09-02 20:25:47'),
-(23, 'Littéraire', 'secondaire', 'Section littéraire pour l\'enseignement secondaire', '2025-09-02 20:25:47'),
-(24, 'Commerciale', 'secondaire', 'Section commerciale pour l\'enseignement secondaire', '2025-09-02 20:25:47'),
-(25, 'Technique', 'secondaire', 'Section technique pour l\'enseignement secondaire', '2025-09-02 20:25:47');
+CREATE TABLE `sessions_caisse` (
+  `id` int NOT NULL,
+  `caisse_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `date_ouverture` datetime NOT NULL,
+  `date_fermeture` datetime DEFAULT NULL,
+  `solde_ouverture` decimal(15,2) NOT NULL,
+  `solde_fermeture` decimal(15,2) DEFAULT NULL,
+  `statut` enum('ouverte','fermee') COLLATE utf8mb4_unicode_ci DEFAULT 'ouverte',
+  `observation_ouverture` text COLLATE utf8mb4_unicode_ci,
+  `observation_fermeture` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1691,13 +1407,6 @@ CREATE TABLE `sms_logs` (
   `tentatives` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `sms_logs`
---
-
-INSERT INTO `sms_logs` (`id`, `expediteur_id`, `destinataire_telephone`, `destinataire_nom`, `message`, `type_sms`, `cout`, `status`, `provider_response`, `date_envoi`, `date_livraison`, `tentatives`, `created_at`) VALUES
-(1, 1, '0975579097', 'Siwa Carin', 'Votre enfant {eleve_nom} est absent aujourd\'hui {date}. Si cette absence est justifiée, merci de nous en informer.', 'retard', 50.00, 'envoye', NULL, '2025-08-14 08:23:36', NULL, 0, '2025-08-14 07:23:36');
 
 -- --------------------------------------------------------
 
@@ -1781,31 +1490,6 @@ CREATE TABLE `system_settings` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `system_settings`
---
-
-INSERT INTO `system_settings` (`id`, `cle`, `valeur`, `description`, `type`, `options`, `categorie`, `updated_at`, `created_at`) VALUES
-(1, 'school_name', 'École de Maris', 'Nom de l\'établissement', 'text', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(2, 'school_address', 'Avenue de la Paix, Kinshasa', 'Adresse de l\'établissement', 'text', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(3, 'school_city', 'Kinshasa', 'Ville de l\'établissement', 'text', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(4, 'school_country', 'République Démocratique du Congo', 'Pays de l\'établissement', 'text', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(5, 'school_phone', '+243 123 456 789', 'Téléphone de l\'établissement', 'text', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(6, 'school_fax', '', 'Fax de l\'établissement', 'text', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(7, 'school_email', 'contact@ecole-sinfinity.cd', 'Email de l\'établissement', 'email', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(8, 'school_website', 'https://www.ecole-sinfinity.cd', 'Site web de l\'établissement', 'url', NULL, 'etablissement', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(9, 'max_students_per_class', '30', 'Nombre maximum d\'élèves par classe', 'number', NULL, 'academique', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(10, 'school_year_start_month', '9', 'Mois de début d\'année scolaire', 'select', '{\"1\":\"Janvier\",\"2\":\"Février\",\"3\":\"Mars\",\"4\":\"Avril\",\"5\":\"Mai\",\"6\":\"Juin\",\"7\":\"Juillet\",\"8\":\"Août\",\"9\":\"Septembre\",\"10\":\"Octobre\",\"11\":\"Novembre\",\"12\":\"Décembre\"}', 'academique', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(11, 'timezone', 'Africa/Kinshasa', 'Fuseau horaire', 'select', '{\"Africa/Kinshasa\":\"Africa/Kinshasa (UTC+1)\",\"Africa/Lubumbashi\":\"Africa/Lubumbashi (UTC+2)\"}', 'academique', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(12, 'language', 'fr', 'Langue par défaut', 'select', '{\"fr\":\"Français\",\"en\":\"English\"}', 'academique', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(13, 'currency', 'FC', 'Devise', 'select', '{\"FC\":\"Franc Congolais (FC)\",\"USD\":\"Dollar US ($)\"}', 'academique', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(14, 'admin_email', 'admin@ecole-sinfinity.cd', 'Email administrateur', 'email', NULL, 'communication', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(15, 'enable_email', '1', 'Activer les emails', 'boolean', NULL, 'communication', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(16, 'enable_sms', '1', 'Activer les SMS', 'boolean', NULL, 'communication', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(17, 'enable_notifications', '1', 'Activer les notifications', 'boolean', NULL, 'communication', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(18, 'backup_retention_days', '30', 'Rétention des sauvegardes (jours)', 'number', NULL, 'systeme', '2025-08-10 22:02:28', '2025-08-09 19:38:10'),
-(19, 'maintenance_mode', '0', 'Mode maintenance', 'boolean', NULL, 'systeme', NULL, '2025-08-09 19:38:10');
-
 -- --------------------------------------------------------
 
 --
@@ -1827,15 +1511,6 @@ CREATE TABLE `templates_messages` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `templates_messages`
---
-
-INSERT INTO `templates_messages` (`id`, `nom`, `description`, `sujet`, `contenu`, `type`, `categorie`, `variables`, `actif`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'Convocation parent', 'Template pour convoquer un parent', 'Convocation - {eleve_nom}', 'Cher(e) parent de {eleve_nom},\\n\\nNous vous prions de bien vouloir vous présenter à l\'établissement le {date_rdv} à {heure_rdv} pour un entretien concernant votre enfant.\\n\\nMotif: {motif}\\n\\nCordialement,\\nL\'administration', 'email', 'discipline', '[\"eleve_nom\", \"date_rdv\", \"heure_rdv\", \"motif\"]', 1, 1, '2025-08-09 19:16:12', '2025-08-18 18:18:57'),
-(2, 'Absence élève', 'Notification d\'absence d\'un élève', 'Absence de {eleve_nom}', 'Votre enfant {eleve_nom} est absent aujourd\'hui {date}. Si cette absence est justifiée, merci de nous en informer.', 'sms', 'absence', '[\"eleve_nom\", \"date\", \"classe\"]', 1, 1, '2025-08-09 19:16:12', NULL),
-(3, 'Félicitations', 'Message de félicitations pour bons résultats', 'Félicitations pour {eleve_nom}', 'Nous tenons à vous féliciter pour les excellents résultats de {eleve_nom} en {matiere}. Continuez ainsi !', 'email', 'pedagogique', '[\"eleve_nom\", \"matiere\", \"note\", \"moyenne\"]', 1, 1, '2025-08-09 19:16:12', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -1850,15 +1525,6 @@ CREATE TABLE `temp_documents_backup` (
   `photo_identite` enum('non_fourni','fourni','verifie','rejete') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'non_fourni',
   `autres_documents` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `temp_documents_backup`
---
-
-INSERT INTO `temp_documents_backup` (`id`, `certificat_naissance`, `bulletin_precedent`, `certificat_medical`, `photo_identite`, `autres_documents`) VALUES
-(1, 'fourni', '', '', '', ''),
-(2, '', '', '', '', NULL),
-(3, '', '', '', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -1912,15 +1578,6 @@ CREATE TABLE `transfers` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `transfers`
---
-
-INSERT INTO `transfers` (`id`, `eleve_id`, `type_mouvement`, `ecole_origine`, `ecole_destination`, `classe_origine_id`, `classe_destination_id`, `motif`, `date_demande`, `date_effective`, `statut`, `documents_requis`, `documents_fournis`, `frais_transfert`, `frais_payes`, `observations`, `approuve_par`, `date_approbation`, `traite_par`, `date_traitement`, `certificat_genere`, `numero_certificat`, `created_at`, `updated_at`) VALUES
-(1, 1, 'transfert_entrant', 'École Primaire Saint-Joseph', 'Notre École', NULL, NULL, 'Déménagement de la famille', '2025-07-24', '2025-07-29', 'complete', NULL, NULL, 50000.00, 50000.00, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2025-08-08 19:50:24', '2025-08-08 19:50:24'),
-(2, 2, 'transfert_sortant', 'Notre École', 'Collège Moderne de Kinshasa', NULL, NULL, 'Changement de niveau d\'études', '2025-08-03', NULL, 'en_attente', NULL, NULL, 75000.00, 0.00, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2025-08-08 19:50:24', '2025-08-08 19:50:24'),
-(3, 3, 'sortie_definitive', 'Notre École', NULL, NULL, NULL, 'Fin de scolarité', '2025-08-06', '2025-08-08', 'complete', NULL, NULL, 25000.00, 25000.00, NULL, NULL, NULL, NULL, NULL, 1, 'CERT2025000003', '2025-08-08 19:50:24', '2025-08-08 21:00:10');
-
 -- --------------------------------------------------------
 
 --
@@ -1973,15 +1630,6 @@ CREATE TABLE `transferts_sorties` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `transferts_sorties`
---
-
-INSERT INTO `transferts_sorties` (`id`, `eleve_id`, `annee_scolaire_id`, `type_mouvement`, `motif`, `date_demande`, `date_effective`, `ecole_destination`, `adresse_destination`, `contact_destination`, `telephone_destination`, `status`, `traite_par`, `date_traitement`, `observations_demande`, `observations_traitement`, `document_justificatif`, `certificat_genere`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 'transfert', 'Déménagement de la famille vers un autre quartier', '2025-08-08', NULL, 'École Primaire Saint-Joseph', NULL, NULL, NULL, 'en_attente', NULL, NULL, NULL, NULL, NULL, 0, '2025-08-08 14:36:40', NULL),
-(2, 2, 1, 'sortie_definitive', 'Fin de scolarité primaire - passage au secondaire', '2025-08-08', NULL, 'Collège Notre-Dame de Kinshasa', NULL, NULL, NULL, 'approuve', NULL, NULL, NULL, NULL, NULL, 0, '2025-08-08 14:36:40', NULL),
-(3, 3, 1, 'transfert', 'Changement de quartier pour raisons professionnelles des parents', '2025-08-08', NULL, 'École Communautaire de Gombe', NULL, NULL, NULL, 'en_attente', NULL, NULL, NULL, NULL, NULL, 0, '2025-08-08 14:36:40', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -2002,13 +1650,6 @@ CREATE TABLE `transfer_documents` (
   `uploaded_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `transfer_documents`
---
-
-INSERT INTO `transfer_documents` (`id`, `transfer_id`, `nom_document`, `type_document`, `chemin_fichier`, `taille_fichier`, `type_mime`, `obligatoire`, `fourni`, `date_upload`, `uploaded_by`, `created_at`) VALUES
-(1, 1, 'Bulletin scolaire', 'bulletin', NULL, NULL, NULL, 1, 1, NULL, NULL, '2025-08-08 19:50:24');
 
 -- --------------------------------------------------------
 
@@ -2046,32 +1687,6 @@ CREATE TABLE `transfer_history` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `transfer_history`
---
-
-INSERT INTO `transfer_history` (`id`, `transfer_id`, `action`, `ancien_statut`, `nouveau_statut`, `commentaire`, `user_id`, `created_at`) VALUES
-(1, 3, 'modification', 'approuve', 'approuve', 'Documents mis à jour', 1, '2025-08-08 20:28:19'),
-(2, 3, 'completion', 'approuve', 'complete', 'Il peut partir', 1, '2025-08-08 21:00:10');
-
--- --------------------------------------------------------
-
---
--- Structure de la table `types_frais`
---
-
-CREATE TABLE `types_frais` (
-  `id` int NOT NULL,
-  `nom` varchar(100) NOT NULL,
-  `description` text,
-  `montant_defaut` decimal(10,2) DEFAULT NULL,
-  `obligatoire` tinyint(1) DEFAULT '1',
-  `periode` enum('annuel','trimestriel','mensuel','ponctuel') DEFAULT 'annuel',
-  `status` enum('actif','inactif') DEFAULT 'actif',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 -- --------------------------------------------------------
 
 --
@@ -2090,27 +1705,23 @@ CREATE TABLE `types_sanctions` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Déchargement des données de la table `types_sanctions`
+-- Structure de la table `type_frais`
 --
 
-INSERT INTO `types_sanctions` (`id`, `nom`, `description`, `gravite`, `duree_defaut`, `couleur`, `active`, `created_at`, `updated_at`) VALUES
-(1, 'Avertissement oral', 'Rappel à l\'ordre verbal', 'legere', 0, '#28a745', 1, '2025-08-09 19:16:07', NULL),
-(2, 'Avertissement écrit', 'Mise en garde officielle par écrit', 'legere', 0, '#ffc107', 1, '2025-08-09 19:16:07', NULL),
-(3, 'Retenue', 'Retenue après les cours', 'moyenne', 1, '#fd7e14', 1, '2025-08-09 19:16:07', NULL),
-(4, 'Exclusion temporaire', 'Exclusion de cours pour une durée déterminée', 'grave', 3, '#dc3545', 1, '2025-08-09 19:16:07', NULL),
-(5, 'Travaux d\'intérêt général', 'Participation à des activités d\'utilité collective', 'moyenne', 5, '#6f42c1', 1, '2025-08-09 19:16:07', NULL),
-(6, 'Convocation des parents', 'Rencontre obligatoire avec les parents', 'moyenne', 0, '#20c997', 1, '2025-08-09 19:16:07', NULL),
-(7, 'Exclusion définitive', 'Renvoi définitif de l\'établissement', 'tres_grave', 0, '#000000', 1, '2025-08-09 19:16:07', NULL),
-(8, 'Blâme', 'Sanction disciplinaire inscrite au dossier', 'grave', 0, '#e83e8c', 1, '2025-08-09 19:16:07', NULL),
-(9, 'Avertissement oral', 'Rappel à l\'ordre verbal', 'legere', 0, '#28a745', 1, '2025-08-09 19:49:10', NULL),
-(10, 'Avertissement écrit', 'Mise en garde officielle par écrit', 'legere', 0, '#ffc107', 1, '2025-08-09 19:49:10', NULL),
-(11, 'Retenue', 'Retenue après les cours', 'moyenne', 1, '#fd7e14', 1, '2025-08-09 19:49:10', NULL),
-(12, 'Exclusion temporaire', 'Exclusion de cours pour une durée déterminée', 'grave', 3, '#dc3545', 1, '2025-08-09 19:49:10', NULL),
-(13, 'Travaux d\'intérêt général', 'Participation à des activités d\'utilité collective', 'moyenne', 5, '#6f42c1', 1, '2025-08-09 19:49:10', NULL),
-(14, 'Convocation des parents', 'Rencontre obligatoire avec les parents', 'moyenne', 0, '#20c997', 1, '2025-08-09 19:49:10', NULL),
-(15, 'Exclusion définitive', 'Renvoi définitif de l\'établissement', 'tres_grave', 0, '#000000', 1, '2025-08-09 19:49:10', NULL),
-(16, 'Blâme', 'Sanction disciplinaire inscrite au dossier', 'grave', 0, '#e83e8c', 1, '2025-08-09 19:49:10', NULL);
+CREATE TABLE `type_frais` (
+  `id` int NOT NULL,
+  `nom` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nom du type de frais (ex: Inscription, Mensualité, Examen)',
+  `description` text COLLATE utf8mb4_unicode_ci COMMENT 'Description détaillée du type de frais',
+  `annee_scolaire_id` int NOT NULL COMMENT 'ID de l''année scolaire à laquelle ce type de frais est attaché',
+  `actif` tinyint(1) DEFAULT '1' COMMENT '1 = actif, 0 = inactif',
+  `priorite` int NOT NULL DEFAULT '10' COMMENT 'Priorité de paiement (plus le chiffre est bas, plus la priorité est haute)',
+  `date_creation` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Date de création du type de frais',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Types de frais programmables par année scolaire';
 
 -- --------------------------------------------------------
 
@@ -2126,7 +1737,7 @@ CREATE TABLE `users` (
   `prenom` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `telephone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `role` enum('admin','directeur','enseignant','secretaire','comptable','surveillant') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role_id` int DEFAULT NULL,
   `status` enum('actif','inactif') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'actif',
   `photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `adresse` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -2140,13 +1751,6 @@ CREATE TABLE `users` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `users`
---
-
-INSERT INTO `users` (`id`, `username`, `password`, `nom`, `prenom`, `email`, `telephone`, `role`, `status`, `photo`, `adresse`, `date_naissance`, `genre`, `derniere_connexion`, `tentatives_connexion`, `compte_verrouille`, `date_verrouillage`, `created_at`, `updated_at`) VALUES
-(1, 'admin', '7c4a8d09ca3762af61e59520943dc26494f8941b', 'Siwa', 'Carin', 'thecarinsiwa@gmail.com', '0975579097', 'comptable', 'actif', NULL, NULL, NULL, NULL, '2025-09-02 17:05:53', 0, 0, NULL, '2025-08-08 13:26:12', '2025-09-02 17:05:53'),
-(2, 'csiwa', '7c222fb2927d828af22f592134e8932480637c0d', 'Siwa', 'Carin', 'carin@gmail.com', '0975579097', 'admin', 'actif', NULL, NULL, NULL, 'M', '2025-09-02 19:17:38', 0, 0, NULL, '2025-08-31 08:29:36', '2025-09-02 19:17:38');
 
 -- --------------------------------------------------------
 
@@ -2166,126 +1770,6 @@ CREATE TABLE `user_actions_log` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `user_actions_log`
---
-
-INSERT INTO `user_actions_log` (`id`, `user_id`, `action`, `module`, `details`, `target_id`, `ip_address`, `user_agent`, `created_at`) VALUES
-(1, 1, 'test_creation_table', 'system', 'Test de création de la table user_actions_log', NULL, '127.0.0.1', 'Test Script', '2025-08-08 18:14:05'),
-(2, 1, 'create_absence', 'attendance', 'Absence créée pour MUKENDI Jean (1ère Primaire A) - Date: 08/08/2025 19:14 - Motif: n,h,n,n,', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:14:57'),
-(3, 1, 'test_final', 'attendance', 'Test final de la table user_actions_log', NULL, NULL, NULL, '2025-08-08 18:15:42'),
-(4, 1, 'add_absence', 'attendance', 'Test d\'ajout d\'absence', NULL, NULL, NULL, '2025-08-08 18:15:42'),
-(5, 1, 'view_records', 'records', 'Test de consultation des dossiers', NULL, NULL, NULL, '2025-08-08 18:15:42'),
-(6, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 4', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:24:31'),
-(7, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 4', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:26:39'),
-(8, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 6', 6, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:28:58'),
-(9, 1, 'justify_absence', 'attendance', 'Absence justifiée - Justification: hghghghghghgvbfdfdfdf', 6, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:34:08'),
-(10, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 6', 6, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:34:08'),
-(11, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:42:34'),
-(12, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-09', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:42:56'),
-(13, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-12', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:09'),
-(14, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-11', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:14'),
-(15, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-02', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:17'),
-(16, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-07', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:23'),
-(17, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:28'),
-(18, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:29'),
-(19, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:43:45'),
-(20, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:44:01'),
-(21, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:31'),
-(22, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:35'),
-(23, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-07', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:36'),
-(24, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-02', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:37'),
-(25, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-11', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:38'),
-(26, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-12', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:39'),
-(27, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-09', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:39'),
-(28, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:40'),
-(29, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:45:50'),
-(30, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:48:53'),
-(31, 1, 'get_students', 'attendance', 'Récupération des élèves - Classe ID: 3, Date: 2025-08-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:50:42'),
-(32, 1, 'get_students', 'attendance', 'Récupération des élèves - Classe ID: 7, Date: 2025-08-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:50:57'),
-(33, 1, 'get_students', 'attendance', 'Récupération des élèves - Classe ID: 6, Date: 2025-08-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:51:04'),
-(34, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:53:11'),
-(35, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:53:57'),
-(36, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08, Classe: 1', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 18:54:08'),
-(37, 1, 'get_students', 'attendance', 'Récupération des élèves - Classe ID: 2, Date: 2025-08-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:05:31'),
-(38, 1, 'view_parent_notifications', 'attendance', 'Consultation de la page notifications parents', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:08:16'),
-(39, 1, 'send_single_notification', 'attendance', 'Notification individuelle - Type: email, Élève: MUKENDI Jean, Statut: sent', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:09:54'),
-(40, 1, 'view_parent_notifications', 'attendance', 'Consultation de la page notifications parents', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:09:56'),
-(41, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 4', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:10:02'),
-(42, 1, 'view_parent_notifications', 'attendance', 'Consultation de la page notifications parents', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:11:19'),
-(43, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 4', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:11:22'),
-(44, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:11:53'),
-(45, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:13:24'),
-(46, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:14:20'),
-(47, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:14:52'),
-(48, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:17:28'),
-(49, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08, Classe: 2', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:17:45'),
-(50, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08, Classe: 1', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:17:49'),
-(51, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08, Classe: 2', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:17:55'),
-(52, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08, Classe: 4', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:18:01'),
-(53, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08, Classe: 4', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:19:17'),
-(54, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:19:32'),
-(55, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:20:55'),
-(56, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36', '2025-08-08 19:21:17'),
-(57, 1, 'create_absence', 'attendance', 'Absence créée pour KALONJI Esther (1ère Primaire A) - Date: 08/08/2025 20:21 - Motif: k_yfeeddddfggghhh', 12, '::1', 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36', '2025-08-08 19:22:23'),
-(58, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:24:24'),
-(59, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:25:11'),
-(60, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:29:15'),
-(61, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:29:35'),
-(62, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36', '2025-08-08 19:30:56'),
-(63, 1, 'view_export_page', 'attendance', 'Consultation de la page d\'export des données', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:35:13'),
-(64, 1, 'export_attendance', 'attendance', 'Export excel - Type: summary, Période: 2025-08-01 à 2025-08-31, Enregistrements: 5', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:35:45'),
-(65, 1, 'export_attendance', 'attendance', 'Export pdf - Type: summary, Période: 2025-08-01 à 2025-08-31, Enregistrements: 5', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:36:11'),
-(66, 1, 'view_export_page', 'attendance', 'Consultation de la page d\'export des données', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:36:32'),
-(67, 1, 'preview_export_data', 'attendance', 'Aperçu export - Type: summary, Période: 2025-08-01 à 2025-08-31, Résultats: 5', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:36:41'),
-(68, 1, 'view_export_page', 'attendance', 'Consultation de la page d\'export des données', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:40:01'),
-(69, 1, 'export_attendance', 'attendance', 'Export excel - Type: summary, Période: 2025-08-01 à 2025-08-31, Enregistrements: 1', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:40:16'),
-(70, 1, 'view_export_page', 'attendance', 'Consultation de la page d\'export des données', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:40:46'),
-(71, 1, 'view_export_page', 'attendance', 'Consultation de la page d\'export des données', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 19:47:01'),
-(72, 1, 'export_movements', 'transfers', 'Export excel - Type: detailed, Période: 2025-08-01 à 2025-08-31, Enregistrements: 2', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 20:05:02'),
-(73, 1, 'process_transfer', 'transfers', 'Action \'update_documents\' sur le transfert ID: 3', 3, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 20:28:19'),
-(74, 1, 'process_transfer', 'transfers', 'Action \'complete\' sur le transfert ID: 3', 3, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-08 21:00:10'),
-(75, 1, 'create_academic_year', 'academic', 'Nouvelle année scolaire créée: 2025-2026 (active)', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:34:15'),
-(76, 1, 'update_academic_year', 'academic', 'Année scolaire modifiée: 2023-2024 (active)', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:34:32'),
-(77, 1, 'add_schedule_course', 'academic', 'Cours ajouté - Classe: 1ère Primaire A, Matière: Mathématiques, Jour: Lundi 08:00-09:00', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:36:54'),
-(78, 1, 'add_schedule_course', 'academic', 'Cours ajouté - Classe: 1ère Primaire A, Matière: Mathématiques, Jour: Mercredi 08:00-09:00', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:39:02'),
-(79, 1, 'add_schedule_course', 'academic', 'Cours ajouté - Classe: 6ème Primaire A, Matière: Mathématiques, Jour: Lundi 08:00-09:00', 3, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:45:14'),
-(80, 1, 'generate_schedule', 'academic', 'Emploi du temps généré pour la classe: 1ère Primaire A', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:52:17'),
-(81, 1, 'export_schedule', 'academic', 'Export emploi du temps - Format: pdf, Type: classe', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:55:56'),
-(82, 1, 'export_schedule', 'academic', 'Export emploi du temps - Format: pdf, Type: classe', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-08 23:55:56'),
-(83, 1, 'update_evaluation', 'evaluations', 'Évaluation modifiée: Interrogation - Tables de multiplication (ID: 2)', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-09 00:42:37'),
-(84, 1, 'view_absence_edit', 'attendance', 'Consultation de la page d\'édition de l\'absence ID 12', 12, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', '2025-08-10 01:42:12'),
-(85, 1, 'generate_schedule', 'academic', 'Emploi du temps généré pour la classe: 1ère Primaire A', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 09:40:02'),
-(86, 1, 'close_academic_year', 'academic', 'Année scolaire fermée: 2023-2024', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 10:06:33'),
-(87, 1, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 10:18:37'),
-(88, 1, 'activate_academic_year', 'academic', 'Année scolaire activée: 2023-2024', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 10:18:57'),
-(89, 1, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:51:55'),
-(90, 1, 'activate_academic_year', 'academic', 'Année scolaire activée: 2023-2024', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:52:02'),
-(91, 1, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:52:29'),
-(92, 1, 'close_academic_year', 'academic', 'Année scolaire fermée: 2025-2026', 2, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:53:13'),
-(93, 1, 'activate_academic_year', 'academic', 'Année scolaire activée: 2023-2024', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:53:17'),
-(94, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:53:46'),
-(95, 1, 'view_export_page', 'attendance', 'Consultation de la page d\'export des données', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:53:51'),
-(96, 1, 'preview_export_data', 'attendance', 'Aperçu export - Type: summary, Période: 2025-08-01 à 2025-08-31, Résultats: 5', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 11:53:58'),
-(97, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 13:14:48'),
-(98, 1, 'view_parent_notifications', 'attendance', 'Consultation de la page notifications parents', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 13:14:58'),
-(99, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 13:15:17'),
-(100, 1, 'view_monthly_report', 'attendance', 'Consultation du rapport mensuel - Mois: 2025-08', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 13:15:20'),
-(101, 1, 'view_parent_notifications', 'attendance', 'Consultation de la page notifications parents', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 13:15:28'),
-(102, 1, 'export_schedule', 'academic', 'Export emploi du temps - Format: pdf, Type: classe', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 14:12:45'),
-(103, 1, 'export_schedule', 'academic', 'Export emploi du temps - Format: pdf, Type: classe', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-14 14:13:19'),
-(104, 1, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 17:52:55'),
-(105, 1, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-25 17:53:28'),
-(106, 2, 'close_academic_year', 'academic', 'Année scolaire fermée: 2023-2024', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-31 08:34:46'),
-(107, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-08-31 08:35:27'),
-(108, 2, 'reinscription', 'students', 'Réinscription de l\'élève ID: 4 pour l\'année 2025-2026', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 13:48:00'),
-(109, 2, 'update_password', 'admin', 'Mot de passe modifié pour: admin (Siwa Carin)', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 13:54:10'),
-(110, 2, 'create_academic_year', 'academic', 'Nouvelle année scolaire créée: 2026-2027 (active)', 3, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 16:59:15'),
-(111, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2023-2024', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:00:29'),
-(112, 2, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:03:55'),
-(113, 2, 'update_user', 'admin', 'Utilisateur modifié: admin (Siwa Carin)', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:05:35'),
-(114, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2026-2027', 3, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 17:15:40'),
-(115, 2, 'activate_academic_year', 'academic', 'Année scolaire activée: 2025-2026', 2, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '2025-09-02 18:40:18');
 
 --
 -- Index pour les tables déchargées
@@ -2321,6 +1805,14 @@ ALTER TABLE `annonces`
   ADD KEY `idx_active` (`active`);
 
 --
+-- Index pour la table `caisses`
+--
+ALTER TABLE `caisses`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `devise_id` (`devise_id`),
+  ADD KEY `annee_scolaire_id` (`annee_scolaire_id`);
+
+--
 -- Index pour la table `campagnes_cibles_dettes`
 --
 ALTER TABLE `campagnes_cibles_dettes`
@@ -2347,6 +1839,28 @@ ALTER TABLE `cartes_eleves`
   ADD KEY `idx_eleve_id` (`eleve_id`),
   ADD KEY `idx_numero_carte` (`numero_carte`),
   ADD KEY `idx_status` (`status`);
+
+--
+-- Index pour la table `carte_eleve`
+--
+ALTER TABLE `carte_eleve`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_carte_annee` (`eleve_id`,`annee_scolaire_id`),
+  ADD UNIQUE KEY `unique_numero_carte` (`numero_carte`),
+  ADD KEY `idx_eleve_id` (`eleve_id`),
+  ADD KEY `idx_annee_scolaire` (`annee_scolaire_id`),
+  ADD KEY `idx_statut` (`statut`),
+  ADD KEY `idx_qr_code` (`qr_code`(100)),
+  ADD KEY `idx_qr_code_path` (`qr_code_path`);
+
+--
+-- Index pour la table `carte_eleve_historique`
+--
+ALTER TABLE `carte_eleve_historique`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_eleve_id` (`eleve_id`),
+  ADD KEY `idx_annee_scolaire` (`annee_scolaire_id`),
+  ADD KEY `idx_carte_id` (`carte_id`);
 
 --
 -- Index pour la table `categories_livres`
@@ -2423,7 +1937,17 @@ ALTER TABLE `demandes_admission`
 -- Index pour la table `depenses`
 --
 ALTER TABLE `depenses`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `devise_id` (`devise_id`);
+
+--
+-- Index pour la table `devises`
+--
+ALTER TABLE `devises`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `code` (`code`),
+  ADD KEY `idx_code` (`code`),
+  ADD KEY `idx_active` (`active`);
 
 --
 -- Index pour la table `documents_eleve`
@@ -2452,16 +1976,6 @@ ALTER TABLE `eleves`
   ADD KEY `idx_parent_id` (`parent_id`),
   ADD KEY `idx_classe_id` (`classe_id`),
   ADD KEY `idx_annee_scolaire_id` (`annee_scolaire_id`);
-
---
--- Index pour la table `emplois_temps`
---
-ALTER TABLE `emplois_temps`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `classe_id` (`classe_id`),
-  ADD KEY `matiere_id` (`matiere_id`),
-  ADD KEY `enseignant_id` (`enseignant_id`),
-  ADD KEY `annee_scolaire_id` (`annee_scolaire_id`);
 
 --
 -- Index pour la table `emploi_temps`
@@ -2555,8 +2069,10 @@ ALTER TABLE `frais_eleves`
 --
 ALTER TABLE `frais_scolaires`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_classe_type` (`classe_id`,`type_frais`),
-  ADD KEY `idx_annee_scolaire` (`annee_scolaire_id`);
+  ADD KEY `idx_classe_type` (`classe_id`),
+  ADD KEY `idx_annee_scolaire` (`annee_scolaire_id`),
+  ADD KEY `fk_frais_devise` (`devise_id`),
+  ADD KEY `idx_type_frais_id` (`type_frais_id`);
 
 --
 -- Index pour la table `incidents`
@@ -2601,6 +2117,16 @@ ALTER TABLE `livres`
   ADD KEY `idx_status` (`status`);
 
 --
+-- Index pour la table `logs_scan_carte`
+--
+ALTER TABLE `logs_scan_carte`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_carte_id` (`carte_id`),
+  ADD KEY `idx_eleve_id` (`eleve_id`),
+  ADD KEY `idx_type_scan` (`type_scan`),
+  ADD KEY `idx_created_at` (`created_at`);
+
+--
 -- Index pour la table `matieres`
 --
 ALTER TABLE `matieres`
@@ -2617,6 +2143,24 @@ ALTER TABLE `messages`
   ADD KEY `idx_type` (`destinataire_type`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_date_envoi` (`date_envoi`);
+
+--
+-- Index pour la table `modeles_frais`
+--
+ALTER TABLE `modeles_frais`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `idx_niveau` (`niveau`),
+  ADD KEY `idx_active` (`is_active`);
+
+--
+-- Index pour la table `mouvements_caisse`
+--
+ALTER TABLE `mouvements_caisse`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `session_caisse_id` (`session_caisse_id`),
+  ADD KEY `devise_id` (`devise_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Index pour la table `notes`
@@ -2683,7 +2227,8 @@ ALTER TABLE `paiements`
   ADD PRIMARY KEY (`id`),
   ADD KEY `eleve_id` (`eleve_id`),
   ADD KEY `annee_scolaire_id` (`annee_scolaire_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `idx_type_frais_id_temp` (`type_frais_id`);
 
 --
 -- Index pour la table `paiements_cartes`
@@ -2693,7 +2238,16 @@ ALTER TABLE `paiements_cartes`
   ADD KEY `user_id` (`user_id`),
   ADD KEY `idx_carte_id` (`carte_id`),
   ADD KEY `idx_status` (`status`),
-  ADD KEY `idx_date_paiement` (`date_paiement`);
+  ADD KEY `idx_date_paiement` (`date_paiement`),
+  ADD KEY `fk_paiements_cartes_devise` (`devise_id`);
+
+--
+-- Index pour la table `parametres_admission`
+--
+ALTER TABLE `parametres_admission`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_annee_scolaire` (`annee_scolaire_id`),
+  ADD KEY `fk_parametres_admission_annee_scolaire` (`annee_scolaire_id`);
 
 --
 -- Index pour la table `parametres_bibliotheque`
@@ -2701,6 +2255,12 @@ ALTER TABLE `paiements_cartes`
 ALTER TABLE `parametres_bibliotheque`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `cle` (`cle`);
+
+--
+-- Index pour la table `parametres_cartes`
+--
+ALTER TABLE `parametres_cartes`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Index pour la table `parametres_recouvrement`
@@ -2767,6 +2327,13 @@ ALTER TABLE `reservations_livres`
   ADD KEY `traite_par` (`traite_par`);
 
 --
+-- Index pour la table `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `nom_unique` (`nom`);
+
+--
 -- Index pour la table `sanctions`
 --
 ALTER TABLE `sanctions`
@@ -2779,6 +2346,14 @@ ALTER TABLE `sanctions`
 --
 ALTER TABLE `sections`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Index pour la table `sessions_caisse`
+--
+ALTER TABLE `sessions_caisse`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `caisse_id` (`caisse_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Index pour la table `sms_logs`
@@ -2909,18 +2484,23 @@ ALTER TABLE `transfer_history`
   ADD KEY `idx_action` (`action`);
 
 --
--- Index pour la table `types_frais`
---
-ALTER TABLE `types_frais`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Index pour la table `types_sanctions`
 --
 ALTER TABLE `types_sanctions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_gravite` (`gravite`),
   ADD KEY `idx_active` (`active`);
+
+--
+-- Index pour la table `type_frais`
+--
+ALTER TABLE `type_frais`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_annee_scolaire` (`annee_scolaire_id`),
+  ADD KEY `idx_actif` (`actif`),
+  ADD KEY `idx_nom` (`nom`),
+  ADD KEY `idx_priorite` (`priorite`),
+  ADD KEY `idx_annee_priorite` (`annee_scolaire_id`,`priorite`,`actif`);
 
 --
 -- Index pour la table `users`
@@ -2931,8 +2511,9 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `idx_username` (`username`),
   ADD KEY `idx_email` (`email`),
-  ADD KEY `idx_role` (`role`),
-  ADD KEY `idx_status` (`status`);
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_users_role_id` (`role_id`),
+  ADD KEY `idx_users_role_id_active` (`role_id`,`status`);
 
 --
 -- Index pour la table `user_actions_log`
@@ -2952,19 +2533,25 @@ ALTER TABLE `user_actions_log`
 -- AUTO_INCREMENT pour la table `absences`
 --
 ALTER TABLE `absences`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `annees_scolaires`
 --
 ALTER TABLE `annees_scolaires`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `annonces`
 --
 ALTER TABLE `annonces`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `caisses`
+--
+ALTER TABLE `caisses`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `campagnes_cibles_dettes`
@@ -2976,25 +2563,37 @@ ALTER TABLE `campagnes_cibles_dettes`
 -- AUTO_INCREMENT pour la table `campagnes_recouvrement`
 --
 ALTER TABLE `campagnes_recouvrement`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `cartes_eleves`
 --
 ALTER TABLE `cartes_eleves`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `carte_eleve`
+--
+ALTER TABLE `carte_eleve`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `carte_eleve_historique`
+--
+ALTER TABLE `carte_eleve_historique`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `categories_livres`
 --
 ALTER TABLE `categories_livres`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `classes`
 --
 ALTER TABLE `classes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `commandes`
@@ -3006,13 +2605,13 @@ ALTER TABLE `commandes`
 -- AUTO_INCREMENT pour la table `criteres_admission`
 --
 ALTER TABLE `criteres_admission`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `criteres_admission_classes`
 --
 ALTER TABLE `criteres_admission_classes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `decisions_admission`
@@ -3024,13 +2623,19 @@ ALTER TABLE `decisions_admission`
 -- AUTO_INCREMENT pour la table `demandes_admission`
 --
 ALTER TABLE `demandes_admission`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `depenses`
 --
 ALTER TABLE `depenses`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `devises`
+--
+ALTER TABLE `devises`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `documents_eleve`
@@ -3042,25 +2647,19 @@ ALTER TABLE `documents_eleve`
 -- AUTO_INCREMENT pour la table `documents_eleves`
 --
 ALTER TABLE `documents_eleves`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `eleves`
 --
 ALTER TABLE `eleves`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
-
---
--- AUTO_INCREMENT pour la table `emplois_temps`
---
-ALTER TABLE `emplois_temps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `emploi_temps`
 --
 ALTER TABLE `emploi_temps`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `emprunts`
@@ -3072,25 +2671,25 @@ ALTER TABLE `emprunts`
 -- AUTO_INCREMENT pour la table `emprunts_livres`
 --
 ALTER TABLE `emprunts_livres`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `etablissements`
 --
 ALTER TABLE `etablissements`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `etapes_admission`
 --
 ALTER TABLE `etapes_admission`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `evaluations`
 --
 ALTER TABLE `evaluations`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `evaluations_admission`
@@ -3108,25 +2707,25 @@ ALTER TABLE `factures`
 -- AUTO_INCREMENT pour la table `frais_eleves`
 --
 ALTER TABLE `frais_eleves`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `frais_scolaires`
 --
 ALTER TABLE `frais_scolaires`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `incidents`
 --
 ALTER TABLE `incidents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `inscriptions`
 --
 ALTER TABLE `inscriptions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `inscriptions_detaillees`
@@ -3138,25 +2737,43 @@ ALTER TABLE `inscriptions_detaillees`
 -- AUTO_INCREMENT pour la table `livres`
 --
 ALTER TABLE `livres`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `logs_scan_carte`
+--
+ALTER TABLE `logs_scan_carte`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `matieres`
 --
 ALTER TABLE `matieres`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `modeles_frais`
+--
+ALTER TABLE `modeles_frais`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `mouvements_caisse`
+--
+ALTER TABLE `mouvements_caisse`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `notes`
 --
 ALTER TABLE `notes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `notifications`
@@ -3174,13 +2791,13 @@ ALTER TABLE `notifications_destinataires`
 -- AUTO_INCREMENT pour la table `notifications_parents`
 --
 ALTER TABLE `notifications_parents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `notifications_recouvrement`
 --
 ALTER TABLE `notifications_recouvrement`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `notifications_suivi`
@@ -3192,7 +2809,7 @@ ALTER TABLE `notifications_suivi`
 -- AUTO_INCREMENT pour la table `paiements`
 --
 ALTER TABLE `paiements`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `paiements_cartes`
@@ -3201,22 +2818,34 @@ ALTER TABLE `paiements_cartes`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT pour la table `parametres_admission`
+--
+ALTER TABLE `parametres_admission`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT pour la table `parametres_bibliotheque`
 --
 ALTER TABLE `parametres_bibliotheque`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `parametres_cartes`
+--
+ALTER TABLE `parametres_cartes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `parametres_recouvrement`
 --
 ALTER TABLE `parametres_recouvrement`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `parents`
 --
 ALTER TABLE `parents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `penalites_bibliotheque`
@@ -3228,7 +2857,7 @@ ALTER TABLE `penalites_bibliotheque`
 -- AUTO_INCREMENT pour la table `personnel`
 --
 ALTER TABLE `personnel`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `presences_qr`
@@ -3240,13 +2869,19 @@ ALTER TABLE `presences_qr`
 -- AUTO_INCREMENT pour la table `recompenses`
 --
 ALTER TABLE `recompenses`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `reservations_livres`
 --
 ALTER TABLE `reservations_livres`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT pour la table `sanctions`
@@ -3258,13 +2893,19 @@ ALTER TABLE `sanctions`
 -- AUTO_INCREMENT pour la table `sections`
 --
 ALTER TABLE `sections`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `sessions_caisse`
+--
+ALTER TABLE `sessions_caisse`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `sms_logs`
 --
 ALTER TABLE `sms_logs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `solvabilite_eleves`
@@ -3288,13 +2929,13 @@ ALTER TABLE `suivi_scolaire`
 -- AUTO_INCREMENT pour la table `system_settings`
 --
 ALTER TABLE `system_settings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `templates_messages`
 --
 ALTER TABLE `templates_messages`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `transactions_cartes`
@@ -3306,7 +2947,7 @@ ALTER TABLE `transactions_cartes`
 -- AUTO_INCREMENT pour la table `transfers`
 --
 ALTER TABLE `transfers`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `transferts`
@@ -3318,13 +2959,13 @@ ALTER TABLE `transferts`
 -- AUTO_INCREMENT pour la table `transferts_sorties`
 --
 ALTER TABLE `transferts_sorties`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `transfer_documents`
 --
 ALTER TABLE `transfer_documents`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `transfer_fees`
@@ -3336,19 +2977,19 @@ ALTER TABLE `transfer_fees`
 -- AUTO_INCREMENT pour la table `transfer_history`
 --
 ALTER TABLE `transfer_history`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT pour la table `types_frais`
---
-ALTER TABLE `types_frais`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `types_sanctions`
 --
 ALTER TABLE `types_sanctions`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `type_frais`
+--
+ALTER TABLE `type_frais`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `users`
@@ -3360,7 +3001,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT pour la table `user_actions_log`
 --
 ALTER TABLE `user_actions_log`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- Contraintes pour les tables déchargées
@@ -3373,6 +3014,13 @@ ALTER TABLE `absences`
   ADD CONSTRAINT `absences_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `absences_ibfk_2` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `absences_ibfk_3` FOREIGN KEY (`valide_par`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `caisses`
+--
+ALTER TABLE `caisses`
+  ADD CONSTRAINT `caisses_ibfk_1` FOREIGN KEY (`devise_id`) REFERENCES `devises` (`id`),
+  ADD CONSTRAINT `caisses_ibfk_2` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`);
 
 --
 -- Contraintes pour la table `campagnes_cibles_dettes`
@@ -3393,6 +3041,13 @@ ALTER TABLE `campagnes_recouvrement`
 --
 ALTER TABLE `cartes_eleves`
   ADD CONSTRAINT `cartes_eleves_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `carte_eleve`
+--
+ALTER TABLE `carte_eleve`
+  ADD CONSTRAINT `fk_carte_annee_scolaire` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_carte_eleve` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `classes`
@@ -3442,6 +3097,12 @@ ALTER TABLE `demandes_admission`
   ADD CONSTRAINT `fk_demandes_admission_verifie_par` FOREIGN KEY (`verifie_par`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
+-- Contraintes pour la table `depenses`
+--
+ALTER TABLE `depenses`
+  ADD CONSTRAINT `depenses_ibfk_1` FOREIGN KEY (`devise_id`) REFERENCES `devises` (`id`);
+
+--
 -- Contraintes pour la table `documents_eleve`
 --
 ALTER TABLE `documents_eleve`
@@ -3454,15 +3115,6 @@ ALTER TABLE `documents_eleve`
 ALTER TABLE `eleves`
   ADD CONSTRAINT `fk_eleves_annee_scolaire` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_eleves_classe` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Contraintes pour la table `emplois_temps`
---
-ALTER TABLE `emplois_temps`
-  ADD CONSTRAINT `emplois_temps_ibfk_1` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`),
-  ADD CONSTRAINT `emplois_temps_ibfk_2` FOREIGN KEY (`matiere_id`) REFERENCES `matieres` (`id`),
-  ADD CONSTRAINT `emplois_temps_ibfk_3` FOREIGN KEY (`enseignant_id`) REFERENCES `personnel` (`id`),
-  ADD CONSTRAINT `emplois_temps_ibfk_4` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`);
 
 --
 -- Contraintes pour la table `emploi_temps`
@@ -3516,6 +3168,8 @@ ALTER TABLE `factures`
 -- Contraintes pour la table `frais_scolaires`
 --
 ALTER TABLE `frais_scolaires`
+  ADD CONSTRAINT `fk_frais_devise` FOREIGN KEY (`devise_id`) REFERENCES `devises` (`id`),
+  ADD CONSTRAINT `fk_frais_scolaires_type_frais` FOREIGN KEY (`type_frais_id`) REFERENCES `type_frais` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `frais_scolaires_ibfk_1` FOREIGN KEY (`classe_id`) REFERENCES `classes` (`id`),
   ADD CONSTRAINT `frais_scolaires_ibfk_2` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`);
 
@@ -3541,6 +3195,27 @@ ALTER TABLE `inscriptions_detaillees`
 --
 ALTER TABLE `livres`
   ADD CONSTRAINT `fk_livres_categorie` FOREIGN KEY (`categorie_id`) REFERENCES `categories_livres` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `logs_scan_carte`
+--
+ALTER TABLE `logs_scan_carte`
+  ADD CONSTRAINT `fk_logs_scan_carte` FOREIGN KEY (`carte_id`) REFERENCES `carte_eleve` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_logs_scan_eleve` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`) ON DELETE CASCADE;
+
+--
+-- Contraintes pour la table `modeles_frais`
+--
+ALTER TABLE `modeles_frais`
+  ADD CONSTRAINT `modeles_frais_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
+
+--
+-- Contraintes pour la table `mouvements_caisse`
+--
+ALTER TABLE `mouvements_caisse`
+  ADD CONSTRAINT `mouvements_caisse_ibfk_1` FOREIGN KEY (`session_caisse_id`) REFERENCES `sessions_caisse` (`id`),
+  ADD CONSTRAINT `mouvements_caisse_ibfk_2` FOREIGN KEY (`devise_id`) REFERENCES `devises` (`id`),
+  ADD CONSTRAINT `mouvements_caisse_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Contraintes pour la table `notes`
@@ -3583,6 +3258,7 @@ ALTER TABLE `notifications_suivi`
 -- Contraintes pour la table `paiements`
 --
 ALTER TABLE `paiements`
+  ADD CONSTRAINT `fk_paiements_type_frais` FOREIGN KEY (`type_frais_id`) REFERENCES `type_frais` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `paiements_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`),
   ADD CONSTRAINT `paiements_ibfk_2` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`),
   ADD CONSTRAINT `paiements_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
@@ -3591,8 +3267,15 @@ ALTER TABLE `paiements`
 -- Contraintes pour la table `paiements_cartes`
 --
 ALTER TABLE `paiements_cartes`
+  ADD CONSTRAINT `fk_paiements_cartes_devise` FOREIGN KEY (`devise_id`) REFERENCES `devises` (`id`),
   ADD CONSTRAINT `paiements_cartes_ibfk_1` FOREIGN KEY (`carte_id`) REFERENCES `cartes_eleves` (`id`),
   ADD CONSTRAINT `paiements_cartes_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Contraintes pour la table `parametres_admission`
+--
+ALTER TABLE `parametres_admission`
+  ADD CONSTRAINT `fk_parametres_admission_annee_scolaire` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `penalites_bibliotheque`
@@ -3628,6 +3311,13 @@ ALTER TABLE `reservations_livres`
 ALTER TABLE `sanctions`
   ADD CONSTRAINT `sanctions_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleves` (`id`),
   ADD CONSTRAINT `sanctions_ibfk_2` FOREIGN KEY (`enseignant_id`) REFERENCES `personnel` (`id`);
+
+--
+-- Contraintes pour la table `sessions_caisse`
+--
+ALTER TABLE `sessions_caisse`
+  ADD CONSTRAINT `sessions_caisse_ibfk_1` FOREIGN KEY (`caisse_id`) REFERENCES `caisses` (`id`),
+  ADD CONSTRAINT `sessions_caisse_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Contraintes pour la table `solvabilite_eleves`
@@ -3705,6 +3395,18 @@ ALTER TABLE `transfer_fees`
 ALTER TABLE `transfer_history`
   ADD CONSTRAINT `transfer_history_ibfk_1` FOREIGN KEY (`transfer_id`) REFERENCES `transfers` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `transfer_history_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
+-- Contraintes pour la table `type_frais`
+--
+ALTER TABLE `type_frais`
+  ADD CONSTRAINT `fk_type_frais_annee_scolaire` FOREIGN KEY (`annee_scolaire_id`) REFERENCES `annees_scolaires` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -7,6 +7,7 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier et créer la table messages si nécessaire
 try {
@@ -53,10 +54,7 @@ try {
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('communication')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('communication', 'messages', 'create', '../../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

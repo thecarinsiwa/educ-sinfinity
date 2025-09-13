@@ -4,16 +4,16 @@
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
-require_once '../../config/config.php';
-require_once '../../config/database.php';
-require_once '../../includes/functions.php';
+ require_once '../../config/config.php';
+ require_once '../../config/database.php';
+ require_once '../../includes/functions.php';
+ require_once '../../includes/permissions-pages.php';
+ require_once '../../includes/ui-permissions.php';
+ 
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admissions')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
+requirePagePermissionFromDB('admissions', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Admissions';
 
@@ -280,3 +280,4 @@ include '../../includes/header.php';
 </div>
 
 <?php include '../../includes/footer.php'; ?>
+

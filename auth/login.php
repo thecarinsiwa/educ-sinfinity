@@ -4,13 +4,13 @@
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
-require_once '../config/config.php';
-require_once '../config/database.php';
-require_once '../includes/functions.php';
+require_once dirname(__DIR__) . '/config/config.php';
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Rediriger si déjà connecté
 if (isLoggedIn()) {
-    redirectTo('../dashboard.php');
+    redirectTo('dashboard.php');
 }
 
 $error_message = '';

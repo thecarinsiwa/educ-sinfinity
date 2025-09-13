@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('personnel') && !checkPermission('personnel_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('personnel', 'export', 'read', '../../dashboard.php');
 
 // Paramètres d'export
 $format = $_GET['format'] ?? 'excel';
@@ -21,9 +19,10 @@ $fonction_filter = $_GET['fonction'] ?? '';
 $status_filter = $_GET['status'] ?? '';
 
 // Construction de la requête
-$sql = "SELECT p.*, u.username, u.role 
+$sql = "SELECT p.*, u.username, r.nom as role_nom 
         FROM personnel p 
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN roles r ON u.role_id = r.id
         WHERE 1=1";
 
 $params = [];
@@ -95,7 +94,7 @@ if ($format === 'excel') {
             $membre['salaire_base'] ? number_format($membre['salaire_base'], 0, ',', ' ') . ' FC' : '',
             ucfirst($membre['status']),
             $membre['username'] ?: 'Aucun',
-            $membre['role'] ? ucfirst($membre['role']) : ''
+            $membre['role_nom'] ? ucfirst($membre['role_nom']) : 'Non défini'
         ], ';');
     }
     

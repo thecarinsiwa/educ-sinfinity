@@ -7,13 +7,12 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+
+requirePagePermissionFromDB('admin', 'users', 'read', '../../dashboard.php');
 
 $page_title = 'Comptes en Attente d\'Activation';
 
@@ -386,3 +385,4 @@ setInterval(function() {
 </script>
 
 <?php include '../../includes/footer.php'; ?>
+

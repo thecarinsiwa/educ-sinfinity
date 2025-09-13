@@ -1,0 +1,226 @@
+/**
+ * Styles pour les éléments d'interface avec permissions
+ * Système de gestion scolaire - République Démocratique du Congo
+ */
+
+/* Boutons et liens désactivés */
+.btn.disabled,
+.btn:disabled,
+.btn-outline-secondary.disabled,
+span.btn-outline-secondary.disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #fff !important;
+    text-decoration: line-through !important;
+}
+
+.btn.disabled:hover,
+.btn:disabled:hover,
+.btn-outline-secondary.disabled:hover,
+span.btn-outline-secondary.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #fff !important;
+    text-decoration: line-through !important;
+}
+
+/* Éléments avec permissions désactivées */
+.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Classes conditionnelles */
+.text-muted.disabled {
+    color: #6c757d !important;
+}
+
+/* Indicateurs visuels pour les permissions */
+.permission-indicator {
+    position: relative;
+}
+
+.permission-indicator.disabled::after {
+    content: "🔒";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+/* Cartes avec permissions conditionnelles */
+.card.disabled {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.card.disabled .card-header {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.card.disabled .card-body {
+    color: #6c757d;
+}
+
+/* Tableaux avec colonnes conditionnelles */
+.table th.disabled,
+.table td.disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Formulaires avec champs conditionnels */
+.form-control.disabled,
+.form-select.disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Messages d'information selon les permissions */
+.alert.permission-warning {
+    border-left: 4px solid #ffc107;
+    background-color: #fff3cd;
+}
+
+.alert.permission-info {
+    border-left: 4px solid #17a2b8;
+    background-color: #d1ecf1;
+}
+
+/* Animations pour les éléments activés/désactivés */
+.permission-transition {
+    transition: all 0.3s ease;
+}
+
+.permission-transition:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Indicateurs de statut des permissions */
+.permission-status {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.permission-status.allowed {
+    background-color: #28a745;
+}
+
+.permission-status.denied {
+    background-color: #dc3545;
+}
+
+.permission-status.partial {
+    background-color: #ffc107;
+}
+
+/* Styles pour les dropdowns avec permissions */
+.dropdown-item.disabled {
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.dropdown-item.disabled:hover {
+    background-color: transparent;
+}
+
+/* Badges de permissions */
+.permission-badge {
+    font-size: 0.75em;
+    padding: 0.25em 0.5em;
+}
+
+.permission-badge.allowed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.permission-badge.denied {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Tooltips pour les éléments désactivés */
+.tooltip-disabled {
+    position: relative;
+}
+
+.tooltip-disabled::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.875em;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+
+.tooltip-disabled:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .permission-indicator.disabled::after {
+        font-size: 0.7em;
+        top: 3px;
+        right: 3px;
+    }
+    
+    .tooltip-disabled::before {
+        font-size: 0.75em;
+        padding: 3px 8px;
+    }
+}
+
+/* Mode sombre (si supporté) */
+@media (prefers-color-scheme: dark) {
+    .card.disabled {
+        background-color: #343a40;
+        border-color: #495057;
+    }
+    
+    .card.disabled .card-header {
+        background-color: #495057;
+        color: #adb5bd;
+    }
+    
+    .table th.disabled,
+    .table td.disabled {
+        background-color: #343a40;
+        color: #adb5bd;
+    }
+    
+    .form-control.disabled,
+    .form-select.disabled {
+        background-color: #343a40;
+        color: #adb5bd;
+    }
+}

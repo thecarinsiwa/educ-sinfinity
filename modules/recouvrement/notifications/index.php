@@ -1,23 +1,21 @@
-<?php
+﻿<?php
 /**
  * Module Recouvrement - Notifications
- * Application de gestion scolaire - République Démocratique du Congo
+ * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('recouvrement_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('recouvrement', 'notifications', 'read', '../../../dashboard.php');
 
 $page_title = 'Notifications de recouvrement';
 
-// Obtenir l'année scolaire actuelle
+// Obtenir l'annÃ©e scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
 // Traitement des actions
@@ -54,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $database->commit();
-            showMessage('success', 'Notification programmée avec succès.');
+            showMessage('success', 'Notification programmÃ©e avec succÃ¨s.');
             redirectTo('index.php');
             
         } catch (Exception $e) {
@@ -67,13 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notification_id = (int)($_POST['notification_id'] ?? 0);
         
         try {
-            // Simuler l'envoi immédiat
+            // Simuler l'envoi immÃ©diat
             $database->query(
                 "UPDATE notifications_destinataires SET status = 'sent', sent_at = NOW() WHERE notification_id = ?",
                 [$notification_id]
             );
             
-            showMessage('success', 'Notification envoyée immédiatement.');
+            showMessage('success', 'Notification envoyÃ©e immÃ©diatement.');
             redirectTo('index.php');
             
         } catch (Exception $e) {
@@ -82,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les notifications
+// RÃ©cupÃ©rer les notifications
 $notifications = $database->query(
     "SELECT 
         nr.*,
@@ -115,13 +113,13 @@ $notification_stats = $database->query(
     [$current_year['id']]
 )->fetch();
 
-// Récupérer les campagnes pour le formulaire
+// RÃ©cupÃ©rer les campagnes pour le formulaire
 $campaigns = $database->query(
     "SELECT id, nom FROM campagnes_recouvrement WHERE annee_scolaire_id = ? AND status = 'active'",
     [$current_year['id']]
 )->fetchAll();
 
-// Récupérer les débiteurs pour le formulaire
+// RÃ©cupÃ©rer les dÃ©biteurs pour le formulaire
 $debitors = $database->query(
     "SELECT 
         e.id,
@@ -135,8 +133,9 @@ $debitors = $database->query(
      JOIN inscriptions i ON e.id = i.eleve_id
      JOIN classes c ON i.classe_id = c.id
      JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
+        JOIN type_frais tf ON fs.type_frais_id = tf.id
      LEFT JOIN paiements p ON e.id = p.eleve_id 
-         AND fs.type_frais COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+         AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
          AND p.annee_scolaire_id = fs.annee_scolaire_id
      WHERE i.annee_scolaire_id = ? AND fs.annee_scolaire_id = ?
      GROUP BY e.id, e.nom, e.prenom, e.telephone, e.email, c.nom
@@ -207,7 +206,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-success"><?php echo $notification_stats['total_envoyees']; ?></h4>
-                <p class="card-text">Envoyées</p>
+                <p class="card-text">EnvoyÃ©es</p>
             </div>
         </div>
     </div>
@@ -215,7 +214,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-danger"><?php echo $notification_stats['total_echouees']; ?></h4>
-                <p class="card-text">Échouées</p>
+                <p class="card-text">Ã‰chouÃ©es</p>
             </div>
         </div>
     </div>
@@ -239,7 +238,7 @@ include '../../../includes/header.php';
                         <th>Campagne</th>
                         <th>Destinataires</th>
                         <th>Statut</th>
-                        <th>Date création</th>
+                        <th>Date crÃ©ation</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -261,12 +260,12 @@ include '../../../includes/header.php';
                                 <small class="text-muted"><?php echo substr(htmlspecialchars($notification['message']), 0, 50) . '...'; ?></small>
                             </td>
                             <td>
-                                <?php echo htmlspecialchars($notification['campagne_nom'] ?? 'Général'); ?>
+                                <?php echo htmlspecialchars($notification['campagne_nom'] ?? 'GÃ©nÃ©ral'); ?>
                             </td>
                             <td>
                                 <span class="badge bg-primary"><?php echo $notification['total_destinataires']; ?></span><br>
                                 <small class="text-muted">
-                                    <?php echo $notification['envoyees']; ?> envoyées, 
+                                    <?php echo $notification['envoyees']; ?> envoyÃ©es, 
                                     <?php echo $notification['en_attente']; ?> en attente
                                 </small>
                             </td>
@@ -289,7 +288,7 @@ include '../../../includes/header.php';
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="details.php?id=<?php echo $notification['id']; ?>" class="btn btn-outline-primary" title="Voir détails">
+                                    <a href="details.php?id=<?php echo $notification['id']; ?>" class="btn btn-outline-primary" title="Voir dÃ©tails">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <?php if ($notification['en_attente'] > 0): ?>
@@ -299,7 +298,7 @@ include '../../../includes/header.php';
                                         </button>
                                     <?php endif; ?>
                                     <button type="button" class="btn btn-outline-info" 
-                                            onclick="showNotificationModal(<?php echo $notification['id']; ?>)" title="Répéter">
+                                            onclick="showNotificationModal(<?php echo $notification['id']; ?>)" title="RÃ©pÃ©ter">
                                         <i class="fas fa-redo"></i>
                                     </button>
                                 </div>
@@ -325,7 +324,7 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <div class="mb-3">
                     <strong>Rappel paiement :</strong>
-                    <p class="text-muted small">Bonjour {nom_parent}, votre enfant {nom_eleve} a une dette de {montant} FC. Merci de régulariser.</p>
+                    <p class="text-muted small">Bonjour {nom_parent}, votre enfant {nom_eleve} a une dette de {montant} FC. Merci de rÃ©gulariser.</p>
                 </div>
                 <div class="mb-3">
                     <strong>Rappel urgent :</strong>
@@ -333,7 +332,7 @@ include '../../../includes/header.php';
                 </div>
                 <div class="mb-3">
                     <strong>Confirmation paiement :</strong>
-                    <p class="text-muted small">Merci pour votre paiement de {montant} FC. Reçu confirmé pour {nom_eleve}.</p>
+                    <p class="text-muted small">Merci pour votre paiement de {montant} FC. ReÃ§u confirmÃ© pour {nom_eleve}.</p>
                 </div>
             </div>
         </div>
@@ -354,11 +353,11 @@ include '../../../includes/header.php';
                 </div>
                 <div class="mb-3">
                     <strong>Lettre de mise en demeure :</strong>
-                    <p class="text-muted small">Suite à nos relances, nous vous mettons en demeure de régulariser la dette de {montant} FC.</p>
+                    <p class="text-muted small">Suite Ã  nos relances, nous vous mettons en demeure de rÃ©gulariser la dette de {montant} FC.</p>
                 </div>
                 <div class="mb-3">
                     <strong>Accord de paiement :</strong>
-                    <p class="text-muted small">Nous acceptons votre proposition de paiement échelonné pour {nom_eleve}.</p>
+                    <p class="text-muted small">Nous acceptons votre proposition de paiement Ã©chelonnÃ© pour {nom_eleve}.</p>
                 </div>
             </div>
         </div>
@@ -379,11 +378,11 @@ include '../../../includes/header.php';
                 </div>
                 <div class="mb-3">
                     <strong>Mise en demeure :</strong>
-                    <p class="text-muted small">Lettre de mise en demeure avec délai de 15 jours.</p>
+                    <p class="text-muted small">Lettre de mise en demeure avec dÃ©lai de 15 jours.</p>
                 </div>
                 <div class="mb-3">
                     <strong>Accord de paiement :</strong>
-                    <p class="text-muted small">Convention de paiement échelonné signée.</p>
+                    <p class="text-muted small">Convention de paiement Ã©chelonnÃ© signÃ©e.</p>
                 </div>
             </div>
         </div>
@@ -406,7 +405,7 @@ include '../../../includes/header.php';
                             <div class="mb-3">
                                 <label for="type_notification" class="form-label">Type de notification *</label>
                                 <select class="form-select" id="type_notification" name="type_notification" required>
-                                    <option value="">Sélectionner</option>
+                                    <option value="">SÃ©lectionner</option>
                                     <option value="sms">SMS</option>
                                     <option value="email">Email</option>
                                     <option value="lettre">Lettre</option>
@@ -448,13 +447,13 @@ include '../../../includes/header.php';
                             <div class="col-md-6">
                                 <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="selectAllDebitors()">
                                     <i class="fas fa-check-double me-1"></i>
-                                    Sélectionner tous les débiteurs
+                                    SÃ©lectionner tous les dÃ©biteurs
                                 </button>
                             </div>
                             <div class="col-md-6">
                                 <button type="button" class="btn btn-outline-secondary btn-sm mb-2" onclick="clearSelection()">
                                     <i class="fas fa-times me-1"></i>
-                                    Effacer la sélection
+                                    Effacer la sÃ©lection
                                 </button>
                             </div>
                         </div>
@@ -500,7 +499,7 @@ function clearSelection() {
 }
 
 function sendImmediate(notificationId) {
-    if (confirm('Envoyer cette notification immédiatement ?')) {
+    if (confirm('Envoyer cette notification immÃ©diatement ?')) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.innerHTML = `
@@ -513,9 +512,9 @@ function sendImmediate(notificationId) {
 }
 
 function showNotificationModal(notificationId) {
-    // Récupérer les détails de la notification et pré-remplir le formulaire
-    // Cette fonction peut être étendue pour récupérer les données via AJAX
-    document.getElementById('sendNotificationModal').querySelector('.modal-title').textContent = 'Répéter notification';
+    // RÃ©cupÃ©rer les dÃ©tails de la notification et prÃ©-remplir le formulaire
+    // Cette fonction peut Ãªtre Ã©tendue pour rÃ©cupÃ©rer les donnÃ©es via AJAX
+    document.getElementById('sendNotificationModal').querySelector('.modal-title').textContent = 'RÃ©pÃ©ter notification';
     new bootstrap.Modal(document.getElementById('sendNotificationModal')).show();
 }
 
@@ -524,9 +523,11 @@ document.querySelector('form').addEventListener('submit', function(e) {
     const destinataires = document.querySelectorAll('input[name="destinataires[]"]:checked');
     if (destinataires.length === 0) {
         e.preventDefault();
-        alert('Veuillez sélectionner au moins un destinataire.');
+        alert('Veuillez sÃ©lectionner au moins un destinataire.');
     }
 });
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+

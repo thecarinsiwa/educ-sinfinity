@@ -7,13 +7,10 @@
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 requireLogin();
 
-// Vérifier les permissions
-if (!hasPermission('cartes_eleves', 'settings')) {
-    showMessage('error', 'Vous n\'avez pas les permissions nécessaires pour accéder à ce module.');
-    redirectTo('../dashboard.php');
-}
+requirePagePermissionFromDB('cartes_eleves', 'settings', 'edit', '../dashboard.php');
 
 $page_title = "Paramètres des Cartes d'Élèves";
 $current_module = 'cartes_eleves';

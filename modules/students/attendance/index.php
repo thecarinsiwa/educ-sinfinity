@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('students', 'attendance', 'read', '../../../dashboard.php');
 
 $page_title = 'Suivi des Absences et Retards';
 
@@ -177,23 +176,17 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (hasPagePermission('students', 'attendance', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="add-absence.php">
-                        <i class="fas fa-user-times me-2"></i>Signaler absence
-                    </a></li>
-                    <li><a class="dropdown-item" href="add-delay.php">
-                        <i class="fas fa-clock me-2"></i>Signaler retard
-                    </a></li>
+                    <li><?php echo generatePermissionLink('add-absence.php', 'dropdown-item', 'Signaler absence', 'fas fa-user-times me-2', 'students', 'attendance', 'create'); ?></li>
+                    <li><?php echo generatePermissionLink('add-delay.php', 'dropdown-item', 'Signaler retard', 'fas fa-clock me-2', 'students', 'attendance', 'create'); ?></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="bulk-attendance.php">
-                        <i class="fas fa-list-check me-2"></i>Appel de classe
-                    </a></li>
+                    <li><?php echo generatePermissionLink('bulk-attendance.php', 'dropdown-item', 'Appel de classe', 'fas fa-list-check me-2', 'students', 'attendance', 'create'); ?></li>
                 </ul>
             </div>
         <?php endif; ?>
@@ -417,17 +410,20 @@ include '../../../includes/header.php';
                                                         title="Historique">
                                                     <i class="fas fa-history"></i>
                                                 </button>
-                                                <?php if (checkPermission('students')): ?>
-                                                    <a href="edit.php?id=<?php echo $absence['id']; ?>"
-                                                       class="btn btn-outline-primary" title="Modifier">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
+                                                <?php if (hasPagePermission('students', 'attendance', 'update')): ?>
+                                                    <?php echo generatePermissionLink('edit.php?id=' . $absence['id'], 'btn btn-outline-primary', 'Modifier', 'fas fa-edit', 'students', 'attendance', 'update'); ?>
                                                     <?php if (!in_array($absence['type_absence'], ['absence_justifiee', 'retard_justifie'])): ?>
-                                                        <button type="button" class="btn btn-outline-success"
-                                                                onclick="justifyAbsence(<?php echo $absence['id']; ?>)"
-                                                                title="Justifier">
-                                                            <i class="fas fa-check"></i>
-                                                        </button>
+                                                        <?php if (hasPagePermission('students', 'attendance', 'update')): ?>
+                                                            <button type="button" class="btn btn-outline-success"
+                                                                    onclick="justifyAbsence(<?php echo $absence['id']; ?>)"
+                                                                    title="Justifier">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                        <?php else: ?>
+                                                            <span class="btn btn-outline-secondary disabled" title="Pas d'accès">
+                                                                <i class="fas fa-check"></i>
+                                                            </span>
+                                                        <?php endif; ?>
                                                     <?php endif; ?>
                                                 <?php endif; ?>
                                             </div>
@@ -561,7 +557,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('students')): ?>
+<?php if (hasPagePermission('students', 'attendance', 'read')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -575,34 +571,22 @@ include '../../../includes/header.php';
                 <div class="row">
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="add-absence.php" class="btn btn-outline-danger">
-                                <i class="fas fa-user-times me-2"></i>
-                                Signaler absence
-                            </a>
+                            <?php echo generatePermissionLink('add-absence.php', 'btn btn-outline-danger', 'Signaler absence', 'fas fa-user-times me-2', 'students', 'attendance', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="add-delay.php" class="btn btn-outline-warning">
-                                <i class="fas fa-clock me-2"></i>
-                                Signaler retard
-                            </a>
+                            <?php echo generatePermissionLink('add-delay.php', 'btn btn-outline-warning', 'Signaler retard', 'fas fa-clock me-2', 'students', 'attendance', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="bulk-attendance.php" class="btn btn-outline-primary">
-                                <i class="fas fa-list-check me-2"></i>
-                                Appel de classe
-                            </a>
+                            <?php echo generatePermissionLink('bulk-attendance.php', 'btn btn-outline-primary', 'Appel de classe', 'fas fa-list-check me-2', 'students', 'attendance', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <a href="reports/monthly.php" class="btn btn-outline-info">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                Rapport mensuel
-                            </a>
+                            <?php echo generatePermissionLink('reports/monthly.php', 'btn btn-outline-info', 'Rapport mensuel', 'fas fa-chart-bar me-2', 'students', 'attendance', 'read'); ?>
                         </div>
                     </div>
                 </div>
@@ -909,3 +893,5 @@ function logUserAction(action, module, details, targetId) {
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+
+

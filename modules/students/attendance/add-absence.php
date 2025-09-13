@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Ajouter une absence ou un retard
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('students', 'attendance', 'create', '../../../dashboard.php');
 
 $page_title = 'Signaler une Absence ou un Retard';
 
@@ -39,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Validation
         if (!$eleve_id) {
-            throw new Exception('Veuillez sélectionner un élève');
+            throw new Exception('Veuillez sÃ©lectionner un Ã©lÃ¨ve');
         }
         
         if (!in_array($type_absence, ['absence', 'retard', 'absence_justifiee', 'retard_justifie'])) {
@@ -54,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Heure requise');
         }
         
-        // Vérifier que l'élève existe et est inscrit
+        // VÃ©rifier que l'Ã©lÃ¨ve existe et est inscrit
         $eleve = $database->query(
             "SELECT e.*, c.nom as classe_nom, c.niveau, i.classe_id
              FROM eleves e
@@ -65,13 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->fetch();
         
         if (!$eleve) {
-            throw new Exception('Élève non trouvé ou non inscrit');
+            throw new Exception('Ã‰lÃ¨ve non trouvÃ© ou non inscrit');
         }
         
         // Combiner date et heure
         $datetime_absence = $date_absence . ' ' . $heure_absence;
         
-        // Vérifier qu'il n'y a pas déjà une absence/retard pour cet élève à cette date/heure
+        // VÃ©rifier qu'il n'y a pas dÃ©jÃ  une absence/retard pour cet Ã©lÃ¨ve Ã  cette date/heure
         $existing = $database->query(
             "SELECT id FROM absences 
              WHERE eleve_id = ? AND date_absence = ?",
@@ -79,14 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->fetch();
         
         if ($existing) {
-            throw new Exception('Une absence/retard est déjà enregistrée pour cet élève à cette date et heure');
+            throw new Exception('Une absence/retard est dÃ©jÃ  enregistrÃ©e pour cet Ã©lÃ¨ve Ã  cette date et heure');
         }
         
         // Commencer une transaction
         $database->beginTransaction();
         
         try {
-            // Insérer l'absence
+            // InsÃ©rer l'absence
             $database->query(
                 "INSERT INTO absences (eleve_id, classe_id, type_absence, date_absence, motif, created_at)
                  VALUES (?, ?, ?, ?, ?, NOW())",
@@ -99,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logUserAction(
                 'create_absence',
                 'attendance',
-                ucfirst($type_absence) . ' créée pour ' . $eleve['nom'] . ' ' . $eleve['prenom'] . 
+                ucfirst($type_absence) . ' crÃ©Ã©e pour ' . $eleve['nom'] . ' ' . $eleve['prenom'] . 
                 ' (' . $eleve['classe_nom'] . ') - Date: ' . formatDateTime($datetime_absence) .
                 ($motif ? ' - Motif: ' . $motif : ''),
                 $absence_id
@@ -108,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Valider la transaction
             $database->commit();
             
-            showMessage('success', ucfirst($type_absence) . ' enregistrée avec succès pour ' . $eleve['nom'] . ' ' . $eleve['prenom']);
+            showMessage('success', ucfirst($type_absence) . ' enregistrÃ©e avec succÃ¨s pour ' . $eleve['nom'] . ' ' . $eleve['prenom']);
             redirectTo('index.php');
             
         } catch (Exception $e) {
@@ -121,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les élèves pour le formulaire
+// RÃ©cupÃ©rer les élèves pour le formulaire
 $eleves = $database->query(
     "SELECT e.id, e.nom, e.prenom, e.numero_matricule, c.nom as classe_nom, c.niveau
      FROM eleves e
@@ -132,7 +131,7 @@ $eleves = $database->query(
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
@@ -180,16 +179,16 @@ include '../../../includes/header.php';
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="search_student" class="form-label">Rechercher un élève</label>
+                            <label for="search_student" class="form-label">Rechercher un Ã©lÃ¨ve</label>
                             <input type="text" class="form-control" id="search_student" 
-                                   placeholder="Nom, prénom ou matricule..." onkeyup="filterStudents()">
+                                   placeholder="Nom, prÃ©nom ou matricule..." onkeyup="filterStudents()">
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="eleve_id" class="form-label">Élève <span class="text-danger">*</span></label>
+                        <label for="eleve_id" class="form-label">Ã‰lÃ¨ve <span class="text-danger">*</span></label>
                         <select class="form-select" id="eleve_id" name="eleve_id" required>
-                            <option value="">Sélectionner un élève</option>
+                            <option value="">SÃ©lectionner un Ã©lÃ¨ve</option>
                             <?php foreach ($eleves as $eleve): ?>
                                 <option value="<?php echo $eleve['id']; ?>" 
                                         data-classe="<?php echo $eleve['classe_nom']; ?>"
@@ -207,7 +206,7 @@ include '../../../includes/header.php';
                         <div class="col-md-4 mb-3">
                             <label for="type_absence" class="form-label">Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="type_absence" name="type_absence" required>
-                                <option value="">Sélectionner</option>
+                                <option value="">SÃ©lectionner</option>
                                 <option value="absence">Absence</option>
                                 <option value="retard">Retard</option>
                             </select>
@@ -234,7 +233,7 @@ include '../../../includes/header.php';
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="justifiee" name="justifiee">
                             <label class="form-check-label" for="justifiee">
-                                Absence/retard justifiée
+                                Absence/retard justifiÃ©e
                             </label>
                         </div>
                     </div>
@@ -266,17 +265,17 @@ include '../../../includes/header.php';
                 <div class="alert alert-info">
                     <h6><i class="fas fa-lightbulb me-2"></i>Conseils</h6>
                     <ul class="mb-0">
-                        <li>Utilisez les filtres pour trouver rapidement un élève</li>
-                        <li>Vérifiez la date et l'heure avant d'enregistrer</li>
-                        <li>Précisez le motif pour faciliter le suivi</li>
-                        <li>Cochez "justifiée" si vous avez reçu un justificatif</li>
+                        <li>Utilisez les filtres pour trouver rapidement un Ã©lÃ¨ve</li>
+                        <li>VÃ©rifiez la date et l'heure avant d'enregistrer</li>
+                        <li>PrÃ©cisez le motif pour faciliter le suivi</li>
+                        <li>Cochez "justifiÃ©e" si vous avez reÃ§u un justificatif</li>
                     </ul>
                 </div>
                 
                 <div class="alert alert-warning">
                     <h6><i class="fas fa-exclamation-triangle me-2"></i>Attention</h6>
                     <p class="mb-0">
-                        Cette action sera enregistrée dans l'historique avec votre nom d'utilisateur 
+                        Cette action sera enregistrÃ©e dans l'historique avec votre nom d'utilisateur 
                         (<strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>).
                     </p>
                 </div>
@@ -304,7 +303,7 @@ function filterStudents() {
         option.style.display = (classeMatch && searchMatch) ? 'block' : 'none';
     });
     
-    // Réinitialiser la sélection si l'option sélectionnée n'est plus visible
+    // RÃ©initialiser la sÃ©lection si l'option sÃ©lectionnÃ©e n'est plus visible
     const selectedOption = eleveSelect.querySelector('option:checked');
     if (selectedOption && selectedOption.style.display === 'none') {
         eleveSelect.value = '';
@@ -324,16 +323,20 @@ document.getElementById('absenceForm').addEventListener('submit', function(e) {
         return;
     }
     
-    // Vérifier que la date n'est pas dans le futur
+    // VÃ©rifier que la date n'est pas dans le futur
     const selectedDate = new Date(dateAbsence + ' ' + heureAbsence);
     const now = new Date();
     
     if (selectedDate > now) {
         e.preventDefault();
-        alert('La date et l\'heure ne peuvent pas être dans le futur');
+        alert('La date et l\'heure ne peuvent pas Ãªtre dans le futur');
         return;
     }
 });
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+
+requirePagePermissionFromDB('evaluations', 'notes', 'read', '../../../dashboard.php');
 
 // Récupérer le type de rapport
 $type = sanitizeInput($_GET['type'] ?? '');
@@ -505,3 +504,4 @@ include '../../../includes/header.php';
 <?php endif; ?>
 
 <?php include '../../../includes/footer.php'; ?>
+

@@ -7,16 +7,13 @@
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 requireLogin();
+
+requirePagePermissionFromDB('cartes_eleves', 'qr-scanner', 'read', '../dashboard.php');
 
 $page_title = "Scanner QR Code";
 $current_module = 'cartes_eleves';
-
-// Vérifier les permissions
-if (!hasPermission('cartes_eleves', 'scan')) {
-    showMessage('error', 'Vous n\'avez pas les permissions nécessaires pour scanner les cartes.');
-    redirectTo('../dashboard.php');
-}
 
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>

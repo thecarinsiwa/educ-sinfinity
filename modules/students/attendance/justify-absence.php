@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Justifier une absence
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,19 +7,18 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
-    exit;
-}
+
+requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
+
 
 header('Content-Type: application/json');
 
 try {
-    // Récupérer les données JSON
+    // RÃ©cupÃ©rer les donnÃ©es JSON
     $input = json_decode(file_get_contents('php://input'), true);
     $absence_id = (int)($input['id'] ?? 0);
     
@@ -27,7 +26,7 @@ try {
         throw new Exception('ID d\'absence manquant');
     }
     
-    // Vérifier que l'absence existe et n'est pas déjà justifiée
+    // VÃ©rifier que l'absence existe et n'est pas dÃ©jÃ  justifiÃ©e
     $absence = $database->query(
         "SELECT a.*, e.nom as eleve_nom, e.prenom as eleve_prenom, 
                 c.nom as classe_nom
@@ -40,18 +39,18 @@ try {
     )->fetch();
     
     if (!$absence) {
-        throw new Exception('Absence non trouvée');
+        throw new Exception('Absence non trouvÃ©e');
     }
     
     if ($absence['justifiee']) {
-        throw new Exception('Cette absence est déjà justifiée');
+        throw new Exception('Cette absence est dÃ©jÃ  justifiÃ©e');
     }
     
     // Commencer une transaction
     $database->beginTransaction();
     
     try {
-        // Mettre à jour l'absence
+        // Mettre Ã  jour l'absence
         $database->query(
             "UPDATE absences 
              SET justifiee = 1, 
@@ -65,7 +64,7 @@ try {
         logUserAction(
             'justify_absence',
             'attendance',
-            'Absence justifiée pour ' . $absence['eleve_nom'] . ' ' . $absence['eleve_prenom'] . 
+            'Absence justifiÃ©e pour ' . $absence['eleve_nom'] . ' ' . $absence['eleve_prenom'] . 
             ' (' . $absence['classe_nom'] . ') - Date: ' . formatDate($absence['date_absence']),
             $absence_id
         );
@@ -75,7 +74,7 @@ try {
         
         echo json_encode([
             'success' => true,
-            'message' => 'Absence justifiée avec succès'
+            'message' => 'Absence justifiÃ©e avec succÃ¨s'
         ]);
         
     } catch (Exception $e) {
@@ -92,3 +91,7 @@ try {
     ]);
 }
 ?>
+
+
+
+

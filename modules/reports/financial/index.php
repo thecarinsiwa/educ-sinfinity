@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification
 requireLogin();
-if (!checkPermission('finances') && !checkPermission('finances_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('reports', 'financial', 'read', '../../dashboard.php');
 
 $page_title = 'Rapports Financiers';
 

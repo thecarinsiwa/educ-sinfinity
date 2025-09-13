@@ -7,18 +7,35 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'expenses', 'create', '../../dashboard.php');
 
 $page_title = 'Ajouter une dépense';
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
+
+// Obtenir la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
+// Vérifier si la table depenses existe et a les bonnes colonnes
+try {
+    $table_exists = $database->query("SHOW TABLES LIKE 'depenses'")->fetch();
+    if ($table_exists) {
+        // Vérifier si les colonnes devise_id et montant_devise_par_defaut existent
+        $columns = $database->query("SHOW COLUMNS FROM depenses LIKE 'devise_id'")->fetch();
+        if (!$columns) {
+            $database->execute("ALTER TABLE depenses ADD COLUMN devise_id INT NOT NULL DEFAULT 1 AFTER montant");
+            $database->execute("ALTER TABLE depenses ADD COLUMN montant_devise_par_defaut DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER devise_id");
+            $database->execute("ALTER TABLE depenses ADD FOREIGN KEY (devise_id) REFERENCES devises(id)");
+        }
+    }
+} catch (Exception $e) {
+    // Table update failed, continue anyway
+}
 
 $errors = [];
 $success = false;
@@ -75,6 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fournisseur, $numero_facture, $mode_paiement, $statut,
                 $current_year['id'], $_SESSION['user_id']
             ]);
+            
+            $depense_id = $database->lastInsertId();
+            
+            // Enregistrer automatiquement la dépense dans la caisse si une session est ouverte
+            require_once 'caisse_functions.php';
+            enregistrerDepenseDansCaisse($depense_id, $libelle, $montant, $devise_id, $date_depense, $fournisseur);
             
             $database->commit();
             
@@ -159,7 +182,7 @@ include '../../../includes/header.php';
                                        max="100000000" 
                                        step="0.01" 
                                        required>
-                                <span class="input-group-text" id="montant-symbole">FC</span>
+                                <span class="input-group-text" id="montant-symbole"><?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></span>
                             </div>
                             <div class="invalid-feedback">
                                 Veuillez saisir un montant valide.
@@ -373,16 +396,17 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <?php
-                // Statistiques du mois en cours
+                // Statistiques du mois en cours (convertis en devise par défaut)
                 try {
                     $stats_sql = "SELECT 
                                     COUNT(*) as total_depenses,
-                                    SUM(CASE WHEN statut = 'payee' THEN montant ELSE 0 END) as total_paye,
-                                    SUM(CASE WHEN statut = 'en_attente' THEN montant ELSE 0 END) as total_attente
-                                  FROM depenses 
-                                  WHERE MONTH(date_depense) = MONTH(CURRENT_DATE()) 
-                                  AND YEAR(date_depense) = YEAR(CURRENT_DATE())
-                                  AND annee_scolaire_id = ?";
+                                    SUM(CASE WHEN statut = 'payee' THEN d.montant / dev.taux_conversion ELSE 0 END) as total_paye,
+                                    SUM(CASE WHEN statut = 'en_attente' THEN d.montant / dev.taux_conversion ELSE 0 END) as total_attente
+                                  FROM depenses d
+                                  JOIN devises dev ON d.devise_id = dev.id
+                                  WHERE MONTH(d.date_depense) = MONTH(CURRENT_DATE()) 
+                                  AND YEAR(d.date_depense) = YEAR(CURRENT_DATE())
+                                  AND d.annee_scolaire_id = ?";
                     
                     $stats = $database->query($stats_sql, [$current_year['id']])->fetch();
                 } catch (Exception $e) {
@@ -396,11 +420,11 @@ include '../../../includes/header.php';
                         <small class="text-muted">Dépenses ce mois</small>
                     </div>
                     <div class="col-6">
-                        <h6 class="text-success"><?php echo formatMoney($stats['total_paye'] ?? 0); ?></h6>
+                        <h6 class="text-success"><?php echo number_format($stats['total_paye'] ?? 0, 0, ',', ' '); ?> <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></h6>
                         <small class="text-muted">Payé</small>
                     </div>
                     <div class="col-6">
-                        <h6 class="text-warning"><?php echo formatMoney($stats['total_attente'] ?? 0); ?></h6>
+                        <h6 class="text-warning"><?php echo number_format($stats['total_attente'] ?? 0, 0, ',', ' '); ?> <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></h6>
                         <small class="text-muted">En attente</small>
                     </div>
                 </div>
@@ -455,7 +479,7 @@ function updateMontantSymbole() {
     if (selectedOption && selectedOption.dataset.symbole) {
         symboleSpan.textContent = selectedOption.dataset.symbole;
     } else {
-        symboleSpan.textContent = 'FC';
+        symboleSpan.textContent = '<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>';
     }
     
     // Mettre à jour la conversion
@@ -475,8 +499,9 @@ function updateConversion() {
         const symbole = selectedOption.dataset.symbole;
         const code = selectedOption.text.split(' - ')[0];
         
-        // Calculer le montant en devise par défaut (CDF)
-        const montantCDF = montant / taux;
+        // Calculer le montant en devise par défaut
+        const montantDeviseDefaut = montant / taux;
+        const symboleDeviseDefaut = '<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>';
         
         conversionDetails.innerHTML = `
             <div class="row">
@@ -484,11 +509,11 @@ function updateConversion() {
                     <strong>Montant saisi :</strong> ${montant.toLocaleString()} ${symbole} (${code})
                 </div>
                 <div class="col-md-6">
-                    <strong>Équivalent en CDF :</strong> ${montantCDF.toLocaleString()} FC
+                    <strong>Équivalent en ${symboleDeviseDefaut} :</strong> ${montantDeviseDefaut.toLocaleString()} ${symboleDeviseDefaut}
                 </div>
             </div>
             <small class="text-muted mt-2 d-block">
-                Taux de conversion : 1 ${code} = ${(1/taux).toLocaleString()} FC
+                Taux de conversion : 1 ${code} = ${(1/taux).toLocaleString()} ${symboleDeviseDefaut}
             </small>
         `;
         

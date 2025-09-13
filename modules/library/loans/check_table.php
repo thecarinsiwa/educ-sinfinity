@@ -6,9 +6,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
+// Vérifier l'authentification et les permissions
 requireLogin();
+requirePagePermissionFromDB('library', 'loans', 'read', '../../../dashboard.php');
 
 echo "<h2>Vérification de la table emprunts_livres</h2>";
 
@@ -103,3 +105,4 @@ try {
     echo "<p style='color: red;'>❌ Erreur : " . $e->getMessage() . "</p>";
 }
 ?>
+

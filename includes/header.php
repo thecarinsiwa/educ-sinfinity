@@ -16,6 +16,9 @@
     
     <!-- Custom CSS -->
     <link href="<?php echo APP_URL; ?>/assets/css/style.css" rel="stylesheet">
+    
+    <!-- Permissions UI CSS -->
+    <link href="<?php echo APP_URL; ?>/assets/css/permissions-ui.css" rel="stylesheet">
 
     <!-- Print CSS -->
     <link href="<?php echo APP_URL; ?>/assets/css/print.css" rel="stylesheet" media="print">
@@ -296,8 +299,10 @@
                             </a>
                         </li>
                         
-                        <?php foreach (MODULES as $module_key => $module): ?>
-                            <?php if (checkPermission($module_key) || checkPermission($module_key . '_view')): ?>
+                        <?php 
+                        // Utiliser le nouveau système de permissions basé sur les pages
+                        foreach (MODULES as $module_key => $module): 
+                            if (function_exists('checkModuleAccess') && checkModuleAccess($module_key)): ?>
                                 <?php if (isset($module['submenu']) && !empty($module['submenu'])): ?>
                                     <li class="nav-item has-submenu">
                                         <a class="nav-link submenu-toggle" href="#" data-module="<?php echo $module_key; ?>">
@@ -308,7 +313,7 @@
                                             <ul class="nav flex-column">
                                                 <?php foreach ($module['submenu'] as $submenu_key => $submenu_item): ?>
                                                     <li class="nav-item">
-                                                        <a class="nav-link" href="<?php echo APP_URL; ?>/<?php echo $submenu_item['url']; ?>">
+                                                        <a class="nav-link" href="<?php echo APP_URL; ?>/<?php echo function_exists('getCorrectMenuUrl') ? getCorrectMenuUrl($submenu_item['url'], $module_key, $submenu_key) : $submenu_item['url']; ?>">
                                                             <i class="<?php echo $submenu_item['icon']; ?>"></i>
                                                             <?php echo $submenu_item['name']; ?>
                                                         </a>
@@ -319,7 +324,35 @@
                                     </li>
                                 <?php else: ?>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="<?php echo APP_URL; ?>/modules/<?php echo $module_key; ?>/">
+                                        <a class="nav-link" href="<?php echo APP_URL; ?>/<?php echo function_exists('getDefaultModuleUrl') ? getDefaultModuleUrl($module_key) : 'modules/' . $module_key . '/index.php'; ?>">
+                                            <i class="<?php echo $module['icon']; ?>"></i>
+                                            <?php echo $module['name']; ?>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+                            <?php elseif (function_exists('checkSidebarPermissionCompat') && checkSidebarPermissionCompat($module_key)): ?>
+                                <?php if (isset($module['submenu']) && !empty($module['submenu'])): ?>
+                                    <li class="nav-item has-submenu">
+                                        <a class="nav-link submenu-toggle" href="#" data-module="<?php echo $module_key; ?>">
+                                            <i class="<?php echo $module['icon']; ?>"></i>
+                                            <?php echo $module['name']; ?>
+                                        </a>
+                                        <div class="submenu" id="submenu-<?php echo $module_key; ?>">
+                                            <ul class="nav flex-column">
+                                                <?php foreach ($module['submenu'] as $submenu_key => $submenu_item): ?>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" href="<?php echo APP_URL; ?>/<?php echo function_exists('getCorrectMenuUrl') ? getCorrectMenuUrl($submenu_item['url'], $module_key, $submenu_key) : $submenu_item['url']; ?>">
+                                                            <i class="<?php echo $submenu_item['icon']; ?>"></i>
+                                                            <?php echo $submenu_item['name']; ?>
+                                                        </a>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                <?php else: ?>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo APP_URL; ?>/<?php echo function_exists('getDefaultModuleUrl') ? getDefaultModuleUrl($module_key) : 'modules/' . $module_key . '/index.php'; ?>">
                                             <i class="<?php echo $module['icon']; ?>"></i>
                                             <?php echo $module['name']; ?>
                                         </a>
@@ -328,23 +361,174 @@
                             <?php endif; ?>
                         <?php endforeach; ?>
                         
-                        <?php if (checkPermission('admin')): ?>
+                        <?php if ((function_exists('checkModuleAccess') && checkModuleAccess('users')) || (function_exists('checkSidebarPermissionCompat') && checkSidebarPermissionCompat('admin'))): ?>
                             <li class="nav-item mt-3">
                                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
                                     <span>Administration</span>
                                 </h6>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/users.php">
-                                    <i class="fas fa-users-cog"></i>
-                                    Utilisateurs
-                                </a>
+                            
+                            <!-- Gestion des Utilisateurs -->
+                            <?php if ((function_exists('checkModuleAccess') && checkModuleAccess('users')) || (function_exists('checkSidebarPermissionCompat') && checkSidebarPermissionCompat('admin'))): ?>
+                                <li class="nav-item has-submenu">
+                                    <a class="nav-link submenu-toggle" href="#" data-module="users">
+                                        <i class="fas fa-users-cog"></i>
+                                        Utilisateurs
+                                    </a>
+                                    <div class="submenu" id="submenu-users">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/users.php">
+                                                    <i class="fas fa-list me-2"></i>
+                                                    Liste des utilisateurs
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/users.php?action=add">
+                                                    <i class="fas fa-user-plus me-2"></i>
+                                                    Ajouter un utilisateur
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            <?php endif; ?>
+                            
+                            <!-- Gestion des Rôles -->
+                            <?php if ((function_exists('checkUserPermission') && checkUserPermission('users', 'read')) || checkPermission('admin')): ?>
+                                <li class="nav-item has-submenu">
+                                    <a class="nav-link submenu-toggle" href="#" data-module="roles">
+                                        <i class="fas fa-user-tag"></i>
+                                        Rôles & Permissions
+                                    </a>
+                                    <div class="submenu" id="submenu-roles">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/roles.php">
+                                                    <i class="fas fa-list me-2"></i>
+                                                    Liste des rôles
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/roles/add.php">
+                                                    <i class="fas fa-plus me-2"></i>
+                                                    Créer un rôle
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/roles.php?view=permissions">
+                                                    <i class="fas fa-shield-alt me-2"></i>
+                                                    Gestion des permissions
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            <?php endif; ?>
+                            
+                            <!-- Paramètres Système -->
+                            <?php if ((function_exists('checkUserPermission') && checkUserPermission('settings', 'read')) || checkPermission('admin')): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo APP_URL; ?>/admin/settings.php">
+                                        <i class="fas fa-cogs"></i>
+                                        Paramètres
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            
+                            <!-- Rapports d'Administration -->
+                            <?php if ((function_exists('checkUserPermission') && checkUserPermission('reports', 'read')) || checkPermission('admin')): ?>
+                                <li class="nav-item has-submenu">
+                                    <a class="nav-link submenu-toggle" href="#" data-module="admin-reports">
+                                        <i class="fas fa-chart-line"></i>
+                                        Rapports Admin
+                                    </a>
+                                    <div class="submenu" id="submenu-admin-reports">
+                                        <ul class="nav flex-column">
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/reports/users.php">
+                                                    <i class="fas fa-users me-2"></i>
+                                                    Rapport utilisateurs
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/reports/activity.php">
+                                                    <i class="fas fa-history me-2"></i>
+                                                    Activité système
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/reports/security.php">
+                                                    <i class="fas fa-shield-alt me-2"></i>
+                                                    Sécurité
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <!-- Informations sur le rôle de l'utilisateur -->
+                        <li class="nav-item mt-4">
+                            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+                                <span>Mon Rôle</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <div class="nav-link text-center" style="background-color: rgba(255,255,255,0.1); border-radius: 8px; margin: 5px 10px;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-user-shield me-2"></i>
+                                    <div>
+                                        <small class="d-block text-white fw-bold">
+                                            <?php echo ucfirst($current_user['user_role'] ?? 'Utilisateur'); ?>
+                                        </small>
+                                        <small class="text-muted">
+                                            <?php echo $current_user['nom'] ?? $current_user['username']; ?>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        
+                        <!-- Statistiques rapides pour les admins -->
+                        <?php if ((function_exists('checkUserPermission') && checkUserPermission('users', 'read')) || checkPermission('admin')): ?>
+                            <li class="nav-item mt-3">
+                                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+                                    <span>Statistiques</span>
+                                </h6>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="<?php echo APP_URL; ?>/admin/settings.php">
-                                    <i class="fas fa-cogs"></i>
-                                    Paramètres
-                                </a>
+                                <div class="nav-link" style="background-color: rgba(255,255,255,0.05); border-radius: 8px; margin: 5px 10px;">
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <small class="d-block text-white fw-bold">
+                                                <?php
+                                                try {
+                                                    $users_count = $database->query("SELECT COUNT(*) as count FROM users")->fetch()['count'];
+                                                    echo $users_count;
+                                                } catch (Exception $e) {
+                                                    echo '0';
+                                                }
+                                                ?>
+                                            </small>
+                                            <small class="text-muted">Utilisateurs</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="d-block text-white fw-bold">
+                                                <?php
+                                                try {
+                                                    $roles_count = $database->query("SELECT COUNT(*) as count FROM roles WHERE actif = 1")->fetch()['count'];
+                                                    echo $roles_count;
+                                                } catch (Exception $e) {
+                                                    echo '0';
+                                                }
+                                                ?>
+                                            </small>
+                                            <small class="text-muted">Rôles actifs</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </li>
                         <?php endif; ?>
                     </ul>

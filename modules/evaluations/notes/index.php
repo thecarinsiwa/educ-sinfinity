@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('evaluations', 'notes', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des notes';
 
@@ -147,7 +145,7 @@ include '../../../includes/header.php';
                 Rapports
             </a>
         </div>
-        <?php if (checkPermission('evaluations')): ?>
+        <?php if (checkPagePermission('evaluations')): ?>
             <div class="btn-group">
                 <a href="../evaluations/add.php" class="btn btn-success">
                     <i class="fas fa-plus me-1"></i>
@@ -417,7 +415,7 @@ include '../../../includes/header.php';
                                        class="btn btn-outline-info btn-sm">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php if (checkPermission('evaluations')): ?>
+                                    <?php if (checkPagePermission('evaluations')): ?>
                                         <a href="entry.php?evaluation_id=<?php echo $evaluation['id']; ?>" 
                                            class="btn btn-outline-success btn-sm">
                                             <i class="fas fa-edit"></i>
@@ -510,7 +508,7 @@ include '../../../includes/header.php';
                                                class="btn btn-outline-info" title="Voir">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPermission('evaluations')): ?>
+                                            <?php if (checkPagePermission('evaluations')): ?>
                                                 <a href="entry.php?evaluation_id=<?php echo $evaluation['id']; ?>" 
                                                    class="btn btn-outline-success" title="Saisir notes">
                                                     <i class="fas fa-edit"></i>
@@ -539,7 +537,7 @@ include '../../../includes/header.php';
                     <?php else: ?>
                         Commencez par créer des évaluations pour pouvoir saisir des notes.
                         <br>
-                        <?php if (checkPermission('evaluations')): ?>
+                        <?php if (checkPagePermission('evaluations')): ?>
                             <a href="../evaluations/add.php" class="btn btn-primary mt-2">
                                 <i class="fas fa-plus me-1"></i>
                                 Créer une évaluation

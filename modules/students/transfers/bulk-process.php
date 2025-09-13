@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Traitement en masse des transferts
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,12 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'transfers', 'edit', '../../../dashboard.php');
 
 $page_title = "Traitement en masse des transferts";
 
@@ -23,14 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
         $action = $_POST['bulk_action'];
         
         if (empty($selected_transfers)) {
-            throw new Exception("Aucun transfert sélectionné");
+            throw new Exception("Aucun transfert sÃ©lectionnÃ©");
         }
         
         $database->beginTransaction();
         $processed_count = 0;
         
         foreach ($selected_transfers as $transfer_id) {
-            // Vérifier que le transfert existe
+            // VÃ©rifier que le transfert existe
             $transfer = $database->query("SELECT * FROM transfers WHERE id = ?", [$transfer_id])->fetch();
             if (!$transfer) continue;
             
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         
                         // Historique
                         $database->query(
-                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'approbation', 'en_attente', 'approuve', 'Approuvé en masse', ?)",
+                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'approbation', 'en_attente', 'approuve', 'ApprouvÃ© en masse', ?)",
                             [$transfer_id, $_SESSION['user_id']]
                         );
                         $processed_count++;
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         
                         // Historique
                         $database->query(
-                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'rejet', 'en_attente', 'rejete', 'Rejeté en masse', ?)",
+                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'rejet', 'en_attente', 'rejete', 'RejetÃ© en masse', ?)",
                             [$transfer_id, $_SESSION['user_id']]
                         );
                         $processed_count++;
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                             [$transfer_id]
                         );
                         
-                        // Mettre à jour le statut de l'élève si c'est une sortie
+                        // Mettre Ã  jour le statut de l'Ã©lÃ¨ve si c'est une sortie
                         if (in_array($transfer['type_mouvement'], ['transfert_sortant', 'sortie_definitive'])) {
                             $database->query(
                                 "UPDATE inscriptions SET statut = 'inactive', date_fin = CURDATE() WHERE eleve_id = ? AND statut = 'active'",
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         
                         // Historique
                         $database->query(
-                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'completion', 'approuve', 'complete', 'Complété en masse', ?)",
+                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'completion', 'approuve', 'complete', 'ComplÃ©tÃ© en masse', ?)",
                             [$transfer_id, $_SESSION['user_id']]
                         );
                         $processed_count++;
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                     
                 case 'generate_certificates':
                     if ($transfer['statut'] === 'complete' && !$transfer['certificat_genere']) {
-                        // Générer un numéro de certificat
+                        // GÃ©nÃ©rer un numÃ©ro de certificat
                         $numero_certificat = 'CERT' . date('Y') . str_pad($transfer_id, 6, '0', STR_PAD_LEFT);
                         
                         $database->query(
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
                         
                         // Historique
                         $database->query(
-                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Certificat généré en masse', ?)",
+                            "INSERT INTO transfer_history (transfer_id, action, ancien_statut, nouveau_statut, commentaire, user_id) VALUES (?, 'modification', ?, ?, 'Certificat gÃ©nÃ©rÃ© en masse', ?)",
                             [$transfer_id, $transfer['statut'], $transfer['statut'], $_SESSION['user_id']]
                         );
                         $processed_count++;
@@ -115,13 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
         $database->commit();
         
         $action_labels = [
-            'approve' => 'approuvés',
-            'reject' => 'rejetés',
-            'complete' => 'complétés',
-            'generate_certificates' => 'certificats générés'
+            'approve' => 'approuvÃ©s',
+            'reject' => 'rejetÃ©s',
+            'complete' => 'complÃ©tÃ©s',
+            'generate_certificates' => 'certificats gÃ©nÃ©rÃ©s'
         ];
         
-        showMessage('success', "$processed_count transfert(s) " . $action_labels[$action] . " avec succès !");
+        showMessage('success', "$processed_count transfert(s) " . $action_labels[$action] . " avec succÃ¨s !");
         
         // Logger l'action
         logUserAction('bulk_process_transfers', 'transfers', "Action en masse: $action sur $processed_count transferts", null);
@@ -132,13 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_action'])) {
     }
 }
 
-// Récupérer les filtres
+// RÃ©cupÃ©rer les filtres
 $status_filter = $_GET['status'] ?? '';
 $type_filter = $_GET['type'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 
-// Construire la requête avec filtres
+// Construire la requÃªte avec filtres
 $where_conditions = ['1=1'];
 $params = [];
 
@@ -164,7 +164,7 @@ if ($date_to) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les transferts
+// RÃ©cupÃ©rer les transferts
 $transfers = $database->query(
     "SELECT t.*, e.numero_matricule, e.nom, e.prenom, 
             c_orig.nom as classe_origine_nom, c_orig.niveau as classe_origine_niveau,
@@ -361,7 +361,7 @@ include '../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="bulk-header">
     <div class="container-fluid">
         <div class="row align-items-center">
@@ -371,7 +371,7 @@ include '../../../includes/header.php';
                     Traitement en masse des transferts
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Gérer plusieurs transferts simultanément
+                    GÃ©rer plusieurs transferts simultanÃ©ment
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -404,25 +404,25 @@ include '../../../includes/header.php';
         <div class="col-lg-2 col-md-4 col-sm-6">
             <div class="stat-item">
                 <span class="stat-number text-info"><?php echo $stats['approuve']; ?></span>
-                <span class="stat-label">Approuvés</span>
+                <span class="stat-label">ApprouvÃ©s</span>
             </div>
         </div>
         <div class="col-lg-2 col-md-4 col-sm-6">
             <div class="stat-item">
                 <span class="stat-number text-danger"><?php echo $stats['rejete']; ?></span>
-                <span class="stat-label">Rejetés</span>
+                <span class="stat-label">RejetÃ©s</span>
             </div>
         </div>
         <div class="col-lg-2 col-md-4 col-sm-6">
             <div class="stat-item">
                 <span class="stat-number text-success"><?php echo $stats['complete']; ?></span>
-                <span class="stat-label">Complétés</span>
+                <span class="stat-label">ComplÃ©tÃ©s</span>
             </div>
         </div>
         <div class="col-lg-2 col-md-4 col-sm-6">
             <div class="stat-item">
                 <span class="stat-number text-secondary"><?php echo count($transfers); ?></span>
-                <span class="stat-label">Affichés</span>
+                <span class="stat-label">AffichÃ©s</span>
             </div>
         </div>
     </div>
@@ -436,9 +436,9 @@ include '../../../includes/header.php';
             <select class="form-select" id="status" name="status">
                 <option value="">Tous les statuts</option>
                 <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
-                <option value="approuve" <?php echo $status_filter === 'approuve' ? 'selected' : ''; ?>>Approuvé</option>
-                <option value="rejete" <?php echo $status_filter === 'rejete' ? 'selected' : ''; ?>>Rejeté</option>
-                <option value="complete" <?php echo $status_filter === 'complete' ? 'selected' : ''; ?>>Complété</option>
+                <option value="approuve" <?php echo $status_filter === 'approuve' ? 'selected' : ''; ?>>ApprouvÃ©</option>
+                <option value="rejete" <?php echo $status_filter === 'rejete' ? 'selected' : ''; ?>>RejetÃ©</option>
+                <option value="complete" <?php echo $status_filter === 'complete' ? 'selected' : ''; ?>>ComplÃ©tÃ©</option>
             </select>
         </div>
         
@@ -448,7 +448,7 @@ include '../../../includes/header.php';
                 <option value="">Tous les types</option>
                 <option value="transfert_entrant" <?php echo $type_filter === 'transfert_entrant' ? 'selected' : ''; ?>>Transfert entrant</option>
                 <option value="transfert_sortant" <?php echo $type_filter === 'transfert_sortant' ? 'selected' : ''; ?>>Transfert sortant</option>
-                <option value="sortie_definitive" <?php echo $type_filter === 'sortie_definitive' ? 'selected' : ''; ?>>Sortie définitive</option>
+                <option value="sortie_definitive" <?php echo $type_filter === 'sortie_definitive' ? 'selected' : ''; ?>>Sortie dÃ©finitive</option>
             </select>
         </div>
         
@@ -480,10 +480,10 @@ include '../../../includes/header.php';
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleAllTransfers()">
                     <label class="form-check-label fw-bold" for="selectAll">
-                        Tout sélectionner
+                        Tout sÃ©lectionner
                     </label>
                 </div>
-                <span id="selectedCount" class="text-muted">0 sélectionné(s)</span>
+                <span id="selectedCount" class="text-muted">0 sÃ©lectionnÃ©(s)</span>
             </div>
             
             <div class="d-flex gap-2">
@@ -491,12 +491,12 @@ include '../../../includes/header.php';
                     <option value="">Choisir une action</option>
                     <option value="approve">Approuver</option>
                     <option value="reject">Rejeter</option>
-                    <option value="complete">Compléter</option>
-                    <option value="generate_certificates">Générer certificats</option>
+                    <option value="complete">ComplÃ©ter</option>
+                    <option value="generate_certificates">GÃ©nÃ©rer certificats</option>
                 </select>
                 <button type="submit" class="btn btn-warning btn-modern" id="bulkSubmit" disabled>
                     <i class="fas fa-cogs me-1"></i>
-                    Exécuter
+                    ExÃ©cuter
                 </button>
             </div>
         </div>
@@ -511,12 +511,12 @@ include '../../../includes/header.php';
                         <th width="50">
                             <input type="checkbox" id="selectAllHeader" onchange="toggleAllTransfers()">
                         </th>
-                        <th>Élève</th>
+                        <th>Ã‰lÃ¨ve</th>
                         <th>Type</th>
-                        <th>École</th>
+                        <th>Ã‰cole</th>
                         <th>Date demande</th>
                         <th>Statut</th>
-                        <th>Traité par</th>
+                        <th>TraitÃ© par</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -546,7 +546,7 @@ include '../../../includes/header.php';
                                 <?php if ($transfer['type_mouvement'] === 'transfert_entrant'): ?>
                                     <div class="fw-bold">De: <?php echo htmlspecialchars($transfer['ecole_origine']); ?></div>
                                 <?php else: ?>
-                                    <div class="fw-bold">Vers: <?php echo htmlspecialchars($transfer['ecole_destination'] ?: 'Non spécifié'); ?></div>
+                                    <div class="fw-bold">Vers: <?php echo htmlspecialchars($transfer['ecole_destination'] ?: 'Non spÃ©cifiÃ©'); ?></div>
                                 <?php endif; ?>
                             </td>
                             <td><?php echo date('d/m/Y', strtotime($transfer['date_demande'])); ?></td>
@@ -559,7 +559,7 @@ include '../../../includes/header.php';
                                 <?php if ($transfer['traite_par_nom']): ?>
                                     <small><?php echo htmlspecialchars($transfer['traite_par_nom'] . ' ' . $transfer['traite_par_prenom']); ?></small>
                                 <?php else: ?>
-                                    <small class="text-muted">Non assigné</small>
+                                    <small class="text-muted">Non assignÃ©</small>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -586,19 +586,19 @@ include '../../../includes/header.php';
 <?php else: ?>
 <div class="text-center py-5">
     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-    <h5 class="text-muted">Aucun transfert trouvé</h5>
-    <p class="text-muted">Aucun transfert ne correspond aux critères sélectionnés.</p>
+    <h5 class="text-muted">Aucun transfert trouvÃ©</h5>
+    <p class="text-muted">Aucun transfert ne correspond aux critÃ¨res sÃ©lectionnÃ©s.</p>
 </div>
 <?php endif; ?>
 
 <script>
-// Sélectionner/désélectionner tous les transferts
+// SÃ©lectionner/dÃ©sÃ©lectionner tous les transferts
 function toggleAllTransfers() {
     const selectAll = document.getElementById('selectAll');
     const selectAllHeader = document.getElementById('selectAllHeader');
     const checkboxes = document.querySelectorAll('.transfer-checkbox');
     
-    // Synchroniser les deux cases "tout sélectionner"
+    // Synchroniser les deux cases "tout sÃ©lectionner"
     selectAll.checked = selectAllHeader.checked = selectAll.checked || selectAllHeader.checked;
     
     checkboxes.forEach(checkbox => {
@@ -608,15 +608,15 @@ function toggleAllTransfers() {
     updateSelectedCount();
 }
 
-// Mettre à jour le compteur de sélection
+// Mettre Ã  jour le compteur de sÃ©lection
 function updateSelectedCount() {
     const checkboxes = document.querySelectorAll('.transfer-checkbox:checked');
     const count = checkboxes.length;
     
-    document.getElementById('selectedCount').textContent = count + ' sélectionné(s)';
+    document.getElementById('selectedCount').textContent = count + ' sÃ©lectionnÃ©(s)';
     document.getElementById('bulkSubmit').disabled = count === 0;
     
-    // Mettre à jour l'état des cases "tout sélectionner"
+    // Mettre Ã  jour l'état des cases "tout sÃ©lectionner"
     const allCheckboxes = document.querySelectorAll('.transfer-checkbox');
     const selectAll = document.getElementById('selectAll');
     const selectAllHeader = document.getElementById('selectAllHeader');
@@ -640,7 +640,7 @@ document.getElementById('bulkForm').addEventListener('submit', function(e) {
     
     if (selectedTransfers.length === 0) {
         e.preventDefault();
-        alert('Veuillez sélectionner au moins un transfert');
+        alert('Veuillez sÃ©lectionner au moins un transfert');
         return false;
     }
     
@@ -653,11 +653,11 @@ document.getElementById('bulkForm').addEventListener('submit', function(e) {
     const actionLabels = {
         'approve': 'approuver',
         'reject': 'rejeter',
-        'complete': 'compléter',
-        'generate_certificates': 'générer les certificats pour'
+        'complete': 'complÃ©ter',
+        'generate_certificates': 'gÃ©nÃ©rer les certificats pour'
     };
     
-    const confirmMessage = `Êtes-vous sûr de vouloir ${actionLabels[action]} ${selectedTransfers.length} transfert(s) ?`;
+    const confirmMessage = `ÃŠtes-vous sÃ»r de vouloir ${actionLabels[action]} ${selectedTransfers.length} transfert(s) ?`;
     
     if (!confirm(confirmMessage)) {
         e.preventDefault();
@@ -670,3 +670,7 @@ updateSelectedCount();
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

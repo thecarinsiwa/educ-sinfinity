@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('academic', 'notes', 'create', '../../../dashboard.php', 'add');
 
 $page_title = 'Ajouter une note';
 

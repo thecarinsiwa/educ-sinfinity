@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('list.php');
-}
+requirePagePermission('users', 'add', 'create', '../../dashboard.php');
 
 $page_title = 'Ajouter un Utilisateur';
 
@@ -27,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prenom = sanitizeInput($_POST['prenom'] ?? '');
         $email = sanitizeInput($_POST['email'] ?? '');
         $telephone = sanitizeInput($_POST['telephone'] ?? '');
-        $role = sanitizeInput($_POST['role'] ?? '');
+        $role_id = (int)($_POST['role_id'] ?? 0);
         $status = sanitizeInput($_POST['status'] ?? 'actif');
         $adresse = sanitizeInput($_POST['adresse'] ?? '');
         $date_naissance = sanitizeInput($_POST['date_naissance'] ?? '');
@@ -54,8 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Le nom et le prénom sont requis');
         }
         
-        if (!$role) {
+        if (!$role_id) {
             throw new Exception('Le rôle est requis');
+        }
+        
+        // Vérifier que le rôle existe et est actif
+        $role_check = $database->query(
+            "SELECT id, nom FROM roles WHERE id = ? AND actif = 1",
+            [$role_id]
+        )->fetch();
+        
+        if (!$role_check) {
+            throw new Exception('Le rôle sélectionné n\'existe pas ou n\'est pas actif');
         }
         
         if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -92,9 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $password_hash = hashPassword($password);
             
             $database->query(
-                "INSERT INTO users (username, password, nom, prenom, email, telephone, role, status, adresse, date_naissance, genre, created_at) 
+                "INSERT INTO users (username, password, nom, prenom, email, telephone, role_id, status, adresse, date_naissance, genre, created_at) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-                [$username, $password_hash, $nom, $prenom, $email, $telephone, $role, $status, $adresse, $date_naissance, $genre]
+                [$username, $password_hash, $nom, $prenom, $email, $telephone, $role_id, $status, $adresse, $date_naissance, $genre]
             );
             
             $user_id = $database->lastInsertId();
@@ -103,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logUserAction(
                 'create_user',
                 'users',
-                'Utilisateur créé: ' . $username . ' (' . $nom . ' ' . $prenom . ') - Rôle: ' . $role,
+                'Utilisateur créé: ' . $username . ' (' . $nom . ' ' . $prenom . ') - Rôle: ' . $role_check['nom'],
                 $user_id
             );
             
@@ -167,28 +175,31 @@ include '../../includes/header.php';
                             <div class="form-text">Utilisé pour se connecter au système</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
-                            <select class="form-select" id="role" name="role" required>
+                            <label for="role_id" class="form-label">Rôle <span class="text-danger">*</span></label>
+                            <select class="form-select" id="role_id" name="role_id" required>
                                 <option value="">Sélectionner un rôle</option>
-                                <option value="admin" <?php echo ($_POST['role'] ?? '') === 'admin' ? 'selected' : ''; ?>>
-                                    Administrateur
-                                </option>
-                                <option value="directeur" <?php echo ($_POST['role'] ?? '') === 'directeur' ? 'selected' : ''; ?>>
-                                    Directeur
-                                </option>
-                                <option value="enseignant" <?php echo ($_POST['role'] ?? '') === 'enseignant' ? 'selected' : ''; ?>>
-                                    Enseignant
-                                </option>
-                                <option value="secretaire" <?php echo ($_POST['role'] ?? '') === 'secretaire' ? 'selected' : ''; ?>>
-                                    Secrétaire
-                                </option>
-                                <option value="comptable" <?php echo ($_POST['role'] ?? '') === 'comptable' ? 'selected' : ''; ?>>
-                                    Comptable
-                                </option>
-                                <option value="surveillant" <?php echo ($_POST['role'] ?? '') === 'surveillant' ? 'selected' : ''; ?>>
-                                    Surveillant
-                                </option>
+                                <?php
+                                // Récupérer les rôles actifs
+                                $roles = $database->query(
+                                    "SELECT id, nom, description FROM roles WHERE actif = 1 ORDER BY nom"
+                                )->fetchAll();
+                                
+                                $selected_role_id = (int)($_POST['role_id'] ?? 0);
+                                
+                                foreach ($roles as $role):
+                                ?>
+                                    <option value="<?php echo $role['id']; ?>" 
+                                            <?php echo $selected_role_id === $role['id'] ? 'selected' : ''; ?>
+                                            title="<?php echo htmlspecialchars($role['description']); ?>">
+                                        <?php echo htmlspecialchars($role['nom']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
+                            <div class="form-text">
+                                <a href="roles/" class="text-decoration-none">
+                                    <i class="fas fa-cog me-1"></i>Gérer les rôles
+                                </a>
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>

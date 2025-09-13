@@ -1,28 +1,28 @@
-<?php
+﻿<?php
 /**
- * Nouveau transfert entrant d'élève
+ * Nouveau transfert entrant d'Ã©lÃ¨ve
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'transfers', 'create', '../../../dashboard.php');
 
 $page_title = "Nouveau transfert entrant";
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
     try {
-        // Validation des données
+        // Validation des donnÃ©es
         $required_fields = ['nom', 'prenom', 'date_naissance', 'ecole_origine', 'classe_destination_id', 'motif', 'date_demande'];
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
             }
         }
         
-        // Vérifier si l'élève existe déjà
+        // VÃ©rifier si l'Ã©lÃ¨ve existe dÃ©jÃ 
         $existing_student = null;
         if (!empty($_POST['numero_matricule'])) {
             $existing_student = $database->query(
@@ -44,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
         $eleve_id = null;
         
         if ($existing_student) {
-            // Élève existant
+            // Ã‰lÃ¨ve existant
             $eleve_id = $existing_student['id'];
         } else {
-            // Créer un nouvel élève
+            // CrÃ©er un nouvel Ã©lÃ¨ve
             $numero_matricule = $_POST['numero_matricule'] ?: generateMatricule();
             
             $sql_eleve = "INSERT INTO eleves (numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe, adresse, telephone_parent, email_parent, nom_pere, nom_mere, profession_pere, profession_mere, created_at) 
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
             $eleve_id = $database->lastInsertId();
         }
         
-        // Créer l'inscription pour l'année en cours
+        // CrÃ©er l'inscription pour l'année en cours
         $sql_inscription = "INSERT INTO inscriptions (eleve_id, classe_id, annee_scolaire_id, date_inscription, statut) 
                            VALUES (?, ?, ?, ?, 'active')
                            ON DUPLICATE KEY UPDATE classe_id = VALUES(classe_id), statut = 'active'";
@@ -84,9 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
             $_POST['date_demande']
         ]);
         
-        // Créer le transfert
+        // CrÃ©er le transfert
         $sql_transfer = "INSERT INTO transfers (eleve_id, type_mouvement, ecole_origine, ecole_destination, classe_destination_id, motif, date_demande, statut, frais_transfert, observations, traite_par, date_traitement) 
-                        VALUES (?, 'transfert_entrant', ?, 'Notre École', ?, ?, ?, 'en_attente', ?, ?, ?, NOW())";
+                        VALUES (?, 'transfert_entrant', ?, 'Notre Ã‰cole', ?, ?, ?, 'en_attente', ?, ?, ?, NOW())";
         
         $database->query($sql_transfer, [
             $eleve_id,
@@ -104,9 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
         // Ajouter les documents requis
         $documents_requis = [
             ['nom' => 'Bulletin scolaire', 'type' => 'bulletin', 'obligatoire' => true],
-            ['nom' => 'Certificat de scolarité', 'type' => 'certificat_scolarite', 'obligatoire' => true],
+            ['nom' => 'Certificat de scolaritÃ©', 'type' => 'certificat_scolarite', 'obligatoire' => true],
             ['nom' => 'Acte de naissance', 'type' => 'acte_naissance', 'obligatoire' => true],
-            ['nom' => 'Photo d\'identité', 'type' => 'photo', 'obligatoire' => false]
+            ['nom' => 'Photo d\'identitÃ©', 'type' => 'photo', 'obligatoire' => false]
         ];
         
         foreach ($documents_requis as $doc) {
@@ -121,15 +121,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
         }
         
         // Enregistrer l'historique
-        $sql_history = "INSERT INTO transfer_history (transfer_id, action, nouveau_statut, commentaire, user_id) VALUES (?, 'creation', 'en_attente', 'Transfert entrant créé', ?)";
+        $sql_history = "INSERT INTO transfer_history (transfer_id, action, nouveau_statut, commentaire, user_id) VALUES (?, 'creation', 'en_attente', 'Transfert entrant crÃ©Ã©', ?)";
         $database->query($sql_history, [$transfer_id, $_SESSION['user_id']]);
         
         // Logger l'action
-        logUserAction('create_transfer', 'transfers', "Nouveau transfert entrant créé pour l'élève ID: $eleve_id", $transfer_id);
+        logUserAction('create_transfer', 'transfers', "Nouveau transfert entrant crÃ©Ã© pour l'Ã©lÃ¨ve ID: $eleve_id", $transfer_id);
         
         $database->commit();
         
-        showMessage('success', 'Transfert entrant créé avec succès !');
+        showMessage('success', 'Transfert entrant crÃ©Ã© avec succÃ¨s !');
         redirectTo("view-transfer.php?id=$transfer_id");
         
     } catch (Exception $e) {
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_transfer'])) {
     }
 }
 
-// Récupérer les classes disponibles
+// RÃ©cupÃ©rer les classes disponibles
 $classes = $database->query(
     "SELECT * FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
@@ -256,7 +256,7 @@ include '../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="transfer-header">
     <div class="container-fluid">
         <div class="row align-items-center">
@@ -266,7 +266,7 @@ include '../../../includes/header.php';
                     Nouveau transfert entrant
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Enregistrer l'arrivée d'un nouvel élève par transfert
+                    Enregistrer l'arrivÃ©e d'un nouvel Ã©lÃ¨ve par transfert
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -286,22 +286,22 @@ include '../../../includes/header.php';
     <form method="POST" id="transferForm">
         <input type="hidden" name="create_transfer" value="1">
         
-        <!-- Informations de l'élève -->
+        <!-- Informations de l'Ã©lÃ¨ve -->
         <div class="form-section">
-            <h6><i class="fas fa-user"></i>Informations de l'élève</h6>
+            <h6><i class="fas fa-user"></i>Informations de l'Ã©lÃ¨ve</h6>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="numero_matricule" class="form-label">Numéro de matricule</label>
+                    <label for="numero_matricule" class="form-label">NumÃ©ro de matricule</label>
                     <input type="text" class="form-control form-control-lg" id="numero_matricule" name="numero_matricule" 
-                           placeholder="Laisser vide pour génération automatique">
-                    <small class="form-text text-muted">Si vide, un matricule sera généré automatiquement</small>
+                           placeholder="Laisser vide pour gÃ©nÃ©ration automatique">
+                    <small class="form-text text-muted">Si vide, un matricule sera gÃ©nÃ©rÃ© automatiquement</small>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-lg" id="nom" name="nom" required>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                    <label for="prenom" class="form-label">PrÃ©nom <span class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-lg" id="prenom" name="prenom" required>
                 </div>
             </div>
@@ -319,7 +319,7 @@ include '../../../includes/header.php';
                     <label for="sexe" class="form-label">Sexe</label>
                     <select class="form-select form-select-lg" id="sexe" name="sexe">
                         <option value="M">Masculin</option>
-                        <option value="F">Féminin</option>
+                        <option value="F">FÃ©minin</option>
                     </select>
                 </div>
             </div>
@@ -337,18 +337,18 @@ include '../../../includes/header.php';
             <h6><i class="fas fa-users"></i>Informations des parents</h6>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="nom_pere" class="form-label">Nom du père</label>
+                    <label for="nom_pere" class="form-label">Nom du pÃ¨re</label>
                     <input type="text" class="form-control form-control-lg" id="nom_pere" name="nom_pere">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="nom_mere" class="form-label">Nom de la mère</label>
+                    <label for="nom_mere" class="form-label">Nom de la mÃ¨re</label>
                     <input type="text" class="form-control form-control-lg" id="nom_mere" name="nom_mere">
                 </div>
             </div>
             
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label for="telephone_parent" class="form-label">Téléphone</label>
+                    <label for="telephone_parent" class="form-label">TÃ©lÃ©phone</label>
                     <input type="tel" class="form-control form-control-lg" id="telephone_parent" name="telephone_parent">
                 </div>
                 <div class="col-md-4 mb-3">
@@ -356,7 +356,7 @@ include '../../../includes/header.php';
                     <input type="email" class="form-control form-control-lg" id="email_parent" name="email_parent">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="profession_pere" class="form-label">Profession du père</label>
+                    <label for="profession_pere" class="form-label">Profession du pÃ¨re</label>
                     <input type="text" class="form-control form-control-lg" id="profession_pere" name="profession_pere">
                 </div>
             </div>
@@ -367,13 +367,13 @@ include '../../../includes/header.php';
             <h6><i class="fas fa-exchange-alt"></i>Informations du transfert</h6>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="ecole_origine" class="form-label">École d'origine <span class="text-danger">*</span></label>
+                    <label for="ecole_origine" class="form-label">Ã‰cole d'origine <span class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-lg" id="ecole_origine" name="ecole_origine" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="classe_destination_id" class="form-label">Classe de destination <span class="text-danger">*</span></label>
                     <select class="form-select form-select-lg" id="classe_destination_id" name="classe_destination_id" required>
-                        <option value="">Sélectionner une classe</option>
+                        <option value="">SÃ©lectionner une classe</option>
                         <?php foreach ($classes as $classe): ?>
                             <option value="<?php echo $classe['id']; ?>">
                                 <?php echo htmlspecialchars($classe['niveau'] . ' - ' . $classe['nom']); ?>
@@ -408,7 +408,7 @@ include '../../../includes/header.php';
                 <div class="col-md-12 mb-3">
                     <label for="observations" class="form-label">Observations</label>
                     <textarea class="form-control" id="observations" name="observations" rows="2" 
-                              placeholder="Observations particulières..."></textarea>
+                              placeholder="Observations particuliÃ¨res..."></textarea>
                 </div>
             </div>
         </div>
@@ -421,7 +421,7 @@ include '../../../includes/header.php';
             </a>
             <button type="submit" class="btn btn-primary btn-modern">
                 <i class="fas fa-save me-2"></i>
-                Créer le transfert
+                CrÃ©er le transfert
             </button>
         </div>
     </form>
@@ -450,20 +450,24 @@ document.getElementById('transferForm').addEventListener('submit', function(e) {
     }
     
     // Confirmation
-    if (!confirm('Êtes-vous sûr de vouloir créer ce transfert entrant ?')) {
+    if (!confirm('ÃŠtes-vous sÃ»r de vouloir crÃ©er ce transfert entrant ?')) {
         e.preventDefault();
         return false;
     }
 });
 
-// Auto-génération du matricule si nécessaire
+// Auto-gÃ©nÃ©ration du matricule si nÃ©cessaire
 document.getElementById('nom').addEventListener('blur', function() {
     const matriculeField = document.getElementById('numero_matricule');
     if (!matriculeField.value) {
-        // Optionnel : suggérer un matricule basé sur le nom
+        // Optionnel : suggÃ©rer un matricule basÃ© sur le nom
         // matriculeField.placeholder = 'MAT' + new Date().getFullYear() + '...';
     }
 });
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

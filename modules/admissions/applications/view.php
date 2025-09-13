@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admissions')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
+requirePagePermissionFromDB('admissions', 'applications', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de la demande
 $demande_id = intval($_GET['id'] ?? 0);
@@ -665,3 +663,4 @@ document.getElementById('status').addEventListener('change', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

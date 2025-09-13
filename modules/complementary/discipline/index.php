@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('discipline') && !checkPermission('discipline_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'discipline', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de la Discipline';
 
@@ -112,7 +111,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('discipline')): ?>
+        <?php if (checkPagePermission('discipline')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -383,7 +382,7 @@ include '../../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('discipline') && $incident['status'] !== 'resolu'): ?>
+                                                <?php if (checkPagePermission('discipline') && $incident['status'] !== 'resolu'): ?>
                                                     <a href="incidents/edit.php?id=<?php echo $incident['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Modifier">
                                                         <i class="fas fa-edit"></i>
@@ -530,7 +529,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('discipline')): ?>
+<?php if (checkPagePermission('discipline')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -592,3 +591,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

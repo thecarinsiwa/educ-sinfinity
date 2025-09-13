@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('finance', 'reports', 'read', '../../dashboard.php');
 
 $page_title = 'Rapport Mensuel';
 
@@ -78,13 +76,14 @@ try {
     // Recettes par type de frais
     $recettes_par_type = $database->query(
         "SELECT 
-            type_frais,
-            SUM(montant) as total,
+            tf.nom as type_frais,
+            SUM(p.montant) as total,
             COUNT(*) as nombre
-         FROM paiements 
-         WHERE date_paiement BETWEEN ? AND ?
-         AND annee_scolaire_id = ?
-         GROUP BY type_frais
+         FROM paiements p
+         JOIN type_frais tf ON p.type_frais_id = tf.id
+         WHERE p.date_paiement BETWEEN ? AND ?
+         AND p.annee_scolaire_id = ?
+         GROUP BY tf.id, tf.nom
          ORDER BY total DESC",
         [$date_debut, $date_fin, $current_year['id'] ?? 0]
     )->fetchAll();

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module Applications - Gestion détaillée des candidatures
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
 
 $page_title = 'Gestion des Candidatures';
 
@@ -29,7 +28,7 @@ $page = max(1, intval($_GET['page'] ?? 1));
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
-// Construction de la requête avec filtres
+// Construction de la requÃªte avec filtres
 $where_conditions = ["da.annee_scolaire_id = ?"];
 $params = [$current_year['id'] ?? 0];
 
@@ -71,7 +70,7 @@ try {
     $total_pages = 1;
 }
 
-// Récupérer les candidatures avec pagination
+// RÃ©cupÃ©rer les candidatures avec pagination
 try {
     $candidatures = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,
@@ -96,7 +95,7 @@ try {
     showMessage('error', 'Erreur lors du chargement des candidatures : ' . $e->getMessage());
 }
 
-// Récupérer les options pour les filtres
+// RÃ©cupÃ©rer les options pour les filtres
 try {
     $classes_options = $database->query(
         "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
@@ -140,7 +139,7 @@ include '../../../../includes/header.php';
                 Retour aux Admissions
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -173,7 +172,7 @@ include '../../../../includes/header.php';
         <div class="card bg-success text-white">
             <div class="card-body text-center">
                 <h4><?php echo $stats['acceptee']; ?></h4>
-                <small>Acceptées</small>
+                <small>AcceptÃ©es</small>
             </div>
         </div>
     </div>
@@ -181,7 +180,7 @@ include '../../../../includes/header.php';
         <div class="card bg-danger text-white">
             <div class="card-body text-center">
                 <h4><?php echo $stats['refusee']; ?></h4>
-                <small>Refusées</small>
+                <small>RefusÃ©es</small>
             </div>
         </div>
     </div>
@@ -209,30 +208,30 @@ include '../../../../includes/header.php';
                 <label for="search" class="form-label">Recherche</label>
                 <input type="text" class="form-control" id="search" name="search" 
                        value="<?php echo htmlspecialchars($search); ?>" 
-                       placeholder="Nom, prénom ou numéro...">
+                       placeholder="Nom, prÃ©nom ou numÃ©ro...">
             </div>
             <div class="col-md-2">
                 <label for="status" class="form-label">Statut</label>
                 <select class="form-select" id="status" name="status">
                     <option value="">Tous les statuts</option>
                     <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
-                    <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                    <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
+                    <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                    <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
                     <option value="en_cours_traitement" <?php echo $status_filter === 'en_cours_traitement' ? 'selected' : ''; ?>>En cours</option>
                     <option value="inscrit" <?php echo $status_filter === 'inscrit' ? 'selected' : ''; ?>>Inscrit</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <label for="priorite" class="form-label">Priorité</label>
+                <label for="priorite" class="form-label">PrioritÃ©</label>
                 <select class="form-select" id="priorite" name="priorite">
-                    <option value="">Toutes priorités</option>
+                    <option value="">Toutes prioritÃ©s</option>
                     <option value="normale" <?php echo $priorite_filter === 'normale' ? 'selected' : ''; ?>>Normale</option>
                     <option value="urgente" <?php echo $priorite_filter === 'urgente' ? 'selected' : ''; ?>>Urgente</option>
-                    <option value="tres_urgente" <?php echo $priorite_filter === 'tres_urgente' ? 'selected' : ''; ?>>Très urgente</option>
+                    <option value="tres_urgente" <?php echo $priorite_filter === 'tres_urgente' ? 'selected' : ''; ?>>TrÃ¨s urgente</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="classe" class="form-label">Classe demandée</label>
+                <label for="classe" class="form-label">Classe demandÃ©e</label>
                 <select class="form-select" id="classe" name="classe">
                     <option value="">Toutes les classes</option>
                     <?php foreach ($classes_options as $classe): ?>
@@ -261,9 +260,9 @@ include '../../../../includes/header.php';
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Candidatures (<?php echo $total_records; ?> résultat<?php echo $total_records > 1 ? 's' : ''; ?>)
+            Candidatures (<?php echo $total_records; ?> rÃ©sultat<?php echo $total_records > 1 ? 's' : ''; ?>)
         </h5>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-download me-1"></i>
@@ -286,11 +285,11 @@ include '../../../../includes/header.php';
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Numéro</th>
+                            <th>NumÃ©ro</th>
                             <th>Candidat</th>
-                            <th>Classe demandée</th>
+                            <th>Classe demandÃ©e</th>
                             <th>Statut</th>
-                            <th>Priorité</th>
+                            <th>PrioritÃ©</th>
                             <th>Date demande</th>
                             <th>Jours</th>
                             <th>Actions</th>
@@ -317,7 +316,7 @@ include '../../../../includes/header.php';
                                         </span>
                                         <br><small class="text-muted"><?php echo htmlspecialchars($candidature['niveau']); ?></small>
                                     <?php else: ?>
-                                        <span class="text-muted">Non spécifiée</span>
+                                        <span class="text-muted">Non spÃ©cifiÃ©e</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -359,10 +358,10 @@ include '../../../../includes/header.php';
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a href="view.php?id=<?php echo $candidature['id']; ?>" 
-                                           class="btn btn-outline-primary" title="Voir détails">
+                                           class="btn btn-outline-primary" title="Voir dÃ©tails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('students')): ?>
+                                        <?php if (checkPagePermission('students')): ?>
                                             <a href="edit.php?id=<?php echo $candidature['id']; ?>" 
                                                class="btn btn-outline-warning" title="Modifier">
                                                 <i class="fas fa-edit"></i>
@@ -390,15 +389,15 @@ include '../../../../includes/header.php';
         <?php else: ?>
             <div class="text-center py-5">
                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune candidature trouvée</h5>
+                <h5 class="text-muted">Aucune candidature trouvÃ©e</h5>
                 <p class="text-muted">
                     <?php if ($search || $status_filter || $priorite_filter || $classe_filter): ?>
-                        Essayez de modifier vos critères de recherche.
+                        Essayez de modifier vos critÃ¨res de recherche.
                     <?php else: ?>
-                        Aucune candidature n'a été soumise pour cette année scolaire.
+                        Aucune candidature n'a Ã©tÃ© soumise pour cette année scolaire.
                     <?php endif; ?>
                 </p>
-                <?php if (checkPermission('students')): ?>
+                <?php if (checkPagePermission('students')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Ajouter une candidature
@@ -455,14 +454,14 @@ function updateStatus(candidatureId, newStatus) {
         'refusee': 'refuser'
     };
     
-    if (confirm(`Êtes-vous sûr de vouloir ${statusNames[newStatus]} cette candidature ?`)) {
-        // Ici vous pouvez ajouter un appel AJAX pour mettre à jour le statut
+    if (confirm(`ÃŠtes-vous sÃ»r de vouloir ${statusNames[newStatus]} cette candidature ?`)) {
+        // Ici vous pouvez ajouter un appel AJAX pour mettre Ã  jour le statut
         // Pour l'instant, on redirige vers une page de traitement
         window.location.href = `update_status.php?id=${candidatureId}&status=${newStatus}`;
     }
 }
 
-// Auto-submit du formulaire de recherche après 500ms de pause
+// Auto-submit du formulaire de recherche aprÃ¨s 500ms de pause
 let searchTimeout;
 document.getElementById('search').addEventListener('input', function() {
     clearTimeout(searchTimeout);
@@ -473,3 +472,7 @@ document.getElementById('search').addEventListener('input', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

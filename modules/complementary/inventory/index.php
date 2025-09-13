@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('inventory') && !checkPermission('inventory_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'inventory', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de l\'Inventaire';
 
@@ -108,7 +107,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('inventory')): ?>
+        <?php if (checkPagePermission('inventory')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-dark dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -367,7 +366,7 @@ include '../../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('inventory')): ?>
+                                                <?php if (checkPagePermission('inventory')): ?>
                                                     <a href="items/edit.php?id=<?php echo $article['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Modifier">
                                                         <i class="fas fa-edit"></i>
@@ -384,7 +383,7 @@ include '../../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-box fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun article récent</p>
-                        <?php if (checkPermission('inventory')): ?>
+                        <?php if (checkPagePermission('inventory')): ?>
                             <a href="items/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Ajouter un article
@@ -515,7 +514,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('inventory')): ?>
+<?php if (checkPagePermission('inventory')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -577,3 +576,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

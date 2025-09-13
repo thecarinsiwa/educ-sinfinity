@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'create', '../../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -348,3 +347,6 @@ include '../../../includes/header.php';
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+

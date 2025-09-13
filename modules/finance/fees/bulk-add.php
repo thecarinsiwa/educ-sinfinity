@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'fees', 'create', '../../dashboard.php');
 
 $page_title = 'Ajout en lot de frais scolaires';
 
@@ -33,6 +32,15 @@ $classes = $database->query(
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
+// Récupérer les types de frais actifs pour l'année scolaire actuelle
+$types_frais = [];
+if ($current_year && isset($current_year['id'])) {
+    $types_frais = $database->query(
+        "SELECT id, nom, description FROM type_frais WHERE annee_scolaire_id = ? AND actif = 1 ORDER BY nom",
+        [$current_year['id']]
+    )->fetchAll();
+}
+
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $selected_classes = $_POST['classes'] ?? [];
@@ -51,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($frais_data as $index => $frais) {
         $frais_num = $index + 1;
         
-        if (empty($frais['type_frais'])) {
+        if (empty($frais['type_frais_id'])) {
             $errors[] = "Frais #{$frais_num}: Le type de frais est obligatoire.";
         }
         
@@ -60,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         if (!isset($frais['montant']) || (float)$frais['montant'] <= 0) {
-            $errors[] = "Frais #{$frais_num}: Le montant doit être supérieur à 0.";
+            $errors[] = "Frais #{$frais_num}: Le montant doit être supérieur à 0 (" . htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC') . ").";
         }
         
         if (!empty($frais['date_echeance']) && !isValidDate($frais['date_echeance'])) {
@@ -79,10 +87,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             foreach ($selected_classes as $classe_id) {
                 foreach ($frais_data as $frais) {
+                    // Vérifier si le type de frais existe
+                    $type_frais_exists = $database->query(
+                        "SELECT id FROM type_frais WHERE id = ? AND annee_scolaire_id = ? AND actif = 1",
+                        [$frais['type_frais_id'], $current_year['id']]
+                    )->fetch();
+                    
+                    if (!$type_frais_exists) {
+                        $skipped_count++;
+                        continue;
+                    }
+                    
                     // Vérifier si ce type de frais existe déjà pour cette classe
                     $existing = $database->query(
-                        "SELECT id FROM frais_scolaires WHERE classe_id = ? AND type_frais = ? AND annee_scolaire_id = ?",
-                        [$classe_id, $frais['type_frais'], $current_year['id']]
+                        "SELECT id FROM frais_scolaires WHERE classe_id = ? AND type_frais_id = ? AND annee_scolaire_id = ?",
+                        [$classe_id, $frais['type_frais_id'], $current_year['id']]
                     )->fetch();
                     
                     if ($existing) {
@@ -91,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Construire la requête d'insertion dynamiquement
-                    $insert_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'annee_scolaire_id'];
-                    $insert_values = [$classe_id, $frais['type_frais'], $frais['libelle'], (float)$frais['montant'], $current_year['id']];
+                    $insert_columns = ['classe_id', 'type_frais_id', 'libelle', 'montant', 'annee_scolaire_id'];
+                    $insert_values = [$classe_id, $frais['type_frais_id'], $frais['libelle'], (float)$frais['montant'], $current_year['id']];
                     
                     // Ajouter les colonnes optionnelles si elles existent
                     if (in_array('obligatoire', $existing_columns)) {
@@ -234,19 +253,30 @@ include '../../../includes/header.php';
                         <i class="fas fa-tags me-2"></i>
                         2. Configurer les frais
                     </h5>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="addFrais()">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addFrais()" <?php echo empty($types_frais) ? 'disabled' : ''; ?>>
                         <i class="fas fa-plus me-1"></i>
                         Ajouter un frais
                     </button>
                 </div>
                 <div class="card-body">
-                    <div id="frais-container">
-                        <!-- Les frais seront ajoutés ici dynamiquement -->
-                    </div>
-                    
-                    <div class="text-center mt-3" id="no-frais-message">
-                        <p class="text-muted">Aucun frais configuré. Cliquez sur "Ajouter un frais" pour commencer.</p>
-                    </div>
+                    <?php if (empty($types_frais)): ?>
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Aucun type de frais configuré</h6>
+                            <p class="mb-0">Vous devez d'abord configurer les types de frais pour l'année scolaire actuelle.</p>
+                            <a href="types/index.php" class="btn btn-sm btn-primary mt-2">
+                                <i class="fas fa-cog me-1"></i>
+                                Configurer les types de frais
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <div id="frais-container">
+                            <!-- Les frais seront ajoutés ici dynamiquement -->
+                        </div>
+                        
+                        <div class="text-center mt-3" id="no-frais-message">
+                            <p class="text-muted">Aucun frais configuré. Cliquez sur "Ajouter un frais" pour commencer.</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -311,7 +341,7 @@ include '../../../includes/header.php';
                 <h6 class="mt-3">Conseils :</h6>
                 <ul class="small">
                     <li>Commencez par les frais obligatoires</li>
-                    <li>Vérifiez les montants avant validation</li>
+                    <li>Vérifiez les montants avant validation (<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>)</li>
                     <li>Utilisez des libellés clairs</li>
                     <li>Définissez des échéances réalistes</li>
                 </ul>
@@ -333,19 +363,17 @@ include '../../../includes/header.php';
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Type de frais *</label>
-                    <select class="form-select" name="frais[INDEX][type_frais]" required>
+                    <select class="form-select" name="frais[INDEX][type_frais_id]" required>
                         <option value="">Sélectionner le type</option>
-                        <option value="inscription">Frais d'inscription</option>
-                        <option value="mensualite">Mensualité</option>
-                        <option value="examen">Frais d'examen</option>
-                        <option value="uniforme">Uniforme scolaire</option>
-                        <option value="transport">Transport scolaire</option>
-                        <option value="cantine">Cantine</option>
-                        <option value="autre">Autre</option>
+                        <?php foreach ($types_frais as $type): ?>
+                            <option value="<?php echo $type['id']; ?>">
+                                <?php echo htmlspecialchars($type['nom']); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Montant (FC) *</label>
+                    <label class="form-label">Montant (<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>) *</label>
                     <input type="number" class="form-control" name="frais[INDEX][montant]" min="1" step="0.01" required>
                 </div>
             </div>
@@ -436,29 +464,37 @@ function loadTemplate(type) {
     document.getElementById('no-frais-message').style.display = 'none';
     fraisCount = 0;
     
+    // Récupérer les types de frais depuis PHP
+    const typesFrais = <?php echo json_encode($types_frais); ?>;
+    
     const templates = {
         'standard': [
-            {type: 'inscription', libelle: 'Frais d\'inscription', montant: 50000, obligatoire: true},
-            {type: 'mensualite', libelle: 'Mensualité', montant: 25000, obligatoire: true},
-            {type: 'examen', libelle: 'Frais d\'examen', montant: 15000, obligatoire: true}
+            {libelle: 'Frais d\'inscription', montant: 50000, obligatoire: true},
+            {libelle: 'Mensualité', montant: 25000, obligatoire: true},
+            {libelle: 'Frais d\'examen', montant: 15000, obligatoire: true}
         ],
         'primaire': [
-            {type: 'inscription', libelle: 'Inscription primaire', montant: 30000, obligatoire: true},
-            {type: 'mensualite', libelle: 'Mensualité primaire', montant: 15000, obligatoire: true},
-            {type: 'uniforme', libelle: 'Uniforme primaire', montant: 20000, obligatoire: false}
+            {libelle: 'Inscription primaire', montant: 30000, obligatoire: true},
+            {libelle: 'Mensualité primaire', montant: 15000, obligatoire: true},
+            {libelle: 'Uniforme primaire', montant: 20000, obligatoire: false}
         ],
         'secondaire': [
-            {type: 'inscription', libelle: 'Inscription secondaire', montant: 75000, obligatoire: true},
-            {type: 'mensualite', libelle: 'Mensualité secondaire', montant: 35000, obligatoire: true},
-            {type: 'examen', libelle: 'Frais d\'examen secondaire', montant: 25000, obligatoire: true}
+            {libelle: 'Inscription secondaire', montant: 75000, obligatoire: true},
+            {libelle: 'Mensualité secondaire', montant: 35000, obligatoire: true},
+            {libelle: 'Frais d\'examen secondaire', montant: 25000, obligatoire: true}
         ]
     };
     
     if (templates[type]) {
-        templates[type].forEach(frais => {
+        templates[type].forEach((frais, index) => {
             addFrais();
             const lastItem = document.querySelector('.frais-item:last-child');
-            lastItem.querySelector('select[name*="[type_frais]"]').value = frais.type;
+            
+            // Sélectionner le premier type de frais disponible par défaut
+            if (typesFrais.length > 0) {
+                lastItem.querySelector('select[name*="[type_frais_id]"]').value = typesFrais[0].id;
+            }
+            
             lastItem.querySelector('input[name*="[libelle]"]').value = frais.libelle;
             lastItem.querySelector('input[name*="[montant]"]').value = frais.montant;
             lastItem.querySelector('input[name*="[obligatoire]"]').checked = frais.obligatoire;
@@ -491,3 +527,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

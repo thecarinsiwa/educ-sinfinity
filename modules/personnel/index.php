@@ -7,13 +7,12 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('personnel') && !checkPermission('personnel_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('personnel', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion du Personnel';
 
@@ -23,9 +22,10 @@ $fonction_filter = sanitizeInput($_GET['fonction'] ?? '');
 $status_filter = sanitizeInput($_GET['status'] ?? '');
 
 // Construction de la requête
-$sql = "SELECT p.*, u.username, u.email as user_email, u.role 
+$sql = "SELECT p.*, u.username, u.email as user_email, r.nom as role_nom 
         FROM personnel p 
         LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN roles r ON u.role_id = r.id
         WHERE 1=1";
 
 $params = [];
@@ -70,16 +70,10 @@ include '../../includes/header.php';
         Gestion du Personnel
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <?php if (checkPermission('personnel')): ?>
+        <?php if (hasPagePermission('personnel', 'add', 'create')): ?>
             <div class="btn-group me-2">
-                <a href="add.php" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i>
-                    Nouveau membre
-                </a>
-                <a href="import.php" class="btn btn-outline-primary">
-                    <i class="fas fa-upload me-1"></i>
-                    Importer
-                </a>
+                <?php echo generatePermissionLink('add.php', 'btn btn-primary', 'Nouveau membre', 'fas fa-plus me-1', 'personnel', 'add', 'create'); ?>
+                <?php echo generatePermissionLink('import.php', 'btn btn-outline-primary', 'Importer', 'fas fa-upload me-1', 'personnel', 'add', 'create'); ?>
             </div>
         <?php endif; ?>
         <div class="btn-group">
@@ -312,7 +306,7 @@ include '../../includes/header.php';
                                     <?php if ($membre['user_id']): ?>
                                         <span class="badge bg-info" title="<?php echo htmlspecialchars($membre['username']); ?>">
                                             <i class="fas fa-user-check"></i>
-                                            <?php echo ucfirst($membre['role']); ?>
+                                            <?php echo ucfirst($membre['role_nom'] ?? 'Non défini'); ?>
                                         </span>
                                     <?php else: ?>
                                         <span class="text-muted">Aucun</span>
@@ -325,24 +319,9 @@ include '../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('personnel')): ?>
-                                            <a href="edit.php?id=<?php echo $membre['id']; ?>" 
-                                               class="btn btn-outline-primary" 
-                                               title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="payslip.php?id=<?php echo $membre['id']; ?>" 
-                                               class="btn btn-outline-success" 
-                                               title="Fiche de paie">
-                                                <i class="fas fa-money-bill"></i>
-                                            </a>
-                                            <a href="delete.php?id=<?php echo $membre['id']; ?>" 
-                                               class="btn btn-outline-danger btn-delete" 
-                                               title="Supprimer"
-                                               data-name="<?php echo htmlspecialchars($membre['nom'] . ' ' . $membre['prenom']); ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        <?php endif; ?>
+                                        <?php echo generatePermissionLink('edit.php?id=' . $membre['id'], 'btn btn-outline-primary', 'Modifier', 'fas fa-edit', 'personnel', 'edit', 'update'); ?>
+                                        <?php echo generatePermissionLink('payslip.php?id=' . $membre['id'], 'btn btn-outline-success', 'Fiche de paie', 'fas fa-money-bill', 'personnel', 'payslip', 'read'); ?>
+                                        <?php echo generatePermissionLink('delete.php?id=' . $membre['id'], 'btn btn-outline-danger btn-delete', 'Supprimer', 'fas fa-trash', 'personnel', 'delete', 'delete', ['data-name' => htmlspecialchars($membre['nom'] . ' ' . $membre['prenom'])]); ?>
                                     </div>
                                 </td>
                             </tr>
@@ -355,7 +334,7 @@ include '../../includes/header.php';
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun membre du personnel trouvé</h5>
                 <p class="text-muted">
-                    <?php if (checkPermission('personnel')): ?>
+                    <?php if (checkPagePermission('personnel', 'add', 'create')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Ajouter le premier membre

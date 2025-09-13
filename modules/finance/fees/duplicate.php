@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'fees', 'create', '../../dashboard.php');
 
 // Récupérer l'ID du frais à dupliquer
 $id = (int)($_GET['id'] ?? 0);
@@ -22,12 +21,14 @@ if (!$id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations du frais source avec devise
+// Récupérer les informations du frais source avec devise et type de frais
 $sql = "SELECT f.*, c.nom as classe_nom, c.niveau,
-               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom,
+               tf.nom as type_frais_nom, tf.description as type_frais_description
         FROM frais_scolaires f
         JOIN classes c ON f.classe_id = c.id
         LEFT JOIN devises d ON f.devise_id = d.id
+        LEFT JOIN type_frais tf ON f.type_frais_id = tf.id
         WHERE f.id = ?";
 
 $frais_source = $database->query($sql, [$id])->fetch();
@@ -104,8 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $existing_columns = array_column($columns, 'Field');
                 
                 // Construire la requête d'insertion dynamiquement
-                $insert_columns = ['classe_id', 'type_frais', 'libelle', 'montant', 'annee_scolaire_id'];
-                $insert_values = [$classe_id, $frais_source['type_frais'], $libelle, $montant, $current_year['id']];
+                $insert_columns = ['classe_id', 'type_frais_id', 'libelle', 'montant', 'annee_scolaire_id'];
+                $insert_values = [$classe_id, $frais_source['type_frais_id'], $libelle, $montant, $current_year['id']];
                 
                 // Ajouter les colonnes optionnelles si elles existent
                 if (in_array('obligatoire', $existing_columns)) {
@@ -218,7 +219,14 @@ include '../../../includes/header.php';
                             </tr>
                             <tr>
                                 <td class="fw-bold">Type :</td>
-                                <td><?php echo ucfirst($frais_source['type_frais']); ?></td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        <?php echo htmlspecialchars($frais_source['type_frais_nom'] ?? $frais_source['type_frais']); ?>
+                                    </span>
+                                    <?php if (!empty($frais_source['type_frais_description'])): ?>
+                                        <br><small class="text-muted"><?php echo displayText($frais_source['type_frais_description']); ?></small>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         </table>
                     </div>
@@ -451,3 +459,4 @@ function deselectAllClasses() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

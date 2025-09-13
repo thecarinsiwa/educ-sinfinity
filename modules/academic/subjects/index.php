@@ -7,13 +7,13 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('academic') && !checkPermission('academic_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+// requirePagePermissionFromDB('academic', 'subjects', 'read', '../../../dashboard.php', 'index'); 
+
 
 $page_title = 'Gestion des Matières';
 
@@ -78,7 +78,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('academic')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -86,6 +86,7 @@ include '../../../includes/header.php';
                 </a>
             </div>
         <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'export')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-download me-1"></i>
@@ -100,6 +101,7 @@ include '../../../includes/header.php';
                 </a></li>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -304,18 +306,20 @@ include '../../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('academic')): ?>
-                                            <a href="edit.php?id=<?php echo $matiere['id']; ?>" 
-                                               class="btn btn-outline-primary" 
-                                               title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="delete.php?id=<?php echo $matiere['id']; ?>" 
-                                               class="btn btn-outline-danger btn-delete" 
-                                               title="Supprimer"
-                                               data-name="<?php echo htmlspecialchars($matiere['nom']); ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
+                                        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
+                                        <a href="edit.php?id=<?php echo $matiere['id']; ?>" 
+                                           class="btn btn-outline-primary" 
+                                           title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'delete')): ?>
+                                        <a href="delete.php?id=<?php echo $matiere['id']; ?>" 
+                                           class="btn btn-outline-danger btn-delete" 
+                                           title="Supprimer"
+                                           data-name="<?php echo htmlspecialchars($matiere['nom']); ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -329,7 +333,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucune matière trouvée</h5>
                 <p class="text-muted">
-                    <?php if (checkPermission('academic')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'create')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Créer la première matière

@@ -7,14 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Accès refusé']);
-    exit;
-}
+requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
@@ -73,3 +70,4 @@ try {
     echo json_encode(['error' => 'Erreur lors de la recherche']);
 }
 ?>
+

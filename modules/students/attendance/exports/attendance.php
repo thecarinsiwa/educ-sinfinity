@@ -1,22 +1,22 @@
-<?php
+﻿<?php
 /**
- * Export des données d'attendance
+ * Export des donnÃ©es d'attendance
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../../login.php');
-}
 
-$page_title = "Export des données d'attendance";
+requirePagePermissionFromDB('students', 'attendance', 'read', '../../../../dashboard.php');
 
-// Récupérer l'année scolaire active
+$page_title = "Export des donnÃ©es d'attendance";
+
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement de l'export
@@ -31,14 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
         
         // Validation
         if (!$date_start || !$date_end) {
-            throw new Exception('Période de dates requise');
+            throw new Exception('PÃ©riode de dates requise');
         }
         
         if (strtotime($date_start) > strtotime($date_end)) {
-            throw new Exception('La date de début doit être antérieure à la date de fin');
+            throw new Exception('La date de dÃ©but doit Ãªtre antÃ©rieure Ã  la date de fin');
         }
         
-        // Construire la requête
+        // Construire la requÃªte
         $where_conditions = [
             "a.date_absence >= ?",
             "a.date_absence <= ?",
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
         
         $where_clause = implode(' AND ', $where_conditions);
         
-        // Requête selon le type d'export
+        // RequÃªte selon le type d'export
         if ($export_type === 'detailed') {
             $query = "
                 SELECT
@@ -109,10 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
         $data = $database->query($query, $params)->fetchAll();
         
         if (empty($data)) {
-            throw new Exception('Aucune donnée trouvée pour les critères sélectionnés');
+            throw new Exception('Aucune donnÃ©e trouvÃ©e pour les critÃ¨res sÃ©lectionnÃ©s');
         }
         
-        // Générer l'export selon le format
+        // GÃ©nÃ©rer l'export selon le format
         switch ($export_format) {
             case 'excel':
                 generateExcelExport($data, $export_type, $date_start, $date_end);
@@ -124,31 +124,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_action'])) {
                 generatePDFExport($data, $export_type, $date_start, $date_end);
                 break;
             default:
-                throw new Exception('Format d\'export non supporté');
+                throw new Exception('Format d\'export non supportÃ©');
         }
         
         // Enregistrer l'action
         logUserAction(
             'export_attendance',
             'attendance',
-            "Export $export_format - Type: $export_type, Période: $date_start à $date_end, Enregistrements: " . count($data),
+            "Export $export_format - Type: $export_type, PÃ©riode: $date_start Ã  $date_end, Enregistrements: " . count($data),
             null
         );
         
-        exit; // L'export a été généré, arrêter l'exécution
+        exit; // L'export a Ã©tÃ© gÃ©nÃ©rÃ©, arrÃªter l'exÃ©cution
         
     } catch (Exception $e) {
         showMessage('error', $e->getMessage());
     }
 }
 
-// Récupérer les classes pour les filtres
+// RÃ©cupÃ©rer les classes pour les filtres
 $classes = $database->query(
     "SELECT * FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
 )->fetchAll();
 
-// Statistiques rapides pour l'aperçu
+// Statistiques rapides pour l'aperÃ§u
 $quick_stats = $database->query(
     "SELECT
         COUNT(*) as total_records,
@@ -171,10 +171,10 @@ function generateExcelExport($data, $type, $date_start, $date_end) {
     header('Cache-Control: max-age=0');
     
     echo "<html><head><meta charset='UTF-8'></head><body>";
-    echo "<h2>Export des données d'attendance</h2>";
-    echo "<p>Période: " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
-    echo "<p>Type: " . ($type === 'detailed' ? 'Détaillé' : 'Résumé') . "</p>";
-    echo "<p>Généré le: " . date('d/m/Y à H:i:s') . "</p>";
+    echo "<h2>Export des donnÃ©es d'attendance</h2>";
+    echo "<p>PÃ©riode: " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
+    echo "<p>Type: " . ($type === 'detailed' ? 'DÃ©taillÃ©' : 'RÃ©sumÃ©') . "</p>";
+    echo "<p>GÃ©nÃ©rÃ© le: " . date('d/m/Y Ã  H:i:s') . "</p>";
     echo "<br>";
     
     echo "<table border='1' cellpadding='5' cellspacing='0'>";
@@ -183,15 +183,15 @@ function generateExcelExport($data, $type, $date_start, $date_end) {
         echo "<tr style='background-color: #f0f0f0; font-weight: bold;'>";
         echo "<th>Matricule</th>";
         echo "<th>Nom</th>";
-        echo "<th>Prénom</th>";
+        echo "<th>PrÃ©nom</th>";
         echo "<th>Classe</th>";
         echo "<th>Type</th>";
         echo "<th>Date</th>";
         echo "<th>Heure</th>";
         echo "<th>Motif</th>";
-        echo "<th>Durée retard (min)</th>";
+        echo "<th>DurÃ©e retard (min)</th>";
         echo "<th>Justification</th>";
-        echo "<th>Validé par</th>";
+        echo "<th>ValidÃ© par</th>";
         echo "</tr>";
 
         foreach ($data as $row) {
@@ -215,9 +215,9 @@ function generateExcelExport($data, $type, $date_start, $date_end) {
         echo "<th>Total incidents</th>";
         echo "<th>Absences</th>";
         echo "<th>Retards</th>";
-        echo "<th>Justifiés</th>";
-        echo "<th>Élèves concernés</th>";
-        echo "<th>Durée moyenne retard (min)</th>";
+        echo "<th>JustifiÃ©s</th>";
+        echo "<th>Ã‰lÃ¨ves concernÃ©s</th>";
+        echo "<th>DurÃ©e moyenne retard (min)</th>";
         echo "</tr>";
         
         foreach ($data as $row) {
@@ -251,8 +251,8 @@ function generateCSVExport($data, $type, $date_start, $date_end) {
     
     if ($type === 'detailed') {
         fputcsv($output, [
-            'Matricule', 'Nom', 'Prénom', 'Classe', 'Type', 'Date', 'Heure',
-            'Motif', 'Durée retard (min)', 'Justification', 'Validé par'
+            'Matricule', 'Nom', 'PrÃ©nom', 'Classe', 'Type', 'Date', 'Heure',
+            'Motif', 'DurÃ©e retard (min)', 'Justification', 'ValidÃ© par'
         ], ';');
 
         foreach ($data as $row) {
@@ -272,8 +272,8 @@ function generateCSVExport($data, $type, $date_start, $date_end) {
         }
     } else {
         fputcsv($output, [
-            'Classe', 'Total incidents', 'Absences', 'Retards', 'Justifiés', 
-            'Élèves concernés', 'Durée moyenne retard (min)'
+            'Classe', 'Total incidents', 'Absences', 'Retards', 'JustifiÃ©s', 
+            'Ã‰lÃ¨ves concernÃ©s', 'DurÃ©e moyenne retard (min)'
         ], ';');
         
         foreach ($data as $row) {
@@ -293,7 +293,7 @@ function generateCSVExport($data, $type, $date_start, $date_end) {
 }
 
 function generatePDFExport($data, $type, $date_start, $date_end) {
-    // Simulation d'export PDF (nécessiterait une librairie comme TCPDF ou FPDF)
+    // Simulation d'export PDF (nÃ©cessiterait une librairie comme TCPDF ou FPDF)
     $filename = "attendance_export_" . date('Y-m-d_H-i-s') . ".html";
     
     header('Content-Type: text/html; charset=UTF-8');
@@ -311,11 +311,11 @@ function generatePDFExport($data, $type, $date_start, $date_end) {
     </style></head><body>";
     
     echo "<div class='header'>";
-    echo "<h1>Export des données d'attendance</h1>";
+    echo "<h1>Export des donnÃ©es d'attendance</h1>";
     echo "<div class='info'>";
-    echo "<p><strong>Période:</strong> " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
-    echo "<p><strong>Type:</strong> " . ($type === 'detailed' ? 'Détaillé' : 'Résumé') . "</p>";
-    echo "<p><strong>Généré le:</strong> " . date('d/m/Y à H:i:s') . "</p>";
+    echo "<p><strong>PÃ©riode:</strong> " . formatDate($date_start) . " au " . formatDate($date_end) . "</p>";
+    echo "<p><strong>Type:</strong> " . ($type === 'detailed' ? 'DÃ©taillÃ©' : 'RÃ©sumÃ©') . "</p>";
+    echo "<p><strong>GÃ©nÃ©rÃ© le:</strong> " . date('d/m/Y Ã  H:i:s') . "</p>";
     echo "</div>";
     echo "</div>";
     
@@ -323,7 +323,7 @@ function generatePDFExport($data, $type, $date_start, $date_end) {
     
     if ($type === 'detailed') {
         echo "<tr>";
-        echo "<th>Matricule</th><th>Nom</th><th>Prénom</th><th>Classe</th>";
+        echo "<th>Matricule</th><th>Nom</th><th>PrÃ©nom</th><th>Classe</th>";
         echo "<th>Type</th><th>Date</th><th>Heure</th><th>Motif</th><th>Justification</th>";
         echo "</tr>";
 
@@ -343,7 +343,7 @@ function generatePDFExport($data, $type, $date_start, $date_end) {
     } else {
         echo "<tr>";
         echo "<th>Classe</th><th>Total incidents</th><th>Absences</th>";
-        echo "<th>Retards</th><th>Justifiés</th><th>Élèves concernés</th>";
+        echo "<th>Retards</th><th>JustifiÃ©s</th><th>Ã‰lÃ¨ves concernÃ©s</th>";
         echo "</tr>";
         
         foreach ($data as $row) {
@@ -548,17 +548,17 @@ include '../../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="export-header">
     <div class="container-fluid">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="animate-fade-in">
                     <i class="fas fa-download me-3"></i>
-                    Export des données d'attendance
+                    Export des donnÃ©es d'attendance
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Exportez vos données d'absences et retards dans différents formats
+                    Exportez vos donnÃ©es d'absences et retards dans diffÃ©rents formats
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -573,7 +573,7 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Aperçu des statistiques -->
+<!-- AperÃ§u des statistiques -->
 <div class="stats-overview animate-fade-in animate-delay-1">
     <div class="row">
         <div class="col-lg-3 col-md-6">
@@ -597,7 +597,7 @@ include '../../../../includes/header.php';
         <div class="col-lg-3 col-md-6">
             <div class="stat-item">
                 <span class="stat-number"><?php echo number_format($quick_stats['unique_students'] ?? 0); ?></span>
-                <span class="stat-label">Élèves concernés</span>
+                <span class="stat-label">Ã‰lÃ¨ves concernÃ©s</span>
             </div>
         </div>
     </div>
@@ -611,12 +611,12 @@ include '../../../../includes/header.php';
         <div class="row">
             <!-- Configuration de l'export -->
             <div class="col-lg-8">
-                <!-- Période -->
+                <!-- PÃ©riode -->
                 <div class="form-section">
-                    <h6><i class="fas fa-calendar-alt"></i>Période d'export</h6>
+                    <h6><i class="fas fa-calendar-alt"></i>PÃ©riode d'export</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="date_start" class="form-label">Date de début</label>
+                            <label for="date_start" class="form-label">Date de dÃ©but</label>
                             <input type="date" class="form-control form-control-lg" id="date_start" name="date_start"
                                    value="<?php echo date('Y-m-01'); ?>" required>
                         </div>
@@ -648,13 +648,13 @@ include '../../../../includes/header.php';
 
                 <!-- Classes -->
                 <div class="form-section">
-                    <h6><i class="fas fa-school"></i>Classes à inclure</h6>
+                    <h6><i class="fas fa-school"></i>Classes Ã  inclure</h6>
                     <div class="row">
                         <div class="col-12 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="select_all_classes" onchange="toggleAllClasses()">
                                 <label class="form-check-label fw-bold" for="select_all_classes">
-                                    Sélectionner toutes les classes
+                                    SÃ©lectionner toutes les classes
                                 </label>
                             </div>
                         </div>
@@ -675,22 +675,22 @@ include '../../../../includes/header.php';
                     </div>
                 </div>
 
-                <!-- Options avancées -->
+                <!-- Options avancÃ©es -->
                 <div class="form-section">
                     <h6><i class="fas fa-cog"></i>Options d'export</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="export_type" class="form-label">Type de données</label>
+                            <label for="export_type" class="form-label">Type de donnÃ©es</label>
                             <select class="form-select form-select-lg" id="export_type" name="export_type">
-                                <option value="summary">Résumé par classe</option>
-                                <option value="detailed">Données détaillées</option>
+                                <option value="summary">RÃ©sumÃ© par classe</option>
+                                <option value="detailed">DonnÃ©es dÃ©taillÃ©es</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="form-check mt-4">
                                 <input class="form-check-input" type="checkbox" id="include_justified" name="include_justified" checked>
                                 <label class="form-check-label" for="include_justified">
-                                    Inclure les absences justifiées
+                                    Inclure les absences justifiÃ©es
                                 </label>
                             </div>
                         </div>
@@ -707,7 +707,7 @@ include '../../../../includes/header.php';
                         <input type="radio" name="export_format" value="excel" id="format_excel" checked style="display: none;">
                         <i class="fas fa-file-excel text-success"></i>
                         <div class="fw-bold">Excel (.xls)</div>
-                        <small class="text-muted">Idéal pour l'analyse</small>
+                        <small class="text-muted">IdÃ©al pour l'analyse</small>
                     </div>
 
                     <div class="format-option" onclick="selectFormat('csv')">
@@ -729,7 +729,7 @@ include '../../../../includes/header.php';
                 <div class="d-grid">
                     <button type="submit" class="btn btn-export excel btn-lg" id="exportButton">
                         <i class="fas fa-download me-2"></i>
-                        Générer l'export
+                        GÃ©nÃ©rer l'export
                     </button>
                 </div>
             </div>
@@ -737,20 +737,20 @@ include '../../../../includes/header.php';
     </form>
 </div>
 
-<!-- Section de prévisualisation -->
+<!-- Section de prÃ©visualisation -->
 <div class="preview-section animate-fade-in animate-delay-3">
     <h5 class="mb-3">
         <i class="fas fa-eye me-2"></i>
-        Aperçu des données
+        AperÃ§u des donnÃ©es
     </h5>
 
     <div id="previewContent">
         <div class="text-center py-4">
             <i class="fas fa-search fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Configurez vos filtres et cliquez sur "Aperçu" pour voir les données</p>
+            <p class="text-muted">Configurez vos filtres et cliquez sur "AperÃ§u" pour voir les donnÃ©es</p>
             <button type="button" class="btn btn-outline-primary" onclick="loadPreview()">
                 <i class="fas fa-eye me-1"></i>
-                Charger l'aperçu
+                Charger l'aperÃ§u
             </button>
         </div>
     </div>
@@ -765,22 +765,22 @@ include '../../../../includes/header.php';
 
     <div class="row">
         <div class="col-md-6">
-            <h6 class="text-primary">📊 Types d'export</h6>
+            <h6 class="text-primary">ðŸ“Š Types d'export</h6>
             <ul class="list-unstyled">
                 <li class="mb-2">
-                    <strong>Résumé par classe :</strong> Statistiques agrégées par classe (nombre d'absences, retards, etc.)
+                    <strong>RÃ©sumÃ© par classe :</strong> Statistiques agrÃ©gÃ©es par classe (nombre d'absences, retards, etc.)
                 </li>
                 <li class="mb-2">
-                    <strong>Données détaillées :</strong> Liste complète de tous les incidents avec détails
+                    <strong>DonnÃ©es dÃ©taillÃ©es :</strong> Liste complÃ¨te de tous les incidents avec dÃ©tails
                 </li>
             </ul>
         </div>
 
         <div class="col-md-6">
-            <h6 class="text-success">📁 Formats disponibles</h6>
+            <h6 class="text-success">ðŸ“ Formats disponibles</h6>
             <ul class="list-unstyled">
                 <li class="mb-2">
-                    <strong>Excel (.xls) :</strong> Idéal pour l'analyse et les calculs
+                    <strong>Excel (.xls) :</strong> IdÃ©al pour l'analyse et les calculs
                 </li>
                 <li class="mb-2">
                     <strong>CSV (.csv) :</strong> Compatible avec tous les logiciels
@@ -794,7 +794,7 @@ include '../../../../includes/header.php';
 
     <div class="alert alert-info mt-3">
         <i class="fas fa-lightbulb me-2"></i>
-        <strong>Conseil :</strong> Pour de gros volumes de données, privilégiez le format CSV qui est plus rapide à générer.
+        <strong>Conseil :</strong> Pour de gros volumes de donnÃ©es, privilÃ©giez le format CSV qui est plus rapide Ã  gÃ©nÃ©rer.
     </div>
 </div>
 
@@ -804,7 +804,7 @@ let selectedFormat = 'excel';
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
-    // Sélectionner le format Excel par défaut
+    // SÃ©lectionner le format Excel par dÃ©faut
     selectFormat('excel');
 
     // Enregistrer l'action de consultation
@@ -816,25 +816,25 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({
             action: 'view_export_page',
             module: 'attendance',
-            details: 'Consultation de la page d\'export des données'
+            details: 'Consultation de la page d\'export des donnÃ©es'
         })
     }).catch(error => console.log('Log error:', error));
 });
 
-// Sélection du format d'export
+// SÃ©lection du format d'export
 function selectFormat(format) {
     selectedFormat = format;
 
-    // Réinitialiser toutes les options
+    // RÃ©initialiser toutes les options
     document.querySelectorAll('.format-option').forEach(option => {
         option.classList.remove('selected');
     });
 
-    // Sélectionner l'option choisie
+    // SÃ©lectionner l'option choisie
     document.querySelector(`input[value="${format}"]`).checked = true;
     document.querySelector(`input[value="${format}"]`).closest('.format-option').classList.add('selected');
 
-    // Mettre à jour le bouton d'export
+    // Mettre Ã  jour le bouton d'export
     const button = document.getElementById('exportButton');
     const icons = {
         excel: 'fas fa-file-excel',
@@ -849,16 +849,16 @@ function selectFormat(format) {
     };
 
     const labels = {
-        excel: 'Générer Excel',
-        csv: 'Générer CSV',
-        pdf: 'Générer PDF'
+        excel: 'GÃ©nÃ©rer Excel',
+        csv: 'GÃ©nÃ©rer CSV',
+        pdf: 'GÃ©nÃ©rer PDF'
     };
 
     button.className = `btn btn-lg ${classes[format]}`;
     button.innerHTML = `<i class="${icons[format]} me-2"></i>${labels[format]}`;
 }
 
-// Définir des plages de dates prédéfinies
+// DÃ©finir des plages de dates prÃ©dÃ©finies
 function setDateRange(range) {
     const startInput = document.getElementById('date_start');
     const endInput = document.getElementById('date_end');
@@ -890,7 +890,7 @@ function setDateRange(range) {
     endInput.value = endDate.toISOString().split('T')[0];
 }
 
-// Sélectionner/désélectionner toutes les classes
+// SÃ©lectionner/dÃ©sÃ©lectionner toutes les classes
 function toggleAllClasses() {
     const selectAll = document.getElementById('select_all_classes');
     const checkboxes = document.querySelectorAll('.class-checkbox');
@@ -900,7 +900,7 @@ function toggleAllClasses() {
     });
 }
 
-// Charger l'aperçu des données
+// Charger l'aperÃ§u des donnÃ©es
 function loadPreview() {
     const formData = new FormData(document.getElementById('exportForm'));
     formData.delete('export_action'); // Retirer l'action d'export
@@ -912,7 +912,7 @@ function loadPreview() {
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Chargement...</span>
             </div>
-            <p class="mt-2 text-muted">Chargement de l'aperçu...</p>
+            <p class="mt-2 text-muted">Chargement de l'aperÃ§u...</p>
         </div>
     `;
 
@@ -928,7 +928,7 @@ function loadPreview() {
             previewContent.innerHTML = `
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    ${data.message || 'Aucune donnée trouvée pour les critères sélectionnés'}
+                    ${data.message || 'Aucune donnÃ©e trouvÃ©e pour les critÃ¨res sÃ©lectionnÃ©s'}
                 </div>
             `;
         }
@@ -938,13 +938,13 @@ function loadPreview() {
         previewContent.innerHTML = `
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-circle me-2"></i>
-                Erreur lors du chargement de l'aperçu
+                Erreur lors du chargement de l'aperÃ§u
             </div>
         `;
     });
 }
 
-// Afficher l'aperçu des données
+// Afficher l'aperÃ§u des donnÃ©es
 function displayPreview(data, type) {
     const previewContent = document.getElementById('previewContent');
 
@@ -952,7 +952,7 @@ function displayPreview(data, type) {
         previewContent.innerHTML = `
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
-                Aucune donnée trouvée pour les critères sélectionnés
+                Aucune donnÃ©e trouvÃ©e pour les critÃ¨res sÃ©lectionnÃ©s
             </div>
         `;
         return;
@@ -960,7 +960,7 @@ function displayPreview(data, type) {
 
     let html = `
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0">Aperçu des données (${data.length} enregistrement${data.length > 1 ? 's' : ''})</h6>
+            <h6 class="mb-0">AperÃ§u des donnÃ©es (${data.length} enregistrement${data.length > 1 ? 's' : ''})</h6>
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadPreview()">
                 <i class="fas fa-sync-alt me-1"></i>
                 Actualiser
@@ -975,7 +975,7 @@ function displayPreview(data, type) {
     if (type === 'detailed') {
         html += `
             <th>Matricule</th>
-            <th>Élève</th>
+            <th>Ã‰lÃ¨ve</th>
             <th>Classe</th>
             <th>Type</th>
             <th>Date</th>
@@ -987,8 +987,8 @@ function displayPreview(data, type) {
             <th>Incidents</th>
             <th>Absences</th>
             <th>Retards</th>
-            <th>Justifiés</th>
-            <th>Élèves</th>
+            <th>JustifiÃ©s</th>
+            <th>Ã‰lÃ¨ves</th>
         `;
     }
 
@@ -998,7 +998,7 @@ function displayPreview(data, type) {
                 <tbody>
     `;
 
-    // Afficher seulement les 10 premiers enregistrements pour l'aperçu
+    // Afficher seulement les 10 premiers enregistrements pour l'aperÃ§u
     const previewData = data.slice(0, 10);
 
     previewData.forEach(row => {
@@ -1037,7 +1037,7 @@ function displayPreview(data, type) {
         html += `
             <div class="alert alert-info mt-3">
                 <i class="fas fa-info-circle me-2"></i>
-                Aperçu limité aux 10 premiers enregistrements. L'export complet contiendra ${data.length} enregistrement${data.length > 1 ? 's' : ''}.
+                AperÃ§u limitÃ© aux 10 premiers enregistrements. L'export complet contiendra ${data.length} enregistrement${data.length > 1 ? 's' : ''}.
             </div>
         `;
     }
@@ -1053,19 +1053,19 @@ document.getElementById('exportForm').addEventListener('submit', function(e) {
 
     if (!startDate || !endDate) {
         e.preventDefault();
-        alert('Veuillez sélectionner une période de dates');
+        alert('Veuillez sÃ©lectionner une période de dates');
         return false;
     }
 
     if (new Date(startDate) > new Date(endDate)) {
         e.preventDefault();
-        alert('La date de début doit être antérieure à la date de fin');
+        alert('La date de dÃ©but doit Ãªtre antÃ©rieure Ã  la date de fin');
         return false;
     }
 
-    // Vérifier qu'au moins une classe est sélectionnée (optionnel)
+    // VÃ©rifier qu'au moins une classe est sÃ©lectionnÃ©e (optionnel)
     if (selectedClasses.length === 0) {
-        if (!confirm('Aucune classe sélectionnée. Exporter toutes les classes ?')) {
+        if (!confirm('Aucune classe sÃ©lectionnÃ©e. Exporter toutes les classes ?')) {
             e.preventDefault();
             return false;
         }
@@ -1074,10 +1074,10 @@ document.getElementById('exportForm').addEventListener('submit', function(e) {
     // Afficher un message de chargement
     const button = document.getElementById('exportButton');
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...';
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>GÃ©nÃ©ration en cours...';
     button.disabled = true;
 
-    // Réactiver le bouton après 5 secondes (au cas où)
+    // RÃ©activer le bouton aprÃ¨s 5 secondes (au cas oÃ¹)
     setTimeout(() => {
         button.innerHTML = originalText;
         button.disabled = false;
@@ -1086,3 +1086,7 @@ document.getElementById('exportForm').addEventListener('submit', function(e) {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

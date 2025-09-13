@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admissions')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
+requirePagePermissionFromDB('admissions', 'applications', 'read', '../../../dashboard.php');
 
 $page_title = 'Liste des Demandes d\'Admission';
 
@@ -451,3 +449,4 @@ document.getElementById('classe').addEventListener('change', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+

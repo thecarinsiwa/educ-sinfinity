@@ -1,23 +1,22 @@
-<?php
+﻿<?php
 /**
- * Module Admissions - Critères d'admission
+ * Module Admissions - CritÃ¨res d'admission
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../index.php');
-}
 
-$page_title = 'Critères d\'admission';
+requirePagePermissionFromDB('students', 'admissions', 'edit', '../../../../dashboard.php');
 
-// Récupérer l'année scolaire active
+$page_title = 'CritÃ¨res d\'admission';
+
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year) {
@@ -33,13 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $database->beginTransaction();
             
-            // Supprimer les anciens critères
+            // Supprimer les anciens critÃ¨res
             $database->query(
                 "DELETE FROM criteres_admission WHERE annee_scolaire_id = ?",
                 [$current_year['id']]
             );
             
-            // Sauvegarder les nouveaux critères
+            // Sauvegarder les nouveaux critÃ¨res
             $niveaux = ['maternelle', 'primaire', 'secondaire', 'superieur'];
             
             foreach ($niveaux as $niveau) {
@@ -63,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
             }
             
-            // Sauvegarder les critères par classe
+            // Sauvegarder les critÃ¨res par classe
             $classes = $database->query(
                 "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ?",
                 [$current_year['id']]
@@ -82,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
             }
             
-            // Sauvegarder les paramètres généraux
+            // Sauvegarder les paramÃ¨tres gÃ©nÃ©raux
             $delai_traitement = (int)($_POST['delai_traitement'] ?? 7);
             $auto_refus = (int)($_POST['auto_refus'] ?? 30);
             $notifications_email = (int)($_POST['notifications_email'] ?? 1);
             $validation_auto = (int)($_POST['validation_auto'] ?? 0);
             
-            // Sauvegarder dans la table des paramètres (ou créer une table si elle n'existe pas)
+            // Sauvegarder dans la table des paramÃ¨tres (ou crÃ©er une table si elle n'existe pas)
             $database->query(
                 "INSERT INTO parametres_admission (
                     annee_scolaire_id, delai_traitement, auto_refus, 
@@ -104,17 +103,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             
             $database->commit();
-            showMessage('success', 'Critères d\'admission sauvegardés avec succès.');
+            showMessage('success', 'CritÃ¨res d\'admission sauvegardÃ©s avec succÃ¨s.');
             redirectTo('criteria.php');
             
         } catch (Exception $e) {
             $database->rollback();
-            showMessage('error', 'Erreur lors de la sauvegarde des critères : ' . $e->getMessage());
+            showMessage('error', 'Erreur lors de la sauvegarde des critÃ¨res : ' . $e->getMessage());
         }
     }
 }
 
-// Récupérer les critères existants
+// RÃ©cupÃ©rer les critÃ¨res existants
 $criteres_niveaux = $database->query(
     "SELECT * FROM criteres_admission WHERE annee_scolaire_id = ? ORDER BY niveau",
     [$current_year['id']]
@@ -129,25 +128,25 @@ $criteres_classes = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// Organiser les critères par niveau
+// Organiser les critÃ¨res par niveau
 $criteres_par_niveau = [];
 foreach ($criteres_niveaux as $critere) {
     $criteres_par_niveau[$critere['niveau']] = $critere;
 }
 
-// Organiser les critères par classe
+// Organiser les critÃ¨res par classe
 $criteres_par_classe = [];
 foreach ($criteres_classes as $critere) {
     $criteres_par_classe[$critere['classe_id']] = $critere;
 }
 
-// Récupérer les paramètres généraux
+// RÃ©cupÃ©rer les paramÃ¨tres gÃ©nÃ©raux
 $parametres_generaux = $database->query(
     "SELECT * FROM parametres_admission WHERE annee_scolaire_id = ?",
     [$current_year['id']]
 )->fetch();
 
-// Récupérer les classes
+// RÃ©cupÃ©rer les classes
 $classes = $database->query(
     "SELECT id, nom, niveau FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id']]
@@ -179,7 +178,7 @@ include '../../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-cogs me-2"></i>
-        Critères d'admission
+        CritÃ¨res d'admission
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -221,12 +220,12 @@ include '../../../../includes/header.php';
                                         </div>
                                         <div class="col-6">
                                             <h4 class="text-success"><?php echo $stats_admission[$niveau]['acceptees']; ?></h4>
-                                            <small>Acceptées</small>
+                                            <small>AcceptÃ©es</small>
                                         </div>
                                     </div>
                                     <div class="mt-2">
                                         <span class="badge bg-warning"><?php echo $stats_admission[$niveau]['en_attente']; ?> en attente</span>
-                                        <span class="badge bg-danger"><?php echo $stats_admission[$niveau]['refusees']; ?> refusées</span>
+                                        <span class="badge bg-danger"><?php echo $stats_admission[$niveau]['refusees']; ?> refusÃ©es</span>
                                     </div>
                                 </div>
                             </div>
@@ -238,16 +237,16 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Formulaire des critères -->
+<!-- Formulaire des critÃ¨res -->
 <form method="POST" action="">
     <input type="hidden" name="action" value="save_criteria">
     
-    <!-- Critères par niveau -->
+    <!-- CritÃ¨res par niveau -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-layer-group me-2"></i>
-                Critères par niveau
+                CritÃ¨res par niveau
             </h5>
         </div>
         <div class="card-body">
@@ -269,19 +268,19 @@ include '../../../../includes/header.php';
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <label for="age_min_<?php echo $niveau; ?>" class="form-label">Âge minimum</label>
+                                        <label for="age_min_<?php echo $niveau; ?>" class="form-label">Ã‚ge minimum</label>
                                         <input type="number" class="form-control" id="age_min_<?php echo $niveau; ?>" 
                                                name="age_min_<?php echo $niveau; ?>" 
                                                value="<?php echo $critere['age_min'] ?? ''; ?>" min="0" max="25">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="age_max_<?php echo $niveau; ?>" class="form-label">Âge maximum</label>
+                                        <label for="age_max_<?php echo $niveau; ?>" class="form-label">Ã‚ge maximum</label>
                                         <input type="number" class="form-control" id="age_max_<?php echo $niveau; ?>" 
                                                name="age_max_<?php echo $niveau; ?>" 
                                                value="<?php echo $critere['age_max'] ?? ''; ?>" min="0" max="25">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="capacite_max_<?php echo $niveau; ?>" class="form-label">Capacité maximale</label>
+                                        <label for="capacite_max_<?php echo $niveau; ?>" class="form-label">CapacitÃ© maximale</label>
                                         <input type="number" class="form-control" id="capacite_max_<?php echo $niveau; ?>" 
                                                name="capacite_max_<?php echo $niveau; ?>" 
                                                value="<?php echo $critere['capacite_max'] ?? ''; ?>" min="0">
@@ -296,7 +295,7 @@ include '../../../../includes/header.php';
                                         <label for="documents_requis_<?php echo $niveau; ?>" class="form-label">Documents requis</label>
                                         <textarea class="form-control" id="documents_requis_<?php echo $niveau; ?>" 
                                                   name="documents_requis_<?php echo $niveau; ?>" rows="2"
-                                                  placeholder="Liste des documents requis (séparés par des virgules)"><?php echo htmlspecialchars($critere['documents_requis'] ?? ''); ?></textarea>
+                                                  placeholder="Liste des documents requis (sÃ©parÃ©s par des virgules)"><?php echo htmlspecialchars($critere['documents_requis'] ?? ''); ?></textarea>
                                     </div>
                                     <div class="col-12">
                                         <label for="conditions_speciales_<?php echo $niveau; ?>" class="form-label">Conditions spéciales</label>
@@ -313,12 +312,12 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- Critères par classe -->
+    <!-- CritÃ¨res par classe -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-graduation-cap me-2"></i>
-                Critères par classe
+                CritÃ¨res par classe
             </h5>
         </div>
         <div class="card-body">
@@ -328,7 +327,7 @@ include '../../../../includes/header.php';
                         <tr>
                             <th>Classe</th>
                             <th>Niveau</th>
-                            <th>Capacité maximale</th>
+                            <th>CapacitÃ© maximale</th>
                             <th>Note minimale</th>
                             <th>Actif</th>
                         </tr>
@@ -370,33 +369,33 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- Paramètres généraux -->
+    <!-- Paramètres gÃ©nÃ©raux -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-sliders-h me-2"></i>
-                Paramètres généraux
+                Paramètres gÃ©nÃ©raux
             </h5>
         </div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label for="delai_traitement" class="form-label">Délai de traitement (jours)</label>
+                    <label for="delai_traitement" class="form-label">DÃ©lai de traitement (jours)</label>
                     <input type="number" class="form-control" id="delai_traitement" name="delai_traitement" 
                            value="<?php echo $parametres_generaux['delai_traitement'] ?? 7; ?>" min="1" max="30">
-                    <small class="form-text text-muted">Délai maximum pour traiter une demande d'admission</small>
+                    <small class="form-text text-muted">DÃ©lai maximum pour traiter une demande d'admission</small>
                 </div>
                 <div class="col-md-6">
-                    <label for="auto_refus" class="form-label">Refus automatique après (jours)</label>
+                    <label for="auto_refus" class="form-label">Refus automatique aprÃ¨s (jours)</label>
                     <input type="number" class="form-control" id="auto_refus" name="auto_refus" 
                            value="<?php echo $parametres_generaux['auto_refus'] ?? 30; ?>" min="1" max="90">
-                    <small class="form-text text-muted">Refus automatique si pas de réponse dans ce délai</small>
+                    <small class="form-text text-muted">Refus automatique si pas de rÃ©ponse dans ce dÃ©lai</small>
                 </div>
                 <div class="col-md-6">
                     <label for="notifications_email" class="form-label">Notifications par email</label>
                     <select class="form-select" id="notifications_email" name="notifications_email">
-                        <option value="1" <?php echo ($parametres_generaux['notifications_email'] ?? 1) ? 'selected' : ''; ?>>Activées</option>
-                        <option value="0" <?php echo !($parametres_generaux['notifications_email'] ?? 1) ? 'selected' : ''; ?>>Désactivées</option>
+                        <option value="1" <?php echo ($parametres_generaux['notifications_email'] ?? 1) ? 'selected' : ''; ?>>ActivÃ©es</option>
+                        <option value="0" <?php echo !($parametres_generaux['notifications_email'] ?? 1) ? 'selected' : ''; ?>>DÃ©sactivÃ©es</option>
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -405,7 +404,7 @@ include '../../../../includes/header.php';
                         <option value="0" <?php echo !($parametres_generaux['validation_auto'] ?? 0) ? 'selected' : ''; ?>>Manuelle</option>
                         <option value="1" <?php echo ($parametres_generaux['validation_auto'] ?? 0) ? 'selected' : ''; ?>>Automatique</option>
                     </select>
-                    <small class="form-text text-muted">Validation automatique si tous les critères sont remplis</small>
+                    <small class="form-text text-muted">Validation automatique si tous les critÃ¨res sont remplis</small>
                 </div>
             </div>
         </div>
@@ -418,7 +417,7 @@ include '../../../../includes/header.php';
                 <div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i>
-                        Sauvegarder les critères
+                        Sauvegarder les critÃ¨res
                     </button>
                     <a href="?" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-1"></i>
@@ -447,28 +446,28 @@ include '../../../../includes/header.php';
     <div class="card-body">
         <div class="row">
             <div class="col-md-6">
-                <h6>Critères par niveau</h6>
+                <h6>CritÃ¨res par niveau</h6>
                 <ul class="list-unstyled">
-                    <li><strong>Âge min/max :</strong> Limites d'âge pour l'admission</li>
-                    <li><strong>Capacité max :</strong> Nombre maximum d'élèves par niveau</li>
+                    <li><strong>Ã‚ge min/max :</strong> Limites d'Ã¢ge pour l'admission</li>
+                    <li><strong>CapacitÃ© max :</strong> Nombre maximum d'élèves par niveau</li>
                     <li><strong>Note min :</strong> Note minimale requise pour l'admission</li>
                     <li><strong>Documents :</strong> Documents obligatoires pour l'inscription</li>
                 </ul>
             </div>
             <div class="col-md-6">
-                <h6>Critères par classe</h6>
+                <h6>CritÃ¨res par classe</h6>
                 <ul class="list-unstyled">
-                    <li><strong>Capacité max :</strong> Nombre maximum d'élèves par classe</li>
-                    <li><strong>Note min :</strong> Note minimale spécifique à la classe</li>
-                    <li><strong>Actif :</strong> Active/désactive les critères pour cette classe</li>
+                    <li><strong>CapacitÃ© max :</strong> Nombre maximum d'élèves par classe</li>
+                    <li><strong>Note min :</strong> Note minimale spÃ©cifique Ã  la classe</li>
+                    <li><strong>Actif :</strong> Active/dÃ©sactive les critÃ¨res pour cette classe</li>
                 </ul>
             </div>
         </div>
         <hr>
         <div class="alert alert-info">
             <i class="fas fa-info-circle me-2"></i>
-            <strong>Note :</strong> Les critères d'admission s'appliquent automatiquement lors du traitement des demandes. 
-            Les demandes qui ne respectent pas ces critères seront automatiquement refusées si la validation automatique est activée.
+            <strong>Note :</strong> Les critÃ¨res d'admission s'appliquent automatiquement lors du traitement des demandes. 
+            Les demandes qui ne respectent pas ces critÃ¨res seront automatiquement refusÃ©es si la validation automatique est activÃ©e.
         </div>
     </div>
 </div>
@@ -480,14 +479,14 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         let isValid = true;
         
-        // Vérifier que les âges min sont inférieurs aux âges max
+        // VÃ©rifier que les Ã¢ges min sont infÃ©rieurs aux Ã¢ges max
         const niveaux = ['maternelle', 'primaire', 'secondaire', 'superieur'];
         niveaux.forEach(function(niveau) {
             const ageMin = parseInt(document.getElementById('age_min_' + niveau).value) || 0;
             const ageMax = parseInt(document.getElementById('age_max_' + niveau).value) || 0;
             
             if (ageMin > 0 && ageMax > 0 && ageMin >= ageMax) {
-                alert('L\'âge minimum doit être inférieur à l\'âge maximum pour le niveau ' + niveau);
+                alert('L\'Ã¢ge minimum doit Ãªtre infÃ©rieur Ã  l\'Ã¢ge maximum pour le niveau ' + niveau);
                 isValid = false;
             }
         });
@@ -497,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Activer/désactiver les champs selon l'état du switch
+    // Activer/dÃ©sactiver les champs selon l'état du switch
     const switches = document.querySelectorAll('.form-check-input');
     switches.forEach(function(switchEl) {
         switchEl.addEventListener('change', function() {
@@ -508,10 +507,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }.bind(this));
         });
         
-        // Déclencher l'événement au chargement
+        // DÃ©clencher l'événement au chargement
         switchEl.dispatchEvent(new Event('change'));
     });
 });
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

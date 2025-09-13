@@ -1,24 +1,23 @@
-<?php
+﻿<?php
 /**
- * Module de Gestion des Évaluations d'Admission
+ * Module de Gestion des Ã‰valuations d'Admission
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
 
-$page_title = 'Gestion des Évaluations';
+requirePagePermissionFromDB('students', 'tracking', 'read', '../../../../dashboard.php');
+
+$page_title = 'Gestion des Ã‰valuations';
 
 // Traitement des actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('students')) {
     try {
         $action = $_POST['action'] ?? '';
         
@@ -32,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                 $lieu = sanitizeInput($_POST['lieu']);
                 $evaluateur_id = intval($_POST['evaluateur_id']);
                 
-                // Insérer l'évaluation
+                // InsÃ©rer l'Ã©valuation
                 $database->execute(
                     "INSERT INTO evaluations_admission (demande_admission_id, type_evaluation, date_evaluation, 
                      heure_debut, heure_fin, lieu, evaluateur_id, created_at) 
@@ -40,17 +39,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPermission('students')) {
                     [$demande_id, $type_evaluation, $date_evaluation, $heure_debut, $heure_fin, $lieu, $evaluateur_id]
                 );
                 
-                // Mettre à jour le statut de la demande
+                // Mettre Ã  jour le statut de la demande
                 $database->execute(
                     "UPDATE demandes_admission SET status = 'en_cours_traitement', updated_at = NOW() WHERE id = ?",
                     [$demande_id]
                 );
                 
-                showMessage('success', 'Évaluation programmée avec succès.');
+                showMessage('success', 'Ã‰valuation programmÃ©e avec succÃ¨s.');
                 break;
         }
     } catch (Exception $e) {
-        showMessage('error', 'Erreur lors de l\'opération : ' . $e->getMessage());
+        showMessage('error', 'Erreur lors de l\'opÃ©ration : ' . $e->getMessage());
     }
 }
 
@@ -63,7 +62,7 @@ $status_filter = $_GET['status'] ?? '';
 $type_evaluation_filter = $_GET['type_evaluation'] ?? '';
 $search = trim($_GET['search'] ?? '');
 
-// Construction de la requête
+// Construction de la requÃªte
 $where_conditions = ["1=1"];
 $params = [];
 
@@ -87,7 +86,7 @@ if ($search) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// Récupérer les évaluations
+// RÃ©cupÃ©rer les Ã©valuations
 try {
     $evaluations = $database->query(
         "SELECT ea.*, da.numero_demande, da.nom_eleve, da.prenom_eleve, da.status as status_demande,
@@ -106,7 +105,7 @@ try {
     $evaluations = [];
 }
 
-// Récupérer les demandes sans évaluation
+// RÃ©cupÃ©rer les demandes sans Ã©valuation
 try {
     $demandes_sans_evaluation = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau
@@ -133,13 +132,13 @@ include '../../../../includes/header.php';
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="../../../../dashboard.php">Tableau de bord</a></li>
-                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Élèves</a></li>
-                        <li class="breadcrumb-item active">Gestion des Évaluations</li>
+                        <li class="breadcrumb-item"><a href="../../index.php">Suivi des Ã‰lÃ¨ves</a></li>
+                        <li class="breadcrumb-item active">Gestion des Ã‰valuations</li>
                     </ol>
                 </div>
                 <h4 class="page-title">
                     <i class="mdi mdi-clipboard-check me-2"></i>
-                    Gestion des Évaluations d'Admission
+                    Gestion des Ã‰valuations d'Admission
                 </h4>
             </div>
         </div>
@@ -157,7 +156,7 @@ include '../../../../includes/header.php';
                             <label for="search" class="form-label">Recherche</label>
                             <input type="text" class="form-control" id="search" name="search" 
                                    value="<?php echo htmlspecialchars($search); ?>" 
-                                   placeholder="Nom, prénom ou numéro...">
+                                   placeholder="Nom, prÃ©nom ou numÃ©ro...">
                         </div>
                         <div class="col-md-3">
                             <label for="status_filter" class="form-label">Statut</label>
@@ -165,18 +164,18 @@ include '../../../../includes/header.php';
                                 <option value="">Tous</option>
                                 <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
                                 <option value="en_cours_traitement" <?php echo $status_filter === 'en_cours_traitement' ? 'selected' : ''; ?>>En cours</option>
-                                <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>Acceptée</option>
-                                <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>Refusée</option>
+                                <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
+                                <option value="refusee" <?php echo $status_filter === 'refusee' ? 'selected' : ''; ?>>RefusÃ©e</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label for="type_evaluation_filter" class="form-label">Type</label>
                             <select class="form-select" id="type_evaluation_filter" name="type_evaluation_filter">
                                 <option value="">Tous</option>
-                                <option value="test_ecrit" <?php echo $type_evaluation_filter === 'test_ecrit' ? 'selected' : ''; ?>>Test écrit</option>
+                                <option value="test_ecrit" <?php echo $type_evaluation_filter === 'test_ecrit' ? 'selected' : ''; ?>>Test Ã©crit</option>
                                 <option value="entretien" <?php echo $type_evaluation_filter === 'entretien' ? 'selected' : ''; ?>>Entretien</option>
-                                <option value="examen_medical" <?php echo $type_evaluation_filter === 'examen_medical' ? 'selected' : ''; ?>>Examen médical</option>
-                                <option value="evaluation_psychologique" <?php echo $type_evaluation_filter === 'evaluation_psychologique' ? 'selected' : ''; ?>>Évaluation psychologique</option>
+                                <option value="examen_medical" <?php echo $type_evaluation_filter === 'examen_medical' ? 'selected' : ''; ?>>Examen mÃ©dical</option>
+                                <option value="evaluation_psychologique" <?php echo $type_evaluation_filter === 'evaluation_psychologique' ? 'selected' : ''; ?>>Ã‰valuation psychologique</option>
                                 <option value="test_niveau" <?php echo $type_evaluation_filter === 'test_niveau' ? 'selected' : ''; ?>>Test de niveau</option>
                             </select>
                         </div>
@@ -197,13 +196,13 @@ include '../../../../includes/header.php';
     </div>
 
     <div class="row">
-        <!-- Liste des évaluations -->
+        <!-- Liste des Ã©valuations -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
                     <h4 class="header-title">
                         <i class="mdi mdi-format-list-bulleted me-2"></i>
-                        Évaluations Programmes
+                        Ã‰valuations Programmes
                     </h4>
                 </div>
                 <div class="card-body">
@@ -212,11 +211,11 @@ include '../../../../includes/header.php';
                             <table class="table table-centered table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Élève</th>
+                                        <th>Ã‰lÃ¨ve</th>
                                         <th>Type</th>
                                         <th>Date & Heure</th>
                                         <th>Lieu</th>
-                                        <th>Évaluateur</th>
+                                        <th>Ã‰valuateur</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -251,10 +250,10 @@ include '../../../../includes/header.php';
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="text-muted"><?php echo $evaluation['lieu'] ?: 'Non défini'; ?></span>
+                                                <span class="text-muted"><?php echo $evaluation['lieu'] ?: 'Non dÃ©fini'; ?></span>
                                             </td>
                                             <td>
-                                                <span class="text-muted"><?php echo $evaluation['evaluateur_nom'] ?: 'Non assigné'; ?></span>
+                                                <span class="text-muted"><?php echo $evaluation['evaluateur_nom'] ?: 'Non assignÃ©'; ?></span>
                                             </td>
                                             <td>
                                                 <div class="btn-group" role="group">
@@ -276,20 +275,20 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-4">
                             <i class="mdi mdi-information-outline text-muted" style="font-size: 48px;"></i>
-                            <p class="text-muted mt-2">Aucune évaluation trouvée</p>
+                            <p class="text-muted mt-2">Aucune Ã©valuation trouvÃ©e</p>
                         </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Demandes sans évaluation -->
+        <!-- Demandes sans Ã©valuation -->
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
                     <h5 class="header-title">
                         <i class="mdi mdi-clock-outline me-2"></i>
-                        Demandes sans Évaluation
+                        Demandes sans Ã‰valuation
                     </h5>
                 </div>
                 <div class="card-body">
@@ -313,7 +312,7 @@ include '../../../../includes/header.php';
                     <?php else: ?>
                         <div class="text-center py-3">
                             <i class="mdi mdi-check-circle text-success" style="font-size: 32px;"></i>
-                            <p class="text-success mt-2">Toutes les demandes ont une évaluation !</p>
+                            <p class="text-success mt-2">Toutes les demandes ont une Ã©valuation !</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -323,3 +322,7 @@ include '../../../../includes/header.php';
 </div>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

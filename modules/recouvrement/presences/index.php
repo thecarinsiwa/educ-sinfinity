@@ -10,10 +10,8 @@ require_once '../../../includes/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('recouvrement') && !checkPermission('admin')) {
-    showMessage('error', 'Accès refusé à cette page.');
-    redirectTo('../../../index.php');
-}
+require_once '../../../includes/permissions-pages.php';
+requirePagePermissionFromDB('recouvrement', 'presences', 'read', '../../../dashboard.php');
 
 $errors = [];
 

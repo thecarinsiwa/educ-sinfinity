@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('transport') && !checkPermission('transport_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'transport', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion du Transport Scolaire';
 
@@ -92,7 +91,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('transport')): ?>
+        <?php if (checkPagePermission('transport')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -341,7 +340,7 @@ include '../../../includes/header.php';
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if (checkPermission('transport')): ?>
+                                                <?php if (checkPagePermission('transport')): ?>
                                                     <a href="vehicles/edit.php?id=<?php echo $vehicule['id']; ?>" 
                                                        class="btn btn-outline-primary" title="Modifier">
                                                         <i class="fas fa-edit"></i>
@@ -358,7 +357,7 @@ include '../../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-bus fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun véhicule enregistré</p>
-                        <?php if (checkPermission('transport')): ?>
+                        <?php if (checkPagePermission('transport')): ?>
                             <a href="vehicles/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Ajouter un véhicule
@@ -463,7 +462,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('transport')): ?>
+<?php if (checkPagePermission('transport')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -525,3 +524,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

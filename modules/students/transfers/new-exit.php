@@ -1,28 +1,28 @@
-<?php
+﻿<?php
 /**
- * Nouvelle sortie d'élève (transfert sortant ou sortie définitive)
+ * Nouvelle sortie d'Ã©lÃ¨ve (transfert sortant ou sortie dÃ©finitive)
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
 
-$page_title = "Nouvelle sortie d'élève";
+requirePagePermissionFromDB('students', 'transfers', 'create', '../../../dashboard.php');
 
-// Récupérer l'année scolaire active
+$page_title = "Nouvelle sortie d'Ã©lÃ¨ve";
+
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exit'])) {
     try {
-        // Validation des données
+        // Validation des donnÃ©es
         $required_fields = ['eleve_id', 'type_mouvement', 'motif', 'date_demande'];
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exit'])) {
             }
         }
         
-        // Vérifier que l'élève existe et est actif
+        // VÃ©rifier que l'Ã©lÃ¨ve existe et est actif
         $eleve = $database->query(
             "SELECT e.*, i.classe_id, c.nom as classe_nom, c.niveau 
              FROM eleves e 
@@ -41,24 +41,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exit'])) {
         )->fetch();
         
         if (!$eleve) {
-            throw new Exception("Élève non trouvé ou non inscrit pour l'année en cours");
+            throw new Exception("Ã‰lÃ¨ve non trouvÃ© ou non inscrit pour l'année en cours");
         }
         
-        // Vérifier qu'il n'y a pas déjà une demande de sortie en cours
+        // VÃ©rifier qu'il n'y a pas dÃ©jÃ  une demande de sortie en cours
         $existing_transfer = $database->query(
             "SELECT * FROM transfers WHERE eleve_id = ? AND type_mouvement IN ('transfert_sortant', 'sortie_definitive') AND statut IN ('en_attente', 'approuve')",
             [$_POST['eleve_id']]
         )->fetch();
         
         if ($existing_transfer) {
-            throw new Exception("Une demande de sortie est déjà en cours pour cet élève");
+            throw new Exception("Une demande de sortie est dÃ©jÃ  en cours pour cet Ã©lÃ¨ve");
         }
         
         $database->beginTransaction();
         
-        // Créer le transfert/sortie
+        // CrÃ©er le transfert/sortie
         $sql_transfer = "INSERT INTO transfers (eleve_id, type_mouvement, ecole_origine, ecole_destination, classe_origine_id, motif, date_demande, date_effective, statut, frais_transfert, observations, traite_par, date_traitement) 
-                        VALUES (?, ?, 'Notre École', ?, ?, ?, ?, ?, 'en_attente', ?, ?, ?, NOW())";
+                        VALUES (?, ?, 'Notre Ã‰cole', ?, ?, ?, ?, ?, 'en_attente', ?, ?, ?, NOW())";
         
         $database->query($sql_transfer, [
             $_POST['eleve_id'],
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exit'])) {
             $documents_requis = [
                 ['nom' => 'Demande de transfert', 'type' => 'autre', 'obligatoire' => true],
                 ['nom' => 'Bulletin scolaire', 'type' => 'bulletin', 'obligatoire' => true],
-                ['nom' => 'Certificat de scolarité', 'type' => 'certificat_scolarite', 'obligatoire' => true],
+                ['nom' => 'Certificat de scolaritÃ©', 'type' => 'certificat_scolarite', 'obligatoire' => true],
                 ['nom' => 'Quitus financier', 'type' => 'autre', 'obligatoire' => true]
             ];
         } else { // sortie_definitive
@@ -119,16 +119,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exit'])) {
         }
         
         // Enregistrer l'historique
-        $action_label = $_POST['type_mouvement'] === 'transfert_sortant' ? 'Demande de transfert sortant' : 'Demande de sortie définitive';
+        $action_label = $_POST['type_mouvement'] === 'transfert_sortant' ? 'Demande de transfert sortant' : 'Demande de sortie dÃ©finitive';
         $sql_history = "INSERT INTO transfer_history (transfer_id, action, nouveau_statut, commentaire, user_id) VALUES (?, 'creation', 'en_attente', ?, ?)";
         $database->query($sql_history, [$transfer_id, $action_label, $_SESSION['user_id']]);
         
         // Logger l'action
-        logUserAction('create_exit', 'transfers', "Nouvelle sortie créée pour l'élève ID: {$_POST['eleve_id']}", $transfer_id);
+        logUserAction('create_exit', 'transfers', "Nouvelle sortie crÃ©Ã©e pour l'Ã©lÃ¨ve ID: {$_POST['eleve_id']}", $transfer_id);
         
         $database->commit();
         
-        showMessage('success', 'Demande de sortie créée avec succès !');
+        showMessage('success', 'Demande de sortie crÃ©Ã©e avec succÃ¨s !');
         redirectTo("view-transfer.php?id=$transfer_id");
         
     } catch (Exception $e) {
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exit'])) {
     }
 }
 
-// Récupérer les élèves actifs
+// RÃ©cupÃ©rer les élèves actifs
 $eleves = $database->query(
     "SELECT e.*, i.classe_id, c.nom as classe_nom, c.niveau 
      FROM eleves e 
@@ -303,17 +303,17 @@ include '../../../includes/header.php';
 }
 </style>
 
-<!-- En-tête moderne -->
+<!-- En-tÃªte moderne -->
 <div class="exit-header">
     <div class="container-fluid">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="animate-fade-in">
                     <i class="fas fa-user-minus me-3"></i>
-                    Nouvelle sortie d'élève
+                    Nouvelle sortie d'Ã©lÃ¨ve
                 </h1>
                 <p class="subtitle animate-fade-in animate-delay-1">
-                    Enregistrer le départ d'un élève (transfert sortant ou sortie définitive)
+                    Enregistrer le dÃ©part d'un Ã©lÃ¨ve (transfert sortant ou sortie dÃ©finitive)
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -333,14 +333,14 @@ include '../../../includes/header.php';
     <form method="POST" id="exitForm">
         <input type="hidden" name="create_exit" value="1">
         
-        <!-- Sélection de l'élève -->
+        <!-- SÃ©lection de l'Ã©lÃ¨ve -->
         <div class="form-section">
-            <h6><i class="fas fa-search"></i>Sélection de l'élève</h6>
+            <h6><i class="fas fa-search"></i>SÃ©lection de l'Ã©lÃ¨ve</h6>
             <div class="row">
                 <div class="col-md-12 mb-3">
-                    <label for="eleve_id" class="form-label">Élève <span class="text-danger">*</span></label>
+                    <label for="eleve_id" class="form-label">Ã‰lÃ¨ve <span class="text-danger">*</span></label>
                     <select class="form-select form-select-lg" id="eleve_id" name="eleve_id" required onchange="showStudentInfo()">
-                        <option value="">Sélectionner un élève</option>
+                        <option value="">SÃ©lectionner un Ã©lÃ¨ve</option>
                         <?php foreach ($eleves as $eleve): ?>
                             <option value="<?php echo $eleve['id']; ?>" 
                                     data-nom="<?php echo htmlspecialchars($eleve['nom']); ?>"
@@ -355,9 +355,9 @@ include '../../../includes/header.php';
             </div>
         </div>
 
-        <!-- Informations de l'élève sélectionné -->
+        <!-- Informations de l'Ã©lÃ¨ve sÃ©lectionnÃ© -->
         <div id="studentInfo" class="student-info" style="display: none;">
-            <h6><i class="fas fa-user text-primary"></i>Informations de l'élève sélectionné</h6>
+            <h6><i class="fas fa-user text-primary"></i>Informations de l'Ã©lÃ¨ve sÃ©lectionnÃ©</h6>
             <div class="row">
                 <div class="col-md-3">
                     <strong>Matricule:</strong>
@@ -386,14 +386,14 @@ include '../../../includes/header.php';
                     <input type="radio" name="type_mouvement" value="transfert_sortant" id="type_transfert" style="display: none;">
                     <i class="fas fa-exchange-alt text-warning"></i>
                     <div class="fw-bold">Transfert sortant</div>
-                    <small class="text-muted">Vers une autre école</small>
+                    <small class="text-muted">Vers une autre Ã©cole</small>
                 </div>
                 
                 <div class="type-option" onclick="selectType('sortie_definitive')">
                     <input type="radio" name="type_mouvement" value="sortie_definitive" id="type_sortie" style="display: none;">
                     <i class="fas fa-graduation-cap text-success"></i>
-                    <div class="fw-bold">Sortie définitive</div>
-                    <small class="text-muted">Fin de scolarité</small>
+                    <div class="fw-bold">Sortie dÃ©finitive</div>
+                    <small class="text-muted">Fin de scolaritÃ©</small>
                 </div>
             </div>
         </div>
@@ -404,7 +404,7 @@ include '../../../includes/header.php';
             
             <div class="row" id="ecole-destination-row" style="display: none;">
                 <div class="col-md-6 mb-3">
-                    <label for="ecole_destination" class="form-label">École de destination</label>
+                    <label for="ecole_destination" class="form-label">Ã‰cole de destination</label>
                     <input type="text" class="form-control form-control-lg" id="ecole_destination" name="ecole_destination">
                 </div>
                 <div class="col-md-6 mb-3">
@@ -438,7 +438,7 @@ include '../../../includes/header.php';
                 <div class="col-md-12 mb-3">
                     <label for="observations" class="form-label">Observations</label>
                     <textarea class="form-control" id="observations" name="observations" rows="2" 
-                              placeholder="Observations particulières..."></textarea>
+                              placeholder="Observations particuliÃ¨res..."></textarea>
                 </div>
             </div>
         </div>
@@ -451,14 +451,14 @@ include '../../../includes/header.php';
             </a>
             <button type="submit" class="btn btn-danger btn-modern">
                 <i class="fas fa-save me-2"></i>
-                Créer la demande de sortie
+                CrÃ©er la demande de sortie
             </button>
         </div>
     </form>
 </div>
 
 <script>
-// Afficher les informations de l'élève sélectionné
+// Afficher les informations de l'Ã©lÃ¨ve sÃ©lectionnÃ©
 function showStudentInfo() {
     const select = document.getElementById('eleve_id');
     const selectedOption = select.options[select.selectedIndex];
@@ -474,14 +474,14 @@ function showStudentInfo() {
     }
 }
 
-// Sélectionner le type de mouvement
+// SÃ©lectionner le type de mouvement
 function selectType(type) {
-    // Réinitialiser toutes les options
+    // RÃ©initialiser toutes les options
     document.querySelectorAll('.type-option').forEach(option => {
         option.classList.remove('selected');
     });
     
-    // Sélectionner l'option choisie
+    // SÃ©lectionner l'option choisie
     document.querySelector(`input[value="${type}"]`).checked = true;
     document.querySelector(`input[value="${type}"]`).closest('.type-option').classList.add('selected');
     
@@ -507,13 +507,13 @@ document.getElementById('exitForm').addEventListener('submit', function(e) {
     const datedemande = document.getElementById('date_demande').value;
     
     if (!eleveId) {
-        alert('Veuillez sélectionner un élève');
+        alert('Veuillez sÃ©lectionner un Ã©lÃ¨ve');
         e.preventDefault();
         return false;
     }
     
     if (!typeMouvement) {
-        alert('Veuillez sélectionner le type de mouvement');
+        alert('Veuillez sÃ©lectionner le type de mouvement');
         e.preventDefault();
         return false;
     }
@@ -530,19 +530,19 @@ document.getElementById('exitForm').addEventListener('submit', function(e) {
         return false;
     }
     
-    // Vérification spécifique pour transfert sortant
+    // VÃ©rification spÃ©cifique pour transfert sortant
     if (typeMouvement.value === 'transfert_sortant') {
         const ecoleDestination = document.getElementById('ecole_destination').value;
         if (!ecoleDestination.trim()) {
-            alert('Veuillez saisir l\'école de destination pour un transfert sortant');
+            alert('Veuillez saisir l\'Ã©cole de destination pour un transfert sortant');
             e.preventDefault();
             return false;
         }
     }
     
     // Confirmation
-    const typeLabel = typeMouvement.value === 'transfert_sortant' ? 'transfert sortant' : 'sortie définitive';
-    if (!confirm(`Êtes-vous sûr de vouloir créer cette demande de ${typeLabel} ?`)) {
+    const typeLabel = typeMouvement.value === 'transfert_sortant' ? 'transfert sortant' : 'sortie dÃ©finitive';
+    if (!confirm(`ÃŠtes-vous sÃ»r de vouloir crÃ©er cette demande de ${typeLabel} ?`)) {
         e.preventDefault();
         return false;
     }
@@ -550,3 +550,7 @@ document.getElementById('exitForm').addEventListener('submit', function(e) {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

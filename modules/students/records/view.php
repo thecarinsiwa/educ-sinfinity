@@ -1,31 +1,30 @@
-<?php
+﻿<?php
 /**
- * Affichage détaillé d'un dossier scolaire
+ * Affichage dÃ©taillÃ© d'un dossier scolaire
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+
+requirePagePermissionFromDB('students', 'records', 'read', '../../../dashboard.php');
 
 $eleve_id = intval($_GET['id'] ?? 0);
 
 if (!$eleve_id) {
-    showMessage('error', 'ID d\'élève invalide.');
+    showMessage('error', 'ID d\'Ã©lÃ¨ve invalide.');
     redirectTo('index.php');
 }
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
-// Récupérer les informations complètes de l'élève
+// RÃ©cupÃ©rer les informations complÃ¨tes de l'Ã©lÃ¨ve
 try {
     $eleve = $database->query(
         "SELECT e.*, CONCAT('INS', YEAR(i.date_inscription), LPAD(i.id, 4, '0')) as numero_inscription, 
@@ -48,7 +47,7 @@ try {
     )->fetch();
 
     if (!$eleve) {
-        showMessage('error', 'Élève non trouvé ou non inscrit pour l\'année scolaire actuelle.');
+        showMessage('error', 'Ã‰lÃ¨ve non trouvÃ© ou non inscrit pour l\'année scolaire actuelle.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
@@ -70,10 +69,10 @@ include '../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour à la liste
+                Retour Ã  la liste
             </a>
         </div>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
         <div class="btn-group me-2">
             <a href="edit.php?id=<?php echo $eleve_id; ?>" class="btn btn-outline-primary">
                 <i class="fas fa-edit me-1"></i>
@@ -97,7 +96,7 @@ include '../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-user me-2"></i>
-                    Informations Générales
+                    Informations GÃ©nÃ©rales
                 </h5>
             </div>
             <div class="card-body">
@@ -114,9 +113,9 @@ include '../../../includes/header.php';
                                     <?php if ($eleve['sexe'] === 'M'): ?>
                                         <span class="badge bg-primary">Masculin</span>
                                     <?php elseif ($eleve['sexe'] === 'F'): ?>
-                                        <span class="badge bg-pink">Féminin</span>
+                                        <span class="badge bg-pink">FÃ©minin</span>
                                     <?php else: ?>
-                                        <span class="text-muted">Non spécifié</span>
+                                        <span class="text-muted">Non spÃ©cifiÃ©</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -127,13 +126,13 @@ include '../../../includes/header.php';
                                         <?php echo formatDate($eleve['date_naissance']); ?>
                                         <small class="text-muted">(<?php echo calculateAge($eleve['date_naissance']); ?> ans)</small>
                                     <?php else: ?>
-                                        <span class="text-danger">Non renseignée</span>
+                                        <span class="text-danger">Non renseignÃ©e</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td><strong>Lieu de naissance :</strong></td>
-                                <td><?php echo $eleve['lieu_naissance'] ? htmlspecialchars($eleve['lieu_naissance']) : '<span class="text-danger">Non renseigné</span>'; ?></td>
+                                <td><?php echo $eleve['lieu_naissance'] ? htmlspecialchars($eleve['lieu_naissance']) : '<span class="text-danger">Non renseignÃ©</span>'; ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Statut :</strong></td>
@@ -157,7 +156,7 @@ include '../../../includes/header.php';
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
-                                <td><strong>Numéro d'inscription :</strong></td>
+                                <td><strong>NumÃ©ro d'inscription :</strong></td>
                                 <td><code><?php echo htmlspecialchars($eleve['numero_inscription']); ?></code></td>
                             </tr>
                             <tr>
@@ -213,7 +212,7 @@ include '../../../includes/header.php';
     </div>
     
     <div class="col-md-4">
-        <!-- Photo de l'élève -->
+        <!-- Photo de l'Ã©lÃ¨ve -->
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="mb-0">
@@ -224,10 +223,10 @@ include '../../../includes/header.php';
             <div class="card-body text-center">
                 <?php if ($eleve['photo']): ?>
                     <?php 
-                    // Vérifier si le chemin contient déjà 'uploads/photos/'
+                    // VÃ©rifier si le chemin contient dÃ©jÃ  'uploads/photos/'
                     $photo_path = $eleve['photo'];
                     if (strpos($photo_path, 'uploads/photos/') === 0) {
-                        // Le chemin contient déjà le dossier, on l'utilise tel quel
+                        // Le chemin contient dÃ©jÃ  le dossier, on l'utilise tel quel
                         $photo_src = "../../../" . $photo_path;
                     } else {
                         // Le chemin ne contient que le nom du fichier
@@ -241,7 +240,7 @@ include '../../../includes/header.php';
                     <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px; display: none;">
                         <div class="text-center text-muted">
                             <i class="fas fa-user fa-3x mb-2"></i>
-                            <br>Photo non trouvée
+                            <br>Photo non trouvÃ©e
                         </div>
                     </div>
                 <?php else: ?>
@@ -273,7 +272,7 @@ include '../../../includes/header.php';
                     </div>
                     <div class="col-6">
                         <h4 class="text-success mb-0"><?php echo $eleve['nb_documents_verifies']; ?></h4>
-                        <small class="text-muted">Vérifiés</small>
+                        <small class="text-muted">VÃ©rifiÃ©s</small>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -287,7 +286,7 @@ include '../../../includes/header.php';
                                 <?php echo $pourcentage; ?>%
                             </div>
                         </div>
-                        <small class="text-muted">Documents vérifiés</small>
+                        <small class="text-muted">Documents vÃ©rifiÃ©s</small>
                     <?php else: ?>
                         <div class="alert alert-warning alert-sm mb-0">
                             <i class="fas fa-exclamation-triangle me-1"></i>
@@ -298,7 +297,7 @@ include '../../../includes/header.php';
                 <div class="mt-3">
                     <a href="documents.php?id=<?php echo $eleve_id; ?>" class="btn btn-outline-info btn-sm w-100">
                         <i class="fas fa-file-alt me-1"></i>
-                        Gérer les documents
+                        GÃ©rer les documents
                     </a>
                 </div>
             </div>
@@ -320,17 +319,17 @@ include '../../../includes/header.php';
                 <table class="table table-borderless">
                     <tr>
                         <td><strong>Adresse :</strong></td>
-                        <td><?php echo $eleve['adresse'] ? nl2br(htmlspecialchars($eleve['adresse'])) : '<span class="text-danger">Non renseignée</span>'; ?></td>
+                        <td><?php echo $eleve['adresse'] ? nl2br(htmlspecialchars($eleve['adresse'])) : '<span class="text-danger">Non renseignÃ©e</span>'; ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Téléphone :</strong></td>
+                        <td><strong>TÃ©lÃ©phone :</strong></td>
                         <td>
                             <?php if ($eleve['telephone']): ?>
                                 <a href="tel:<?php echo htmlspecialchars($eleve['telephone']); ?>">
                                     <?php echo htmlspecialchars($eleve['telephone']); ?>
                                 </a>
                             <?php else: ?>
-                                <span class="text-muted">Non renseigné</span>
+                                <span class="text-muted">Non renseignÃ©</span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -342,7 +341,7 @@ include '../../../includes/header.php';
                                     <?php echo htmlspecialchars($eleve['email']); ?>
                                 </a>
                             <?php else: ?>
-                                <span class="text-muted">Non renseigné</span>
+                                <span class="text-muted">Non renseignÃ©</span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -362,30 +361,30 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <table class="table table-borderless">
                     <tr>
-                        <td><strong>Nom du père :</strong></td>
-                        <td><?php echo $eleve['nom_pere'] ? htmlspecialchars($eleve['nom_pere']) : '<span class="text-muted">Non renseigné</span>'; ?></td>
+                        <td><strong>Nom du pÃ¨re :</strong></td>
+                        <td><?php echo $eleve['nom_pere'] ? htmlspecialchars($eleve['nom_pere']) : '<span class="text-muted">Non renseignÃ©</span>'; ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Nom de la mère :</strong></td>
-                        <td><?php echo $eleve['nom_mere'] ? htmlspecialchars($eleve['nom_mere']) : '<span class="text-muted">Non renseigné</span>'; ?></td>
+                        <td><strong>Nom de la mÃ¨re :</strong></td>
+                        <td><?php echo $eleve['nom_mere'] ? htmlspecialchars($eleve['nom_mere']) : '<span class="text-muted">Non renseignÃ©</span>'; ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Profession du père :</strong></td>
-                        <td><?php echo $eleve['profession_pere'] ? htmlspecialchars($eleve['profession_pere']) : '<span class="text-muted">Non renseignée</span>'; ?></td>
+                        <td><strong>Profession du pÃ¨re :</strong></td>
+                        <td><?php echo $eleve['profession_pere'] ? htmlspecialchars($eleve['profession_pere']) : '<span class="text-muted">Non renseignÃ©e</span>'; ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Profession de la mère :</strong></td>
-                        <td><?php echo $eleve['profession_mere'] ? htmlspecialchars($eleve['profession_mere']) : '<span class="text-muted">Non renseignée</span>'; ?></td>
+                        <td><strong>Profession de la mÃ¨re :</strong></td>
+                        <td><?php echo $eleve['profession_mere'] ? htmlspecialchars($eleve['profession_mere']) : '<span class="text-muted">Non renseignÃ©e</span>'; ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Téléphone des parents :</strong></td>
+                        <td><strong>TÃ©lÃ©phone des parents :</strong></td>
                         <td>
                             <?php if ($eleve['telephone_parent']): ?>
                                 <a href="tel:<?php echo htmlspecialchars($eleve['telephone_parent']); ?>">
                                     <?php echo htmlspecialchars($eleve['telephone_parent']); ?>
                                 </a>
                             <?php else: ?>
-                                <span class="text-muted">Non renseigné</span>
+                                <span class="text-muted">Non renseignÃ©</span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -396,3 +395,7 @@ include '../../../includes/header.php';
 </div>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

@@ -7,6 +7,7 @@
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 require_once __DIR__ . '/qr-generator.php';
 require_once __DIR__ . '/auto-generate.php';
 
@@ -15,10 +16,7 @@ if (!isLoggedIn()) {
     redirectTo('auth/login.php');
 }
 
-// Vérifier les permissions
-if (!hasPermission('cartes_eleves', 'create')) {
-    redirectTo('dashboard.php?error=permission_denied');
-}
+requirePagePermissionFromDB('cartes_eleves', 'generate', 'create', '../dashboard.php');
 
 $page_title = 'Génération de Cartes d\'Élèves';
 $success_message = '';

@@ -7,9 +7,12 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification
 requireLogin();
+
+requirePagePermissionFromDB('complementary', 'index', 'read', '../../dashboard.php');
 
 $page_title = 'Modules Complémentaires';
 
@@ -20,7 +23,7 @@ $current_year = getCurrentAcademicYear();
 $stats = [];
 
 // Bibliothèque
-if (checkPermission('library') || checkPermission('library_view')) {
+if (checkPagePermission('library') || checkPagePermission('library_view')) {
     $stmt = $database->query("SELECT COUNT(*) as total FROM livres WHERE status = 'disponible'");
     $stats['library']['livres_disponibles'] = $stmt->fetch()['total'];
     
@@ -29,7 +32,7 @@ if (checkPermission('library') || checkPermission('library_view')) {
 }
 
 // Discipline
-if (checkPermission('discipline') || checkPermission('discipline_view')) {
+if (checkPagePermission('discipline') || checkPagePermission('discipline_view')) {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM incidents WHERE annee_scolaire_id = ? AND status != 'resolu'",
         [$current_year['id'] ?? 0]
@@ -44,7 +47,7 @@ if (checkPermission('discipline') || checkPermission('discipline_view')) {
 }
 
 // Communication
-if (checkPermission('communication') || checkPermission('communication_view')) {
+if (checkPagePermission('communication') || checkPagePermission('communication_view')) {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM messages WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
     );
@@ -57,7 +60,7 @@ if (checkPermission('communication') || checkPermission('communication_view')) {
 }
 
 // Internat
-if (checkPermission('internat') || checkPermission('internat_view')) {
+if (checkPagePermission('internat') || checkPagePermission('internat_view')) {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM hebergements WHERE annee_scolaire_id = ? AND status = 'actif'",
         [$current_year['id'] ?? 0]
@@ -69,7 +72,7 @@ if (checkPermission('internat') || checkPermission('internat_view')) {
 }
 
 // Transport
-if (checkPermission('transport') || checkPermission('transport_view')) {
+if (checkPagePermission('transport') || checkPagePermission('transport_view')) {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM transport_eleves WHERE annee_scolaire_id = ? AND status = 'actif'",
         [$current_year['id'] ?? 0]
@@ -81,7 +84,7 @@ if (checkPermission('transport') || checkPermission('transport_view')) {
 }
 
 // Inventaire
-if (checkPermission('inventory') || checkPermission('inventory_view')) {
+if (checkPagePermission('inventory') || checkPagePermission('inventory_view')) {
     $stmt = $database->query("SELECT COUNT(*) as total FROM inventaire WHERE status = 'actif'");
     $stats['inventory']['articles_actifs'] = $stmt->fetch()['total'];
     
@@ -90,7 +93,7 @@ if (checkPermission('inventory') || checkPermission('inventory_view')) {
 }
 
 // Santé
-if (checkPermission('health') || checkPermission('health_view')) {
+if (checkPagePermission('health') || checkPagePermission('health_view')) {
     $stmt = $database->query(
         "SELECT COUNT(*) as total FROM consultations WHERE date_consultation >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
     );
@@ -159,7 +162,7 @@ include '../../includes/header.php';
 <div class="row">
     <!-- Bibliothèque -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('library') || checkPermission('library_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('library') || checkPagePermission('library_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-book me-2"></i>
@@ -170,7 +173,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Gestion des livres, emprunts, retours et catalogue de la bibliothèque scolaire.
                 </p>
-                <?php if (checkPermission('library') || checkPermission('library_view')): ?>
+                <?php if (checkPagePermission('library') || checkPagePermission('library_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-primary"><?php echo $stats['library']['livres_disponibles'] ?? 0; ?></h4>
@@ -199,7 +202,7 @@ include '../../includes/header.php';
     
     <!-- Discipline -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('discipline') || checkPermission('discipline_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('discipline') || checkPagePermission('discipline_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
                     <i class="fas fa-gavel me-2"></i>
@@ -210,7 +213,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Gestion des incidents, sanctions disciplinaires et suivi comportemental des élèves.
                 </p>
-                <?php if (checkPermission('discipline') || checkPermission('discipline_view')): ?>
+                <?php if (checkPagePermission('discipline') || checkPagePermission('discipline_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-warning"><?php echo $stats['discipline']['incidents_ouverts'] ?? 0; ?></h4>
@@ -239,7 +242,7 @@ include '../../includes/header.php';
     
     <!-- Communication -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('communication') || checkPermission('communication_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('communication') || checkPagePermission('communication_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-comments me-2"></i>
@@ -250,7 +253,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Messagerie interne, notifications, annonces et communication avec les parents.
                 </p>
-                <?php if (checkPermission('communication') || checkPermission('communication_view')): ?>
+                <?php if (checkPagePermission('communication') || checkPagePermission('communication_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-info"><?php echo $stats['communication']['messages_semaine'] ?? 0; ?></h4>
@@ -279,7 +282,7 @@ include '../../includes/header.php';
     
     <!-- Internat -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('internat') || checkPermission('internat_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('internat') || checkPagePermission('internat_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-bed me-2"></i>
@@ -290,7 +293,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Gestion des chambres, hébergement des élèves internes et suivi de l'internat.
                 </p>
-                <?php if (checkPermission('internat') || checkPermission('internat_view')): ?>
+                <?php if (checkPagePermission('internat') || checkPagePermission('internat_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-success"><?php echo $stats['internat']['residents_actifs'] ?? 0; ?></h4>
@@ -319,7 +322,7 @@ include '../../includes/header.php';
     
     <!-- Transport -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('transport') || checkPermission('transport_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('transport') || checkPagePermission('transport_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-bus me-2"></i>
@@ -330,7 +333,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Gestion du transport scolaire, itinéraires, véhicules et suivi des élèves transportés.
                 </p>
-                <?php if (checkPermission('transport') || checkPermission('transport_view')): ?>
+                <?php if (checkPagePermission('transport') || checkPagePermission('transport_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-secondary"><?php echo $stats['transport']['eleves_transportes'] ?? 0; ?></h4>
@@ -359,7 +362,7 @@ include '../../includes/header.php';
     
     <!-- Inventaire -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('inventory') || checkPermission('inventory_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('inventory') || checkPagePermission('inventory_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-dark text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-boxes me-2"></i>
@@ -370,7 +373,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Gestion du matériel, équipements, fournitures et suivi de l'inventaire scolaire.
                 </p>
-                <?php if (checkPermission('inventory') || checkPermission('inventory_view')): ?>
+                <?php if (checkPagePermission('inventory') || checkPagePermission('inventory_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-dark"><?php echo $stats['inventory']['articles_actifs'] ?? 0; ?></h4>
@@ -399,7 +402,7 @@ include '../../includes/header.php';
     
     <!-- Santé -->
     <div class="col-lg-6 col-xl-4 mb-4">
-        <div class="card h-100 <?php echo (checkPermission('health') || checkPermission('health_view')) ? '' : 'opacity-50'; ?>">
+        <div class="card h-100 <?php echo (checkPagePermission('health') || checkPagePermission('health_view')) ? '' : 'opacity-50'; ?>">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-heartbeat me-2"></i>
@@ -410,7 +413,7 @@ include '../../includes/header.php';
                 <p class="card-text">
                     Suivi médical, vaccinations, consultations et gestion de l'infirmerie scolaire.
                 </p>
-                <?php if (checkPermission('health') || checkPermission('health_view')): ?>
+                <?php if (checkPagePermission('health') || checkPagePermission('health_view')): ?>
                     <div class="row text-center mb-3">
                         <div class="col-6">
                             <h4 class="text-danger"><?php echo $stats['health']['consultations_mois'] ?? 0; ?></h4>
@@ -503,3 +506,4 @@ include '../../includes/header.php';
 </style>
 
 <?php include '../../includes/footer.php'; ?>
+

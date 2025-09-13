@@ -7,6 +7,9 @@
 require_once 'config/config.php';
 require_once 'config/database.php';
 require_once 'includes/functions.php';
+require_once 'includes/permissions.php';
+require_once 'includes/sidebar-permissions.php';
+require_once 'includes/sidebar-url-fixer.php';
 
 // Vérifier l'authentification
 requireLogin();
@@ -82,9 +85,10 @@ $recent_inscriptions = $database->query(
 
 // Obtenir les paiements récents
 $recent_payments = $database->query(
-    "SELECT e.nom, e.prenom, p.montant, p.type_paiement, p.date_paiement, p.mode_paiement
+    "SELECT e.nom, e.prenom, p.montant, tf.nom as type_paiement, p.date_paiement, p.mode_paiement
      FROM paiements p
      JOIN eleves e ON p.eleve_id = e.id
+     JOIN type_frais tf ON p.type_frais_id = tf.id
      WHERE p.annee_scolaire_id = ?
      ORDER BY p.date_paiement DESC
      LIMIT 8",
@@ -94,7 +98,7 @@ $recent_payments = $database->query(
 // Vérifier les comptes en attente d'activation (pour les admins)
 $pending_users_count = 0;
 $pending_users = [];
-if (checkPermission('admin')) {
+if (checkUserPermission('users', 'read') || checkPermission('admin')) {
     $pending_users_count = $database->query(
         "SELECT COUNT(*) as total FROM users WHERE status = 'inactif'"
     )->fetch()['total'];
@@ -143,19 +147,27 @@ include 'includes/header.php';
                 Actions rapides
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="modules/students/add.php">
-                    <i class="fas fa-user-plus me-2"></i>Ajouter un élève
-                </a></li>
-                <li><a class="dropdown-item" href="modules/academic/classes/add.php">
-                    <i class="fas fa-school me-2"></i>Nouvelle classe
-                </a></li>
-                <li><a class="dropdown-item" href="modules/finance/payments/add.php">
-                    <i class="fas fa-money-bill me-2"></i>Nouveau paiement
-                </a></li>
+                <?php if (checkUserPermission('students', 'create')): ?>
+                    <li><a class="dropdown-item" href="modules/students/add.php">
+                        <i class="fas fa-user-plus me-2"></i>Ajouter un élève
+                    </a></li>
+                <?php endif; ?>
+                <?php if (checkUserPermission('academic', 'create')): ?>
+                    <li><a class="dropdown-item" href="modules/academic/classes/add.php">
+                        <i class="fas fa-school me-2"></i>Nouvelle classe
+                    </a></li>
+                <?php endif; ?>
+                <?php if (checkUserPermission('finance', 'create')): ?>
+                    <li><a class="dropdown-item" href="modules/finance/payments/add.php">
+                        <i class="fas fa-money-bill me-2"></i>Nouveau paiement
+                    </a></li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="modules/reports/">
-                    <i class="fas fa-chart-bar me-2"></i>Rapports
-                </a></li>
+                <?php if (checkUserPermission('reports', 'read')): ?>
+                    <li><a class="dropdown-item" href="modules/reports/">
+                        <i class="fas fa-chart-bar me-2"></i>Rapports
+                    </a></li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
@@ -240,73 +252,81 @@ include 'includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <a href="modules/students/" class="text-decoration-none">
-                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                                    <h5 class="card-title">Élèves</h5>
-                                    <p class="card-text text-muted">
-                                        Gestion des élèves et inscriptions
-                                    </p>
-                                    <div class="mt-3">
-                                        <span class="badge bg-primary"><?php echo number_format($stats['total_eleves']); ?> élèves</span>
+                    <?php if (checkUserPermission('students', 'read')): ?>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="modules/students/" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                                        <h5 class="card-title">Élèves</h5>
+                                        <p class="card-text text-muted">
+                                            Gestion des élèves et inscriptions
+                                        </p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-primary"><?php echo number_format($stats['total_eleves']); ?> élèves</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </a>
-                    </div>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                     
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <a href="modules/academic/" class="text-decoration-none">
-                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-book fa-3x text-success mb-3"></i>
-                                    <h5 class="card-title">Académique</h5>
-                                    <p class="card-text text-muted">
-                                        Classes, matières et emplois du temps
-                                    </p>
-                                    <div class="mt-3">
-                                        <span class="badge bg-success"><?php echo number_format($stats['total_classes']); ?> classes</span>
+                    <?php if (checkUserPermission('academic', 'read')): ?>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="modules/academic/" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-book fa-3x text-success mb-3"></i>
+                                        <h5 class="card-title">Académique</h5>
+                                        <p class="card-text text-muted">
+                                            Classes, matières et emplois du temps
+                                        </p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-success"><?php echo number_format($stats['total_classes']); ?> classes</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </a>
-                    </div>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                     
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <a href="modules/finance/" class="text-decoration-none">
-                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-money-bill-wave fa-3x text-warning mb-3"></i>
-                                    <h5 class="card-title">Finance</h5>
-                                    <p class="card-text text-muted">
-                                        Gestion financière et paiements
-                                    </p>
-                                    <div class="mt-3">
-                                        <span class="badge bg-warning"><?php echo $paiements_mois['nb_paiements'] ?? 0; ?> paiements</span>
+                    <?php if (checkUserPermission('finance', 'read')): ?>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="modules/finance/" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-money-bill-wave fa-3x text-warning mb-3"></i>
+                                        <h5 class="card-title">Finance</h5>
+                                        <p class="card-text text-muted">
+                                            Gestion financière et paiements
+                                        </p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-warning"><?php echo $paiements_mois['nb_paiements'] ?? 0; ?> paiements</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </a>
-                    </div>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                     
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <a href="modules/personnel/" class="text-decoration-none">
-                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-chalkboard-teacher fa-3x text-info mb-3"></i>
-                                    <h5 class="card-title">Personnel</h5>
-                                    <p class="card-text text-muted">
-                                        Gestion du personnel enseignant
-                                    </p>
-                                    <div class="mt-3">
-                                        <span class="badge bg-info"><?php echo number_format($stats['total_enseignants']); ?> enseignants</span>
+                    <?php if (checkUserPermission('users', 'read')): ?>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="modules/personnel/" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chalkboard-teacher fa-3x text-info mb-3"></i>
+                                        <h5 class="card-title">Personnel</h5>
+                                        <p class="card-text text-muted">
+                                            Gestion du personnel enseignant
+                                        </p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-info"><?php echo number_format($stats['total_enseignants']); ?> enseignants</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </a>
-                    </div>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -428,38 +448,46 @@ include 'includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <div class="d-grid">
-                            <a href="modules/students/add.php" class="btn btn-outline-primary">
-                                <i class="fas fa-user-plus me-2"></i>
-                                Ajouter un élève
-                            </a>
+                    <?php if (checkUserPermission('students', 'create')): ?>
+                        <div class="col-md-3 mb-2">
+                            <div class="d-grid">
+                                <a href="modules/students/add.php" class="btn btn-outline-primary">
+                                    <i class="fas fa-user-plus me-2"></i>
+                                    Ajouter un élève
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <div class="d-grid">
-                            <a href="modules/academic/classes/add.php" class="btn btn-outline-success">
-                                <i class="fas fa-school me-2"></i>
-                                Nouvelle classe
-                            </a>
+                    <?php endif; ?>
+                    <?php if (checkUserPermission('academic', 'create')): ?>
+                        <div class="col-md-3 mb-2">
+                            <div class="d-grid">
+                                <a href="modules/academic/classes/add.php" class="btn btn-outline-success">
+                                    <i class="fas fa-school me-2"></i>
+                                    Nouvelle classe
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <div class="d-grid">
-                            <a href="modules/finance/payments/add.php" class="btn btn-outline-warning">
-                                <i class="fas fa-money-bill me-2"></i>
-                                Nouveau paiement
-                            </a>
+                    <?php endif; ?>
+                    <?php if (checkUserPermission('finance', 'create')): ?>
+                        <div class="col-md-3 mb-2">
+                            <div class="d-grid">
+                                <a href="modules/finance/payments/add.php" class="btn btn-outline-warning">
+                                    <i class="fas fa-money-bill me-2"></i>
+                                    Nouveau paiement
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <div class="d-grid">
-                            <a href="modules/reports/" class="btn btn-outline-info">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                Rapports
-                            </a>
+                    <?php endif; ?>
+                    <?php if (checkUserPermission('reports', 'read')): ?>
+                        <div class="col-md-3 mb-2">
+                            <div class="d-grid">
+                                <a href="modules/reports/" class="btn btn-outline-info">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Rapports
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -467,7 +495,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Alertes pour les administrateurs -->
-<?php if (checkPermission('admin') && $pending_users_count > 0): ?>
+<?php if ((checkUserPermission('users', 'read') || checkPermission('admin')) && $pending_users_count > 0): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card border-warning">

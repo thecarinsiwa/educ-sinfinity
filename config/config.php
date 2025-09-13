@@ -1,15 +1,12 @@
 <?php
 /**
- * Configuration générale de l'application
- * Application de gestion scolaire - République Démocratique du Congo
+ * Configuration principale de l'application
+ * Système de gestion scolaire - République Démocratique du Congo
+ * 
+ * Reconfiguré le 10/09/2025 à 14:21:35
  */
 
-// Démarrer la session
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Configuration générale
+// Configuration de l'application
 define('APP_NAME', 'Educ-Sinfinity');
 define('APP_VERSION', '1.0.0');
 define('APP_URL', 'http://localhost/educ-sinfinity');
@@ -57,7 +54,10 @@ define('MESSAGES', [
     ]
 ]);
 
-// Configuration des rôles et permissions
+// Démarrer la session
+session_start();
+
+// Configuration des rôles et permissions (ancien système)
 define('ROLES', [
     'admin' => [
         'name' => 'Administrateur',
@@ -81,311 +81,378 @@ define('ROLES', [
     ]
 ]);
 
-// Configuration des modules avec sous-menus
-define('MODULES', [
-    'students' => [
-        'name' => 'Gestion des Élèves',
-        'icon' => 'fas fa-user-graduate',
-        'description' => 'Inscriptions, dossiers, transferts',
-        'submenu' => [           
-            'add' => [
-                'name' => 'Gerer les Élèves',
-                'icon' => 'fas fa-users',
-                'url' => 'modules/students/'
-            ],
-            'admissions' => [
-                'name' => 'Admissions',
-                'icon' => 'fas fa-user-plus',
-                'url' => 'modules/students/admissions/'
-            ],
-            'attendance' => [
-                'name' => 'Présences',
-                'icon' => 'fas fa-calendar-check',
-                'url' => 'modules/students/attendance/'
-            ],
-            'transfers' => [
-                'name' => 'Transferts',
-                'icon' => 'fas fa-exchange-alt',
-                'url' => 'modules/students/transfers/'
-            ],
-            'student-tracking' => [
-                'name' => 'Suivi des Élèves',
-                'icon' => 'fas fa-tasks',
-                'url' => 'modules/students/student-tracking/'
-            ]
-        ]
-    ],
-    'personnel' => [
-        'name' => 'Gestion du Personnel',
+// Configuration des modules avec sous-menus (URLs corrigées)
+define('MODULES', array (
+  'students' => 
+  array (
+    'name' => 'Gestion des Élèves',
+    'icon' => 'fas fa-user-graduate',
+    'description' => 'Inscriptions, dossiers, transferts',
+    'submenu' => 
+    array (
+      'add' => 
+      array (
+        'name' => 'Gérer les Élèves',
         'icon' => 'fas fa-users',
-        'description' => 'Enseignants, administratifs, paie',
-        'submenu' => [
-            'list' => [
-                'name' => 'Liste du Personnel',
-                'icon' => 'fas fa-list',
-                'url' => 'modules/personnel/'
-            ],
-            'add' => [
-                'name' => 'Ajouter Personnel',
-                'icon' => 'fas fa-plus',
-                'url' => 'modules/personnel/add.php'
-            ],
-            'create-account' => [
-                'name' => 'Créer Compte',
-                'icon' => 'fas fa-user-plus',
-                'url' => 'modules/personnel/create-account.php'
-            ]
-        ]
-    ],
-    'academic' => [
-        'name' => 'Gestion Académique',
-        'icon' => 'fas fa-book',
-        'description' => 'Classes, matières, emplois du temps',
-        'submenu' => [
-            'classes' => [
-                'name' => 'Classes',
-                'icon' => 'fas fa-school',
-                'url' => 'modules/academic/classes/'
-            ],
-            'subjects' => [
-                'name' => 'Matières',
-                'icon' => 'fas fa-book-open',
-                'url' => 'modules/academic/subjects/'
-            ],
-            'schedule' => [
-                'name' => 'Emplois du Temps',
-                'icon' => 'fas fa-calendar-alt',
-                'url' => 'modules/academic/schedule/'
-            ],
-            'years' => [
-                'name' => 'Années Scolaires',
-                'icon' => 'fas fa-calendar',
-                'url' => 'modules/academic/years/'
-            ]
-        ]
-    ],
-    'evaluations' => [
-        'name' => 'Évaluations et Notes',
-        'icon' => 'fas fa-chart-line',
-        'description' => 'Bulletins, examens, moyennes',
-        'submenu' => [
-            'evaluations' => [
-                'name' => 'Évaluations',
-                'icon' => 'fas fa-edit',
-                'url' => 'modules/evaluations/evaluations/'
-            ],
-            'notes' => [
-                'name' => 'Saisie des Notes',
-                'icon' => 'fas fa-pencil-alt',
-                'url' => 'modules/evaluations/notes/'
-            ],
-            'bulletins' => [
-                'name' => 'Bulletins',
-                'icon' => 'fas fa-file-alt',
-                'url' => 'modules/evaluations/bulletins/'
-            ],
-            'statistics' => [
-                'name' => 'Statistiques',
-                'icon' => 'fas fa-chart-bar',
-                'url' => 'modules/evaluations/statistics/'
-            ]
-        ]
-    ],
-    'finance' => [
-        'name' => 'Gestion Financière',
-        'icon' => 'fas fa-money-bill-wave',
-        'description' => 'Frais scolaires, comptabilité',
-        'submenu' => [
-            'dashboard' => [
-                'name' => 'Tableau de Bord',
-                'icon' => 'fas fa-tachometer-alt',
-                'url' => 'modules/finance/'
-            ],
-            'fees' => [
-                'name' => 'Frais Scolaires',
-                'icon' => 'fas fa-dollar-sign',
-                'url' => 'modules/finance/fees/'
-            ],
-            'payments' => [
-                'name' => 'Paiements',
-                'icon' => 'fas fa-credit-card',
-                'url' => 'modules/finance/payments/'
-            ],
-            'devises' => [
-                'name' => 'Devises',
-                'icon' => 'fas fa-exchange-alt',
-                'url' => 'modules/finance/devises/'
-            ],
-            'expenses' => [
-                'name' => 'Dépenses',
-                'icon' => 'fas fa-receipt',
-                'url' => 'modules/finance/expenses/'
-            ],
-            'reports' => [
-                'name' => 'Rapports',
-                'icon' => 'fas fa-chart-pie',
-                'url' => 'modules/finance/reports/'
-            ]
-        ]
-    ],
-    'recouvrement' => [
-        'name' => 'Recouvrement',
-        'icon' => 'fas fa-hand-holding-usd',
-        'description' => 'Gestion des dettes et recouvrement',
-        'submenu' => [
-            'dashboard' => [
-                'name' => 'Tableau de Bord',
-                'icon' => 'fas fa-tachometer-alt',
-                'url' => 'modules/recouvrement/'
-            ],
-            'debtors' => [
-                'name' => 'Liste des Débiteurs',
-                'icon' => 'fas fa-exclamation-triangle',
-                'url' => 'modules/finance/reports/debtors.php'
-            ],
-            'campaigns' => [
-                'name' => 'Campagnes',
-                'icon' => 'fas fa-bullhorn',
-                'url' => 'modules/recouvrement/campaigns/'
-            ],
-            'notifications' => [
-                'name' => 'Notifications',
-                'icon' => 'fas fa-bell',
-                'url' => 'modules/recouvrement/notifications/'
-            ]
-        ]
-    ],
-    'library' => [
-        'name' => 'Bibliothèque',
+        'url' => 'modules/students/index.php',
+      ),
+      'admissions' => 
+      array (
+        'name' => 'Admissions',
+        'icon' => 'fas fa-user-plus',
+        'url' => 'modules/students/admissions/index.php',
+      ),
+      'attendance' => 
+      array (
+        'name' => 'Présences',
+        'icon' => 'fas fa-calendar-check',
+        'url' => 'modules/students/attendance/index.php',
+      ),
+      'transfers' => 
+      array (
+        'name' => 'Transferts',
+        'icon' => 'fas fa-exchange-alt',
+        'url' => 'modules/students/transfers/index.php',
+      ),
+      'student-tracking' => 
+      array (
+        'name' => 'Suivi des Élèves',
+        'icon' => 'fas fa-tasks',
+        'url' => 'modules/students/student-tracking/index.php',
+      ),
+    ),
+  ),
+  'personnel' => 
+  array (
+    'name' => 'Gestion du Personnel',
+    'icon' => 'fas fa-users-cog',
+    'description' => 'Employés, salaires, contrats',
+    'submenu' => 
+    array (
+      'list' => 
+      array (
+        'name' => 'Liste du Personnel',
+        'icon' => 'fas fa-list',
+        'url' => 'modules/personnel/index.php',
+      ),
+      'add' => 
+      array (
+        'name' => 'Ajouter Personnel',
+        'icon' => 'fas fa-user-plus',
+        'url' => 'modules/personnel/add.php',
+      ),
+      'create-account' => 
+      array (
+        'name' => 'Créer Compte',
+        'icon' => 'fas fa-user-plus',
+        'url' => 'modules/personnel/create-account.php',
+      ),
+    ),
+  ),
+  'academic' => 
+  array (
+    'name' => 'Gestion Académique',
+    'icon' => 'fas fa-book',
+    'description' => 'Classes, matières, emplois du temps',
+    'submenu' => 
+    array (
+      'classes' => 
+      array (
+        'name' => 'Classes',
+        'icon' => 'fas fa-school',
+        'url' => 'modules/academic/classes/index.php',
+      ),
+      'subjects' => 
+      array (
+        'name' => 'Matières',
         'icon' => 'fas fa-book-open',
-        'description' => 'Livres, emprunts',
-        'submenu' => [
-            'books' => [
-                'name' => 'Livres',
-                'icon' => 'fas fa-book',
-                'url' => 'modules/library/books/'
-            ],
-            'loans' => [
-                'name' => 'Emprunts',
-                'icon' => 'fas fa-handshake',
-                'url' => 'modules/library/loans/'
-            ],
-            'reservations' => [
-                'name' => 'Réservations',
-                'icon' => 'fas fa-clock',
-                'url' => 'modules/library/reservations/'
-            ],
-            'reports' => [
-                'name' => 'Rapports',
-                'icon' => 'fas fa-chart-bar',
-                'url' => 'modules/library/reports/'
-            ]
-        ]
-    ],
-    'discipline' => [
-        'name' => 'Discipline',
-        'icon' => 'fas fa-gavel',
-        'description' => 'Sanctions, comportement',
-        'submenu' => [
-            'incidents' => [
-                'name' => 'Incidents',
-                'icon' => 'fas fa-exclamation-circle',
-                'url' => 'modules/discipline/incidents/'
-            ],
-            'sanctions' => [
-                'name' => 'Sanctions',
-                'icon' => 'fas fa-ban',
-                'url' => 'modules/discipline/sanctions/'
-            ],
-            'rewards' => [
-                'name' => 'Récompenses',
-                'icon' => 'fas fa-trophy',
-                'url' => 'modules/discipline/recompenses/'
-            ],
-            'reports' => [
-                'name' => 'Rapports',
-                'icon' => 'fas fa-file-alt',
-                'url' => 'modules/discipline/reports/'
-            ]
-        ]
-    ],
-    'communication' => [
-        'name' => 'Communication',
-        'icon' => 'fas fa-bullhorn',
-        'description' => 'Parents, circulaires',
-        'submenu' => [
-            'announcements' => [
-                'name' => 'Annonces',
-                'icon' => 'fas fa-bullhorn',
-                'url' => 'modules/communication/annonces/'
-            ],
-            'messages' => [
-                'name' => 'Messages',
-                'icon' => 'fas fa-envelope',
-                'url' => 'modules/communication/messages/'
-            ],
-            'sms' => [
-                'name' => 'SMS',
-                'icon' => 'fas fa-mobile-alt',
-                'url' => 'modules/communication/sms/'
-            ],
-            'templates' => [
-                'name' => 'Modèles',
-                'icon' => 'fas fa-file-alt',
-                'url' => 'modules/communication/templates/'
-            ]
-        ]
-    ],
-    'cartes_eleves' => [
-        'name' => 'Cartes d\'Élèves',
-        'icon' => 'fas fa-id-card',
-        'description' => 'Cartes d\'identification avec QR Code',
-        'submenu' => [
-            'list' => [
-                'name' => 'Liste des Cartes',
-                'icon' => 'fas fa-list',
-                'url' => 'modules/cartes_eleves/index.php'
-            ],
-            'scanner' => [
-                'name' => 'Scanner QR Code',
-                'icon' => 'fas fa-qrcode',
-                'url' => 'modules/cartes_eleves/qr-scanner.php'
-            ],
-            'settings' => [
-                'name' => 'Paramètres',
-                'icon' => 'fas fa-cog',
-                'url' => 'modules/cartes_eleves/settings.php'
-            ]
-        ]
-    ],
-    'reports' => [
-        'name' => 'Rapports et Statistiques',
+        'url' => 'modules/academic/subjects/index.php',
+      ),
+      'schedule' => 
+      array (
+        'name' => 'Emplois du Temps',
+        'icon' => 'fas fa-calendar-alt',
+        'url' => 'modules/academic/schedule/index.php',
+      ),
+      'years' => 
+      array (
+        'name' => 'Années Scolaires',
+        'icon' => 'fas fa-calendar',
+        'url' => 'modules/academic/years/index.php',
+      ),
+    ),
+  ),
+  'evaluations' => 
+  array (
+    'name' => 'Évaluations et Notes',
+    'icon' => 'fas fa-chart-line',
+    'description' => 'Bulletins, examens, moyennes',
+    'submenu' => 
+    array (
+      'evaluations' => 
+      array (
+        'name' => 'Évaluations',
+        'icon' => 'fas fa-clipboard-list',
+        'url' => 'modules/evaluations/evaluations/index.php',
+      ),
+      'notes' => 
+      array (
+        'name' => 'Saisie des Notes',
+        'icon' => 'fas fa-edit',
+        'url' => 'modules/evaluations/notes/index.php',
+      ),
+      'bulletins' => 
+      array (
+        'name' => 'Bulletins',
+        'icon' => 'fas fa-file-alt',
+        'url' => 'modules/evaluations/bulletins/index.php',
+      ),
+      'statistics' => 
+      array (
+        'name' => 'Statistiques',
         'icon' => 'fas fa-chart-bar',
-        'description' => 'Tableaux de bord',
-        'submenu' => [
-            'academic' => [
-                'name' => 'Rapports Académiques',
-                'icon' => 'fas fa-graduation-cap',
-                'url' => 'modules/reports/academic/'
-            ],
-            'financial' => [
-                'name' => 'Rapports Financiers',
-                'icon' => 'fas fa-chart-line',
-                'url' => 'modules/finance/reports/'
-            ],
-            'administrative' => [
-                'name' => 'Rapports Administratifs',
-                'icon' => 'fas fa-clipboard-list',
-                'url' => 'modules/reports/administrative/'
-            ],
-            'custom' => [
-                'name' => 'Rapports Personnalisés',
-                'icon' => 'fas fa-cogs',
-                'url' => 'modules/reports/custom/'
-            ]
-        ]
-    ]
-]);
+        'url' => 'modules/evaluations/statistics/index.php',
+      ),
+    ),
+  ),
+  'finance' => 
+  array (
+    'name' => 'Gestion Financière',
+    'icon' => 'fas fa-dollar-sign',
+    'description' => 'Frais, paiements, comptabilité',
+    'submenu' => 
+    array (
+      'dashboard' => 
+      array (
+        'name' => 'Tableau de Bord',
+        'icon' => 'fas fa-tachometer-alt',
+        'url' => 'modules/finance/index.php',
+      ),
+      'fees' => 
+      array (
+        'name' => 'Frais Scolaires',
+        'icon' => 'fas fa-dollar-sign',
+        'url' => 'modules/finance/fees/index.php',
+      ),
+      'payments' => 
+      array (
+        'name' => 'Paiements',
+        'icon' => 'fas fa-credit-card',
+        'url' => 'modules/finance/payments/index.php',
+      ),
+      'devises' => 
+      array (
+        'name' => 'Devises',
+        'icon' => 'fas fa-exchange-alt',
+        'url' => 'modules/finance/devises/index.php',
+      ),
+      'expenses' => 
+      array (
+        'name' => 'Dépenses',
+        'icon' => 'fas fa-receipt',
+        'url' => 'modules/finance/expenses/index.php',
+      ),
+      'reports' => 
+      array (
+        'name' => 'Rapports',
+        'icon' => 'fas fa-chart-pie',
+        'url' => 'modules/finance/reports/index.php',
+      ),
+    ),
+  ),
+  'recouvrement' => 
+  array (
+    'name' => 'Recouvrement',
+    'icon' => 'fas fa-hand-holding-usd',
+    'description' => 'Gestion des dettes et recouvrement',
+    'submenu' => 
+    array (
+      'dashboard' => 
+      array (
+        'name' => 'Tableau de Bord',
+        'icon' => 'fas fa-tachometer-alt',
+        'url' => 'modules/recouvrement/index.php',
+      ),
+      'debtors' => 
+      array (
+        'name' => 'Liste des Débiteurs',
+        'icon' => 'fas fa-exclamation-triangle',
+        'url' => 'modules/finance/reports/debtors.php',
+      ),
+      'campaigns' => 
+      array (
+        'name' => 'Campagnes',
+        'icon' => 'fas fa-bullhorn',
+        'url' => 'modules/recouvrement/campaigns/index.php',
+      ),
+      'notifications' => 
+      array (
+        'name' => 'Notifications',
+        'icon' => 'fas fa-bell',
+        'url' => 'modules/recouvrement/notifications/index.php',
+      ),
+    ),
+  ),
+  'library' => 
+  array (
+    'name' => 'Bibliothèque',
+    'icon' => 'fas fa-book',
+    'description' => 'Gestion des livres et emprunts',
+    'submenu' => 
+    array (
+      'books' => 
+      array (
+        'name' => 'Livres',
+        'icon' => 'fas fa-book',
+        'url' => 'modules/library/books/index.php',
+      ),
+      'loans' => 
+      array (
+        'name' => 'Emprunts',
+        'icon' => 'fas fa-hand-holding',
+        'url' => 'modules/library/loans/index.php',
+      ),
+      'reservations' => 
+      array (
+        'name' => 'Réservations',
+        'icon' => 'fas fa-calendar-plus',
+        'url' => 'modules/library/reservations/add.php',
+      ),
+      'reports' => 
+      array (
+        'name' => 'Rapports',
+        'icon' => 'fas fa-chart-line',
+        'url' => 'modules/library/reports/index.php',
+      ),
+    ),
+  ),
+  'discipline' => 
+  array (
+    'name' => 'Discipline',
+    'icon' => 'fas fa-gavel',
+    'description' => 'Incidents, sanctions, récompenses',
+    'submenu' => 
+    array (
+      'incidents' => 
+      array (
+        'name' => 'Incidents',
+        'icon' => 'fas fa-exclamation-triangle',
+        'url' => 'modules/discipline/incidents/index.php',
+      ),
+      'sanctions' => 
+      array (
+        'name' => 'Sanctions',
+        'icon' => 'fas fa-ban',
+        'url' => 'modules/discipline/sanctions/index.php',
+      ),
+      'rewards' => 
+      array (
+        'name' => 'Récompenses',
+        'icon' => 'fas fa-trophy',
+        'url' => 'modules/discipline/recompenses/index.php',
+      ),
+      'reports' => 
+      array (
+        'name' => 'Rapports',
+        'icon' => 'fas fa-chart-bar',
+        'url' => 'modules/discipline/reports/index.php',
+      ),
+    ),
+  ),
+  'communication' => 
+  array (
+    'name' => 'Communication',
+    'icon' => 'fas fa-comments',
+    'description' => 'Messages, annonces, SMS',
+    'submenu' => 
+    array (
+      'announcements' => 
+      array (
+        'name' => 'Annonces',
+        'icon' => 'fas fa-bullhorn',
+        'url' => 'modules/communication/annonces/add.php',
+      ),
+      'messages' => 
+      array (
+        'name' => 'Messages',
+        'icon' => 'fas fa-envelope',
+        'url' => 'modules/communication/messages/index.php',
+      ),
+      'sms' => 
+      array (
+        'name' => 'SMS',
+        'icon' => 'fas fa-sms',
+        'url' => 'modules/communication/sms/index.php',
+      ),
+      'templates' => 
+      array (
+        'name' => 'Modèles',
+        'icon' => 'fas fa-file-alt',
+        'url' => 'modules/communication/templates/index.php',
+      ),
+    ),
+  ),
+  'cartes_eleves' => 
+  array (
+    'name' => 'Cartes d\'Élèves',
+    'icon' => 'fas fa-id-card',
+    'description' => 'Génération et gestion des cartes',
+    'submenu' => 
+    array (
+      'list' => 
+      array (
+        'name' => 'Liste des Cartes',
+        'icon' => 'fas fa-list',
+        'url' => 'modules/cartes_eleves/index.php',
+      ),
+      'scanner' => 
+      array (
+        'name' => 'Scanner QR Code',
+        'icon' => 'fas fa-qrcode',
+        'url' => 'modules/cartes_eleves/qr-scanner.php',
+      ),
+      'settings' => 
+      array (
+        'name' => 'Paramètres',
+        'icon' => 'fas fa-cog',
+        'url' => 'modules/cartes_eleves/settings.php',
+      ),
+    ),
+  ),
+  'reports' => 
+  array (
+    'name' => 'Rapports et Statistiques',
+    'icon' => 'fas fa-chart-pie',
+    'description' => 'Rapports académiques et financiers',
+    'submenu' => 
+    array (
+      'academic' => 
+      array (
+        'name' => 'Rapports Académiques',
+        'icon' => 'fas fa-graduation-cap',
+        'url' => 'modules/reports/academic/index.php',
+      ),
+      'financial' => 
+      array (
+        'name' => 'Rapports Financiers',
+        'icon' => 'fas fa-chart-line',
+        'url' => 'modules/finance/reports/index.php',
+      ),
+      'administrative' => 
+      array (
+        'name' => 'Rapports Administratifs',
+        'icon' => 'fas fa-clipboard-list',
+        'url' => 'modules/reports/administrative/index.php',
+      ),
+      'custom' => 
+      array (
+        'name' => 'Rapports Personnalisés',
+        'icon' => 'fas fa-cogs',
+        'url' => 'modules/reports/custom/index.php',
+      ),
+    ),
+  ),
+));
 
 // Fonctions utilitaires
 function getCurrentAcademicYear() {
@@ -397,83 +464,48 @@ function getCurrentAcademicYear() {
     }
 
     try {
-        $stmt = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1");
-        return $stmt->fetch();
-    } catch (Exception $e) {
-        // Retourner null si la table n'existe pas encore
-        return null;
-    }
-}
-
-function formatDate($date, $format = 'd/m/Y') {
-    if (empty($date)) {
-        return '';
-    }
-    return date($format, strtotime($date));
-}
-
-function formatMoney($amount) {
-    return number_format($amount, 2, ',', ' ') . ' FC';
-}
-
-function sanitizeInput($data) {
-    return htmlspecialchars(strip_tags(trim($data)));
-}
-
-if (!function_exists('generateMatricule')) {
-    function generateMatricule($prefix = 'MAT') {
-        global $database;
-
-        try {
-            $year = date('Y');
-            $pattern = $prefix . $year . '%';
-
-            // Récupérer le dernier matricule de l'année
-            $last_matricule = $database->query(
-                "SELECT numero_matricule FROM eleves WHERE numero_matricule LIKE ? ORDER BY numero_matricule DESC LIMIT 1",
-                [$pattern]
-            )->fetch();
-
-            if ($last_matricule) {
-                // Extraire le numéro séquentiel (les 3 derniers chiffres)
-                $last_number = intval(substr($last_matricule['numero_matricule'], -3));
-                $new_number = $last_number + 1;
-            } else {
-                $new_number = 1;
-            }
-
-            return $prefix . $year . str_pad($new_number, 3, '0', STR_PAD_LEFT);
-
-        } catch (Exception $e) {
-            // En cas d'erreur, générer un matricule aléatoire
-            return $prefix . date('Y') . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+        $stmt = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' ORDER BY date_debut DESC LIMIT 1");
+        $annee = $stmt->fetch();
+        
+        if ($annee) {
+            return $annee;
         }
+    } catch (Exception $e) {
+        error_log("Erreur lors de la récupération de l\'année scolaire : " . $e->getMessage());
     }
+    
+    return null;
 }
 
-function checkPermission($required_permission) {
-    if (!isset($_SESSION['user_role'])) {
-        return false;
-    }
-    $role = $_SESSION['user_role'];
-    // Vérifier que la clé existe et que permissions est bien un array
-    if (!defined('ROLES') || !isset(ROLES[$role]['permissions']) || !is_array(ROLES[$role]['permissions'])) {
-        return false;
-    }
-    $user_permissions = ROLES[$role]['permissions'];
-    if (in_array('all', $user_permissions)) {
-        return true;
-    }
-    return in_array($required_permission, $user_permissions);
+function getCurrentAcademicYearId() {
+    $annee = getCurrentAcademicYear();
+    return $annee ? $annee['id'] : null;
+}
+
+function getCurrentAcademicYearName() {
+    $annee = getCurrentAcademicYear();
+    return $annee ? $annee['nom'] : 'Année non définie';
 }
 
 function redirectTo($url) {
-    header("Location: $url");
-    exit();
+    // Vérifier si les headers ont déjà été envoyés
+    if (headers_sent()) {
+        // Utiliser JavaScript pour la redirection
+        echo "<script>window.location.href = '" . htmlspecialchars($url, ENT_QUOTES) . "';</script>";
+        echo "<noscript><meta http-equiv='refresh' content='0;url=" . htmlspecialchars($url, ENT_QUOTES) . "'></noscript>";
+        exit;
+    } else {
+        // Utiliser la redirection HTTP normale
+        header("Location: " . $url);
+        exit;
+    }
 }
 
 function showMessage($type, $message) {
-    $_SESSION['message'] = ['type' => $type, 'text' => $message];
+    $_SESSION['message'] = [
+        'type' => $type,
+        'text' => $message
+    ];
 }
 
 function displayMessage() {
@@ -485,5 +517,29 @@ function displayMessage() {
               </div>";
         unset($_SESSION['message']);
     }
+}
+
+function checkPermission($required_permission) {
+    // Utiliser uniquement l'ancien système de rôles
+    if (!isset($_SESSION['user_role'])) {
+        return false;
+    }
+    
+    $role = $_SESSION['user_role'];
+    
+    // Vérifier que la clé existe et que permissions est bien un array
+    if (!defined('ROLES') || !isset(ROLES[$role]['permissions']) || !is_array(ROLES[$role]['permissions'])) {
+        return false;
+    }
+    
+    $user_permissions = ROLES[$role]['permissions'];
+    
+    // Si l'utilisateur a la permission 'all', il a accès à tout
+    if (in_array('all', $user_permissions)) {
+        return true;
+    }
+    
+    // Vérifier si l'utilisateur a la permission spécifique
+    return in_array($required_permission, $user_permissions);
 }
 ?>

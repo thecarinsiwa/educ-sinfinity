@@ -7,18 +7,35 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('personnel')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('personnel', 'add', 'create', '../../dashboard.php');
 
 $page_title = 'Ajouter un membre du personnel';
 
 $errors = [];
 $success = false;
+
+// Récupérer les rôles disponibles depuis la base de données
+$roles = $database->query("SELECT id, nom, description FROM roles WHERE actif = 1 ORDER BY nom")->fetchAll();
+
+// Créer un mapping des fonctions vers les IDs des rôles
+$function_to_role_mapping = [];
+foreach ($roles as $role) {
+    $role_name_lower = strtolower($role['nom']);
+    if (strpos($role_name_lower, 'directeur') !== false) {
+        $function_to_role_mapping['directeur'] = $role['id'];
+        $function_to_role_mapping['sous_directeur'] = $role['id'];
+    } elseif (strpos($role_name_lower, 'enseignant') !== false || strpos($role_name_lower, 'professeur') !== false) {
+        $function_to_role_mapping['enseignant'] = $role['id'];
+    } elseif (strpos($role_name_lower, 'secrétaire') !== false || strpos($role_name_lower, 'secretaire') !== false) {
+        $function_to_role_mapping['secretaire'] = $role['id'];
+    } elseif (strpos($role_name_lower, 'comptable') !== false) {
+        $function_to_role_mapping['comptable'] = $role['id'];
+    }
+}
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -84,6 +101,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($user_role)) $errors[] = 'Le rôle utilisateur est obligatoire pour créer un compte.';
         if (empty($email)) $errors[] = 'L\'adresse email est obligatoire pour créer un compte utilisateur.';
         
+        // Vérifier que le rôle existe
+        if (!empty($user_role)) {
+            $stmt = $database->query("SELECT id FROM roles WHERE id = ? AND actif = 1", [$user_role]);
+            if (!$stmt->fetch()) {
+                $errors[] = 'Le rôle sélectionné n\'existe pas ou n\'est pas actif.';
+            }
+        }
+        
         // Vérifier la longueur du mot de passe
         if (!empty($user_password) && strlen($user_password) < 8) {
             $errors[] = 'Le mot de passe doit contenir au moins 8 caractères.';
@@ -116,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Créer le compte utilisateur si demandé
             if ($create_account) {
                 $hashed_password = password_hash($user_password, PASSWORD_DEFAULT);
-                $sql_user = "INSERT INTO users (username, email, password, nom, prenom, role, status) VALUES (?, ?, ?, ?, ?, ?, 'actif')";
+                $sql_user = "INSERT INTO users (username, email, password, nom, prenom, role_id, status) VALUES (?, ?, ?, ?, ?, ?, 'actif')";
                 $database->execute($sql_user, [$username, $email, $hashed_password, $nom, $prenom, $user_role]);
                 $user_id = $database->lastInsertId();
             }
@@ -421,10 +446,12 @@ include '../../includes/header.php';
                             <label for="user_role" class="form-label">Rôle dans le système</label>
                             <select class="form-select" id="user_role" name="user_role">
                                 <option value="">Sélectionner un rôle...</option>
-                                <option value="directeur" <?php echo ($_POST['user_role'] ?? '') === 'directeur' ? 'selected' : ''; ?>>Directeur</option>
-                                <option value="enseignant" <?php echo ($_POST['user_role'] ?? '') === 'enseignant' ? 'selected' : ''; ?>>Enseignant</option>
-                                <option value="secretaire" <?php echo ($_POST['user_role'] ?? '') === 'secretaire' ? 'selected' : ''; ?>>Secrétaire</option>
-                                <option value="comptable" <?php echo ($_POST['user_role'] ?? '') === 'comptable' ? 'selected' : ''; ?>>Comptable</option>
+                                <?php foreach ($roles as $role): ?>
+                                    <option value="<?php echo $role['id']; ?>" 
+                                            <?php echo ($_POST['user_role'] ?? '') == $role['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($role['nom']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                             <small class="text-muted">Détermine les permissions d'accès</small>
                         </div>
@@ -437,26 +464,23 @@ include '../../includes/header.php';
                                     <thead>
                                         <tr>
                                             <th>Rôle</th>
-                                            <th>Permissions</th>
+                                            <th>Description</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td><span class="badge bg-danger">Directeur</span></td>
-                                            <td>Accès complet sauf administration système</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="badge bg-primary">Enseignant</span></td>
-                                            <td>Gestion des notes, consultation des élèves</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="badge bg-info">Secrétaire</span></td>
-                                            <td>Gestion des élèves, communication</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="badge bg-success">Comptable</span></td>
-                                            <td>Gestion financière, rapports</td>
-                                        </tr>
+                                        <?php foreach ($roles as $index => $role): ?>
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-<?php 
+                                                        $colors = ['danger', 'primary', 'info', 'success', 'warning', 'secondary'];
+                                                        echo $colors[$index % count($colors)]; 
+                                                    ?>">
+                                                        <?php echo htmlspecialchars($role['nom']); ?>
+                                                    </span>
+                                                </td>
+                                                <td><?php echo htmlspecialchars($role['description']); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -560,22 +584,14 @@ document.getElementById('fonction').addEventListener('change', function() {
     const createAccountCheckbox = document.getElementById('create_account');
 
     if (createAccountCheckbox.checked) {
-        switch(this.value) {
-            case 'directeur':
-            case 'sous_directeur':
-                roleField.value = 'directeur';
-                break;
-            case 'enseignant':
-                roleField.value = 'enseignant';
-                break;
-            case 'secretaire':
-                roleField.value = 'secretaire';
-                break;
-            case 'comptable':
-                roleField.value = 'comptable';
-                break;
-            default:
-                roleField.value = '';
+        // Mapping des fonctions vers les IDs des rôles
+        const functionToRoleMapping = <?php echo json_encode($function_to_role_mapping); ?>;
+        
+        const selectedFunction = this.value;
+        if (functionToRoleMapping[selectedFunction]) {
+            roleField.value = functionToRoleMapping[selectedFunction];
+        } else {
+            roleField.value = '';
         }
     }
 });

@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../dashboard.php');
-}
+requirePagePermissionFromDB('students', 'view', 'read', '../../dashboard.php');
 
 // Récupérer l'ID de l'étudiant
 $eleve_id = (int)($_GET['id'] ?? 0);
@@ -145,7 +143,7 @@ include '../../includes/header.php';
                 </button>
             </div>
         <?php endif; ?>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
             <div class="btn-group me-2">
                 <a href="records/edit.php?id=<?php echo $eleve_id; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>

@@ -16,20 +16,11 @@ if (ob_get_level()) {
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Non authentifié']);
-    exit;
-}
-
-// Vérifier les permissions
-if (!checkPermission('finance')) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
-    exit;
-}
+// Vérifier l'authentification et les permissions
+requireLogin();
+requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
 
 // Vérifier les paramètres
 $classe_id = (int)($_GET['classe_id'] ?? 0);

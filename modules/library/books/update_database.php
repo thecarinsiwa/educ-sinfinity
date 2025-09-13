@@ -7,13 +7,11 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('admin')) {
-    showMessage('error', 'Accès refusé. Permissions administrateur requises.');
-    redirectTo('../../../index.php');
-}
+requirePagePermissionFromDB('library', 'books', 'edit', '../../../dashboard.php');
 
 $success_messages = [];
 $error_messages = [];
@@ -258,3 +256,4 @@ include '../../../includes/header.php';
 </div>
 
 <?php include '../../../includes/footer.php'; ?>
+

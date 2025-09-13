@@ -1,19 +1,18 @@
-<?php
+﻿<?php
 /**
- * Voir les détails d'une candidature
+ * Voir les dÃ©tails d'une candidature
  * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../../index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
 
 $candidature_id = intval($_GET['id'] ?? 0);
 
@@ -22,7 +21,7 @@ if (!$candidature_id) {
     redirectTo('index.php');
 }
 
-// Récupérer les détails de la candidature
+// RÃ©cupÃ©rer les dÃ©tails de la candidature
 try {
     $candidature = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,
@@ -38,7 +37,7 @@ try {
     )->fetch();
 
     if (!$candidature) {
-        showMessage('error', 'Candidature non trouvée.');
+        showMessage('error', 'Candidature non trouvÃ©e.');
         redirectTo('index.php');
     }
 } catch (Exception $e) {
@@ -48,7 +47,7 @@ try {
 
 $page_title = 'Candidature - ' . $candidature['nom_eleve'] . ' ' . $candidature['prenom_eleve'];
 
-// Obtenir la devise par défaut
+// Obtenir la devise par dÃ©faut
 $devise_par_defaut = getDefaultCurrency();
 
 include '../../../../includes/header.php';
@@ -57,25 +56,25 @@ include '../../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-file-alt me-2"></i>
-        Détails de la Candidature
+        DÃ©tails de la Candidature
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour à la liste
+                Retour Ã  la liste
             </a>
         </div>
         <?php if ($devise_par_defaut): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-outline-info">
                     <i class="fas fa-exchange-alt me-1"></i>
-                    Devise par défaut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
+                    Devise par dÃ©faut : <?php echo htmlspecialchars($devise_par_defaut['code']); ?> 
                     (<?php echo htmlspecialchars($devise_par_defaut['symbole']); ?>)
                 </button>
             </div>
         <?php endif; ?>
-        <?php if (checkPermission('students')): ?>
+        <?php if (checkPagePermission('students')): ?>
             <div class="btn-group me-2">
                 <a href="edit.php?id=<?php echo $candidature['id']; ?>" class="btn btn-warning">
                     <i class="fas fa-edit me-1"></i>
@@ -113,7 +112,7 @@ include '../../../../includes/header.php';
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
-                                <td><strong>Numéro de demande :</strong></td>
+                                <td><strong>NumÃ©ro de demande :</strong></td>
                                 <td><?php echo htmlspecialchars($candidature['numero_demande']); ?></td>
                             </tr>
                             <tr>
@@ -126,43 +125,43 @@ include '../../../../includes/header.php';
                             </tr>
                             <tr>
                                 <td><strong>Lieu de naissance :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['lieu_naissance'] ?? 'Non spécifié'); ?></td>
+                                <td><?php echo htmlspecialchars($candidature['lieu_naissance'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Sexe :</strong></td>
-                                <td><?php echo $candidature['sexe'] === 'M' ? 'Masculin' : 'Féminin'; ?></td>
+                                <td><?php echo $candidature['sexe'] === 'M' ? 'Masculin' : 'FÃ©minin'; ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Adresse :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['adresse'] ?? 'Non spécifiée'); ?></td>
+                                <td><?php echo htmlspecialchars($candidature['adresse'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                             </tr>
                         </table>
                     </div>
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
-                                <td><strong>Téléphone :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['telephone'] ?? 'Non spécifié'); ?></td>
+                                <td><strong>TÃ©lÃ©phone :</strong></td>
+                                <td><?php echo htmlspecialchars($candidature['telephone'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Email :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['email'] ?? 'Non spécifié'); ?></td>
+                                <td><?php echo htmlspecialchars($candidature['email'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                             </tr>
                             <tr>
-                                <td><strong>École précédente :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['ecole_precedente'] ?? 'Non spécifiée'); ?></td>
+                                <td><strong>Ã‰cole prÃ©cÃ©dente :</strong></td>
+                                <td><?php echo htmlspecialchars($candidature['ecole_precedente'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                             </tr>
                             <tr>
-                                <td><strong>Classe précédente :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['classe_precedente'] ?? 'Non spécifiée'); ?></td>
+                                <td><strong>Classe prÃ©cÃ©dente :</strong></td>
+                                <td><?php echo htmlspecialchars($candidature['classe_precedente'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                             </tr>
                             <tr>
-                                <td><strong>Année précédente :</strong></td>
-                                <td><?php echo htmlspecialchars($candidature['annee_precedente'] ?? 'Non spécifiée'); ?></td>
+                                <td><strong>AnnÃ©e prÃ©cÃ©dente :</strong></td>
+                                <td><?php echo htmlspecialchars($candidature['annee_precedente'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                             </tr>
                             <tr>
-                                <td><strong>Moyenne précédente :</strong></td>
-                                <td><?php echo $candidature['moyenne_precedente'] ? $candidature['moyenne_precedente'] . '/20' : 'Non spécifiée'; ?></td>
+                                <td><strong>Moyenne prÃ©cÃ©dente :</strong></td>
+                                <td><?php echo $candidature['moyenne_precedente'] ? $candidature['moyenne_precedente'] . '/20' : 'Non spÃ©cifiÃ©e'; ?></td>
                             </tr>
                         </table>
                     </div>
@@ -205,15 +204,15 @@ include '../../../../includes/header.php';
                 $priorite_color = $priorite_colors[$candidature['priorite']] ?? 'secondary';
                 ?>
                 <div class="mb-3">
-                    <small class="text-muted">Priorité :</small><br>
+                    <small class="text-muted">PrioritÃ© :</small><br>
                     <span class="badge bg-<?php echo $priorite_color; ?>">
                         <?php echo ucfirst(str_replace('_', ' ', $candidature['priorite'])); ?>
                     </span>
                 </div>
                 
                 <div class="mb-3">
-                    <small class="text-muted">Classe demandée :</small><br>
-                    <strong><?php echo htmlspecialchars($candidature['classe_demandee'] ?? 'Non spécifiée'); ?></strong>
+                    <small class="text-muted">Classe demandÃ©e :</small><br>
+                    <strong><?php echo htmlspecialchars($candidature['classe_demandee'] ?? 'Non spÃ©cifiÃ©e'); ?></strong>
                     <?php if ($candidature['niveau']): ?>
                         <br><small class="text-muted"><?php echo htmlspecialchars($candidature['niveau']); ?></small>
                     <?php endif; ?>
@@ -227,7 +226,7 @@ include '../../../../includes/header.php';
                 
                 <?php if ($candidature['traite_par']): ?>
                     <div class="mb-3">
-                        <small class="text-muted">Traitée par :</small><br>
+                        <small class="text-muted">TraitÃ©e par :</small><br>
                         <strong><?php echo htmlspecialchars($candidature['traite_par_nom_complet'] ?? $candidature['traite_par_nom']); ?></strong>
                         <?php if ($candidature['date_traitement']): ?>
                             <br><small class="text-muted"><?php echo formatDate($candidature['date_traitement']); ?></small>
@@ -252,24 +251,24 @@ include '../../../../includes/header.php';
             <div class="card-body">
                 <table class="table table-borderless">
                     <tr>
-                        <td><strong>Nom du père :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['nom_pere'] ?? 'Non spécifié'); ?></td>
+                        <td><strong>Nom du pÃ¨re :</strong></td>
+                        <td><?php echo htmlspecialchars($candidature['nom_pere'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Profession du père :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['profession_pere'] ?? 'Non spécifiée'); ?></td>
+                        <td><strong>Profession du pÃ¨re :</strong></td>
+                        <td><?php echo htmlspecialchars($candidature['profession_pere'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Nom de la mère :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['nom_mere'] ?? 'Non spécifié'); ?></td>
+                        <td><strong>Nom de la mÃ¨re :</strong></td>
+                        <td><?php echo htmlspecialchars($candidature['nom_mere'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Profession de la mère :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['profession_mere'] ?? 'Non spécifiée'); ?></td>
+                        <td><strong>Profession de la mÃ¨re :</strong></td>
+                        <td><?php echo htmlspecialchars($candidature['profession_mere'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Téléphone des parents :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['telephone_parent'] ?? 'Non spécifié'); ?></td>
+                        <td><strong>TÃ©lÃ©phone des parents :</strong></td>
+                        <td><?php echo htmlspecialchars($candidature['telephone_parent'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                     </tr>
                 </table>
             </div>
@@ -288,15 +287,15 @@ include '../../../../includes/header.php';
                 <table class="table table-borderless">
                     <tr>
                         <td><strong>Nom du contact :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['personne_contact'] ?? 'Non spécifié'); ?></td>
+                        <td><?php echo htmlspecialchars($candidature['personne_contact'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                     </tr>
                     <tr>
-                        <td><strong>Téléphone du contact :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['telephone_contact'] ?? 'Non spécifié'); ?></td>
+                        <td><strong>TÃ©lÃ©phone du contact :</strong></td>
+                        <td><?php echo htmlspecialchars($candidature['telephone_contact'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                     </tr>
                     <tr>
                         <td><strong>Relation :</strong></td>
-                        <td><?php echo htmlspecialchars($candidature['relation_contact'] ?? 'Non spécifiée'); ?></td>
+                        <td><?php echo htmlspecialchars($candidature['relation_contact'] ?? 'Non spÃ©cifiÃ©e'); ?></td>
                     </tr>
                 </table>
             </div>
@@ -304,7 +303,7 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Documents et informations supplémentaires -->
+<!-- Documents et informations supplÃ©mentaires -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card">
@@ -325,19 +324,19 @@ include '../../../../includes/header.php';
                     <div class="col-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" <?php echo $candidature['bulletin_precedent'] ? 'checked' : ''; ?> disabled>
-                            <label class="form-check-label">Bulletin précédent</label>
+                            <label class="form-check-label">Bulletin prÃ©cÃ©dent</label>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" <?php echo $candidature['certificat_medical'] ? 'checked' : ''; ?> disabled>
-                            <label class="form-check-label">Certificat médical</label>
+                            <label class="form-check-label">Certificat mÃ©dical</label>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" <?php echo $candidature['photo_identite'] ? 'checked' : ''; ?> disabled>
-                            <label class="form-check-label">Photo d'identité</label>
+                            <label class="form-check-label">Photo d'identitÃ©</label>
                         </div>
                     </div>
                 </div>
@@ -357,7 +356,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-notes-medical me-2"></i>
-                    Informations Médicales
+                    Informations MÃ©dicales
                 </h5>
             </div>
             <div class="card-body">
@@ -370,13 +369,13 @@ include '../../../../includes/header.php';
                 
                 <?php if ($candidature['allergies_medicales']): ?>
                     <div class="mb-3">
-                        <strong>Allergies médicales :</strong>
+                        <strong>Allergies mÃ©dicales :</strong>
                         <p class="text-muted"><?php echo nl2br(htmlspecialchars($candidature['allergies_medicales'])); ?></p>
                     </div>
                 <?php endif; ?>
                 
                 <?php if (!$candidature['besoins_speciaux'] && !$candidature['allergies_medicales']): ?>
-                    <p class="text-muted">Aucune information médicale spéciale renseignée.</p>
+                    <p class="text-muted">Aucune information mÃ©dicale spéciale renseignÃ©e.</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -411,7 +410,7 @@ include '../../../../includes/header.php';
                 
                 <?php if ($candidature['decision_motif']): ?>
                     <div class="mb-3">
-                        <strong>Motif de la décision :</strong>
+                        <strong>Motif de la dÃ©cision :</strong>
                         <p class="text-muted"><?php echo nl2br(htmlspecialchars($candidature['decision_motif'])); ?></p>
                     </div>
                 <?php endif; ?>
@@ -421,7 +420,7 @@ include '../../../../includes/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Informations financières -->
+<!-- Informations financiÃ¨res -->
 <?php if ($candidature['frais_inscription'] || $candidature['frais_scolarite'] || $candidature['reduction_accordee']): ?>
 <div class="row mb-4">
     <div class="col-md-6">
@@ -429,7 +428,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-money-bill me-2"></i>
-                    Informations Financières
+                    Informations FinanciÃ¨res
                 </h5>
             </div>
             <div class="card-body">
@@ -442,13 +441,13 @@ include '../../../../includes/header.php';
                     <?php endif; ?>
                     <?php if ($candidature['frais_scolarite']): ?>
                         <tr>
-                            <td><strong>Frais de scolarité :</strong></td>
+                            <td><strong>Frais de scolaritÃ© :</strong></td>
                             <td><?php echo formatMoneyDefault($candidature['frais_scolarite']); ?></td>
                         </tr>
                     <?php endif; ?>
                     <?php if ($candidature['reduction_accordee']): ?>
                         <tr>
-                            <td><strong>Réduction accordée :</strong></td>
+                            <td><strong>RÃ©duction accordÃ©e :</strong></td>
                             <td><?php echo $candidature['reduction_accordee'] . '%'; ?></td>
                         </tr>
                     <?php endif; ?>
@@ -466,10 +465,14 @@ function updateStatus(newStatus) {
         'refusee': 'refuser'
     };
     
-    if (confirm(`Êtes-vous sûr de vouloir ${statusNames[newStatus]} cette candidature ?`)) {
+    if (confirm(`ÃŠtes-vous sÃ»r de vouloir ${statusNames[newStatus]} cette candidature ?`)) {
         window.location.href = `update_status.php?id=<?php echo $candidature['id']; ?>&status=${newStatus}`;
     }
 }
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

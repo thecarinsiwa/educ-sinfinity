@@ -7,13 +7,24 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+
+// Fonction pour récupérer l'ID du type de frais à partir du nom
+function getTypeFraisId($type_nom, $annee_scolaire_id) {
+    global $database;
+    
+    $type_frais = $database->query(
+        "SELECT id FROM type_frais WHERE nom = ? AND annee_scolaire_id = ? AND actif = 1",
+        [$type_nom, $annee_scolaire_id]
+    )->fetch();
+    
+    return $type_frais ? $type_frais['id'] : null;
+}
+require_once '../fees/types/priority-functions-simple.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'payments', 'create', '../../dashboard.php');
 
 $page_title = 'Enregistrer un paiement';
 
@@ -39,6 +50,14 @@ $eleves = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
+// Récupérer les types de frais actifs pour l'année scolaire (triés par priorité)
+$types_frais = $database->query(
+    "SELECT id, nom, description, priorite FROM type_frais 
+     WHERE annee_scolaire_id = ? AND actif = 1 
+     ORDER BY priorite ASC, nom ASC",
+    [$current_year['id']]
+)->fetchAll();
+
 $errors = [];
 $success = false;
 
@@ -60,6 +79,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($montant <= 0) $errors[] = 'Le montant doit être supérieur à zéro.';
     if (empty($mode_paiement)) $errors[] = 'Le mode de paiement est obligatoire.';
     if (empty($date_paiement)) $errors[] = 'La date de paiement est obligatoire.';
+    
+    // Vérifier que le type de paiement existe et est actif
+    if (!empty($type_paiement)) {
+        $type_frais_existe = $database->query(
+            "SELECT id, priorite FROM type_frais WHERE nom = ? AND annee_scolaire_id = ? AND actif = 1",
+            [$type_paiement, $current_year['id']]
+        )->fetch();
+        
+        if (!$type_frais_existe) {
+            $errors[] = 'Le type de paiement sélectionné n\'est pas valide ou n\'est pas actif pour cette année scolaire.';
+        } else {
+            // Vérifier la règle de priorité
+            require_once '../fees/types/priority-functions-simple.php';
+            $can_pay = canPayFeeType($type_frais_existe['id'], $eleve_id, $current_year['id']);
+            
+            if (!$can_pay['allowed']) {
+                $errors[] = $can_pay['message'];
+            }
+        }
+    }
     
     // Vérifier que l'élève existe et a une classe assignée
     if ($eleve_id) {
@@ -93,8 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Validation du montant
-    if ($montant > 10000000) { // 10 millions FC max
-        $errors[] = 'Le montant ne peut pas dépasser 10 000 000 FC.';
+    if ($montant > 10000000) { // 10 millions max
+        $errors[] = 'Le montant ne peut pas dépasser 10 000 000 ' . ($devise_par_defaut['symbole'] ?? 'FC') . '.';
     }
     
     // Si pas d'erreurs, enregistrer le paiement
@@ -105,26 +144,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Générer le numéro de reçu
             $numero_recu = generateReceiptNumber();
             
-            // Insérer le paiement
-            $sql = "INSERT INTO paiements (
-                        eleve_id, annee_scolaire_id, recu_numero, type_paiement,
-                        montant, devise_id, montant_devise_par_defaut, mode_paiement, date_paiement, observation,
-                        user_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // Récupérer l'ID du type de frais
+            $type_frais_id = getTypeFraisId($type_paiement, $current_year['id']);
+            if (!$type_frais_id) {
+                $errors[] = 'Type de frais non trouvé ou inactif.';
+                $has_errors = true;
+            }
 
-            // Calculer le montant dans la devise par défaut
-            $montant_devise_par_defaut = convertToDefaultCurrency($montant, $devise_id);
+            if (!$has_errors) {
+                // Insérer le paiement
+                $sql = "INSERT INTO paiements (
+                            eleve_id, annee_scolaire_id, recu_numero, type_frais_id,
+                            montant, devise_id, montant_devise_par_defaut, mode_paiement, date_paiement, observation,
+                            user_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            $database->execute($sql, [
-                $eleve_id, $current_year['id'], $numero_recu, $type_paiement,
-                $montant, $devise_id, $montant_devise_par_defaut, $mode_paiement, $date_paiement, $description,
-                $_SESSION['user_id']
-            ]);
-            
-            $paiement_id = $database->lastInsertId();
-            
-            // Si c'est un paiement de frais d'inscription, inscrire automatiquement l'élève
-            if ($type_paiement === 'inscription') {
+                // Calculer le montant dans la devise par défaut
+                $montant_devise_par_defaut = convertToDefaultCurrency($montant, $devise_id);
+                
+                $database->execute($sql, [
+                    $eleve_id, $current_year['id'], $numero_recu, $type_frais_id,
+                    $montant, $devise_id, $montant_devise_par_defaut, $mode_paiement, $date_paiement, $description,
+                    $_SESSION['user_id']
+                ]);
+                
+                $paiement_id = $database->lastInsertId();
+                
+                // Enregistrer automatiquement le paiement dans la caisse si une session est ouverte
+                require_once '../expenses/caisse_functions.php';
+                enregistrerPaiementDansCaisse($paiement_id, $eleve_id, $montant, $devise_id, $type_paiement, $date_paiement, $numero_recu);
+                
+                // Si c'est un paiement de frais d'inscription, inscrire automatiquement l'élève
+                if (strtolower($type_paiement) === 'inscription') {
                 try {
                     // Récupérer les informations de l'élève (classe_id)
                     $eleve_info = $database->query(
@@ -215,18 +266,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log("Erreur lors de l'inscription automatique de l'élève: " . $e->getMessage());
                     $message_inscription = "Paiement enregistré mais erreur lors de l'inscription automatique. Contactez l'administrateur.";
                 }
+                }
+                
+                $database->commit();
+                
+                // Message de succès avec informations d'inscription si applicable
+                $message_succes = 'Paiement enregistré avec succès !';
+                if (strtolower($type_paiement) === 'inscription' && isset($message_inscription)) {
+                    $message_succes .= ' ' . $message_inscription;
+                }
+                
+                showMessage('success', $message_succes);
+                redirectTo('receipt.php?id=' . $paiement_id);
             }
-            
-            $database->commit();
-            
-            // Message de succès avec informations d'inscription si applicable
-            $message_succes = 'Paiement enregistré avec succès !';
-            if ($type_paiement === 'inscription' && isset($message_inscription)) {
-                $message_succes .= ' ' . $message_inscription;
-            }
-            
-            showMessage('success', $message_succes);
-            redirectTo('receipt.php?id=' . $paiement_id);
             
         } catch (Exception $e) {
             $database->rollback();
@@ -366,15 +418,33 @@ include '../../../includes/header.php';
                         <div class="col-md-6 mb-3">
                             <label for="type_paiement" class="form-label">Type de paiement <span class="text-danger">*</span></label>
                             <select class="form-select" id="type_paiement" name="type_paiement" required onchange="updateFraisOptions()">
-                                <option value="">Sélectionner un type...</option>
-                                <option value="inscription" <?php echo ($_POST['type_paiement'] ?? '') === 'inscription' ? 'selected' : ''; ?>>Frais d'inscription</option>
-                                <option value="mensualite" <?php echo ($_POST['type_paiement'] ?? '') === 'mensualite' ? 'selected' : ''; ?>>Mensualité</option>
-                                <option value="examen" <?php echo ($_POST['type_paiement'] ?? '') === 'examen' ? 'selected' : ''; ?>>Frais d'examen</option>
-                                <option value="uniforme" <?php echo ($_POST['type_paiement'] ?? '') === 'uniforme' ? 'selected' : ''; ?>>Uniforme</option>
-                                <option value="transport" <?php echo ($_POST['type_paiement'] ?? '') === 'transport' ? 'selected' : ''; ?>>Transport</option>
-                                <option value="cantine" <?php echo ($_POST['type_paiement'] ?? '') === 'cantine' ? 'selected' : ''; ?>>Cantine</option>
-                                <option value="autre" <?php echo ($_POST['type_paiement'] ?? '') === 'autre' ? 'selected' : ''; ?>>Autre</option>
+                                <option value="">Sélectionner un élève d'abord...</option>
+                                <?php if (!empty($types_frais)): ?>
+                                    <?php foreach ($types_frais as $type): ?>
+                                        <option value="<?php echo htmlspecialchars($type['nom']); ?>" 
+                                                <?php echo ($_POST['type_paiement'] ?? '') === $type['nom'] ? 'selected' : ''; ?>
+                                                title="<?php echo htmlspecialchars($type['description']); ?>"
+                                                data-priorite="<?php echo $type['priorite']; ?>"
+                                                data-type-id="<?php echo $type['id']; ?>">
+                                            <?php echo htmlspecialchars($type['nom']); ?> 
+                                            (Priorité <?php echo $type['priorite']; ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="" disabled>Aucun type de frais configuré pour cette année</option>
+                                <?php endif; ?>
                             </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Le type de frais sera sélectionné automatiquement selon la priorité une fois l'élève choisi.
+                            </div>
+                            <?php if (empty($types_frais)): ?>
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Aucun type de frais n'est configuré pour cette année scolaire. 
+                                    <a href="../fees/types/add.php" class="alert-link">Cliquez ici pour en créer</a>.
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -404,7 +474,7 @@ include '../../../includes/header.php';
                                        placeholder="Ex: 50000"
                                        value="<?php echo htmlspecialchars($_POST['montant'] ?? ''); ?>"
                                        required>
-                                <span class="input-group-text" id="montant-symbole">FC</span>
+                                <span class="input-group-text" id="montant-symbole"><?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></span>
                             </div>
                         </div>
                         
@@ -527,7 +597,7 @@ include '../../../includes/header.php';
                         <div class="col-6">
                             <div class="border-end">
                                 <h6 class="text-muted">Montant</h6>
-                                <h4 class="text-success" id="resume-montant">0 FC</h4>
+                                <h4 class="text-success" id="resume-montant">0 <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></h4>
                     </div>
                         </div>
                         <div class="col-6">
@@ -619,6 +689,8 @@ include '../../../includes/header.php';
                             <div id="collapseAutomatique" class="accordion-collapse collapse" data-bs-parent="#accordionAide">
                                 <div class="accordion-body">
                                     <ul class="list-unstyled small mb-0">
+                                        <li><strong>Sélection automatique :</strong> Le type de frais prioritaire est sélectionné automatiquement</li>
+                                        <li><strong>Règle de priorité :</strong> Impossible de payer des frais de priorité basse si les frais de priorité haute ne sont pas soldés</li>
                                         <li><strong>Frais d'inscription :</strong> Inscription automatique dans la table inscriptions</li>
                                         <li><strong>Statut élève :</strong> Mise à jour automatique à "inscrit"</li>
                                         <li><strong>Suivi des paiements :</strong> Cumul des frais d'inscription payés</li>
@@ -626,6 +698,27 @@ include '../../../includes/header.php';
                                         <li><strong>Frais spécifiques :</strong> Après sélection d'un élève et d'un type, choisissez le frais exact</li>
                                         <li><strong>Pré-remplissage :</strong> Le montant et la description sont automatiquement remplis</li>
                                         <li><strong>Par classe :</strong> Seuls les frais de la classe de l'élève sont affichés</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Système de priorité -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingPriorite">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePriorite">
+                                    Système de priorité
+                                </button>
+                            </h2>
+                            <div id="collapsePriorite" class="accordion-collapse collapse" data-bs-parent="#accordionAide">
+                                <div class="accordion-body">
+                                    <ul class="list-unstyled small mb-0">
+                                        <li><strong>Priorité 1 :</strong> Frais d'inscription (doivent être soldés en premier)</li>
+                                        <li><strong>Priorité 2 :</strong> Frais mensuels (après inscription complète)</li>
+                                        <li><strong>Priorité 3 :</strong> Autres frais (uniforme, transport, etc.)</li>
+                                        <li><strong>Sélection automatique :</strong> Le système sélectionne automatiquement le type de frais prioritaire restant à payer</li>
+                                        <li><strong>Blocage :</strong> Impossible de sélectionner manuellement un type de frais de priorité plus basse</li>
+                                        <li><strong>Notification :</strong> Affichage du statut de tous les types de frais dans la notification</li>
                                     </ul>
                                 </div>
                             </div>
@@ -695,6 +788,42 @@ include '../../../includes/header.php';
                                     </button>
                                 </div>
                             </div>
+                            
+                            <!-- Informations financières -->
+                            <div class="row mt-3" id="student-financial-info" style="display: none;">
+                                <div class="col-12">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-calculator me-2"></i>
+                                        Situation Financière
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card border-primary">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title text-primary">Total à Payer</h6>
+                                                    <h4 class="text-primary" id="selected-student-total-frais">0 <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card border-success">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title text-success">Déjà Payé</h6>
+                                                    <h4 class="text-success" id="selected-student-total-paye">0 <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card border-danger">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title text-danger">Solde Restant</h6>
+                                                    <h4 class="text-danger" id="selected-student-solde-restant">0 <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -711,6 +840,9 @@ include '../../../includes/header.php';
                                 <th>Classe</th>
                                 <th>Niveau</th>
                                 <th>Statut</th>
+                                <th>Total à Payer</th>
+                                <th>Déjà Payé</th>
+                                <th>Solde Restant</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -726,6 +858,33 @@ include '../../../includes/header.php';
         </div>
     </div>
 </div>
+
+<style>
+.eleve-selected {
+    background-color: #e3f2fd !important;
+}
+
+.student-info-card {
+    border-left: 4px solid #007bff;
+}
+
+#student-financial-info .card {
+    transition: transform 0.2s;
+}
+
+#student-financial-info .card:hover {
+    transform: translateY(-2px);
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.text-danger.fw-bold {
+    font-weight: 700 !important;
+}
+</style>
 
 <script>
 // Variables globales pour la devise par défaut
@@ -783,7 +942,8 @@ function initializeEleveTable() {
                         'diplome': 'primary',
                         'non-evalue': 'warning',
                         'admis': 'secondary',
-                        'evalue': 'success'
+                        'evalue': 'success',
+                        'inscrit': 'success'
                     };
                     const statusLabels = {
                         'actif': 'Actif',
@@ -792,16 +952,50 @@ function initializeEleveTable() {
                         'diplome': 'Diplômé',
                         'non-evalue': 'Non évalué',
                         'admis': 'Admis',
-                        'evalue': 'Évalué'
+                        'evalue': 'Évalué',
+                        'inscrit': 'Inscrit'
                     };
                     return `<span class="badge bg-${statusColors[data] || 'secondary'}">${statusLabels[data] || data}</span>`;
+                }
+            },
+            {
+                data: 'total_frais_formatted',
+                render: function(data, type, row) {
+                    const totalFrais = parseFloat(row.total_frais) || 0;
+                    if (totalFrais === 0) {
+                        return '<span class="text-muted">Aucun frais</span>';
+                    }
+                    return `<strong class="text-primary">${data}</strong>`;
+                }
+            },
+            {
+                data: 'total_paye_formatted',
+                render: function(data, type, row) {
+                    const totalPaye = parseFloat(row.total_paye) || 0;
+                    if (totalPaye === 0) {
+                        return '<span class="text-muted">0 <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?></span>';
+                    }
+                    return `<span class="text-success">${data}</span>`;
+                }
+            },
+            {
+                data: 'solde_restant_formatted',
+                render: function(data, type, row) {
+                    const soldeRestant = parseFloat(row.solde_restant) || 0;
+                    if (soldeRestant === 0) {
+                        return '<span class="badge bg-success">Solde acquitté</span>';
+                    } else if (soldeRestant > 0) {
+                        return `<span class="text-danger fw-bold">${data}</span>`;
+                    } else {
+                        return `<span class="text-warning">${data}</span>`;
+                    }
                 }
             },
             {
                 data: null,
                 orderable: false,
                 render: function(data, type, row) {
-                    return `<button type="button" class="btn btn-sm btn-primary" onclick="selectStudent(${row.id}, '${row.nom}', '${row.prenom}', '${row.numero_matricule}', '${row.classe_nom}', '${row.status}', ${row.classe_id})">
+                    return `<button type="button" class="btn btn-sm btn-primary" onclick="selectStudent(${row.id}, '${row.nom}', '${row.prenom}', '${row.numero_matricule}', '${row.classe_nom}', '${row.status}', ${row.classe_id}, ${row.total_frais}, ${row.total_paye}, ${row.solde_restant})">
                         <i class="fas fa-check me-1"></i>Sélectionner
                     </button>`;
                 }
@@ -886,8 +1080,8 @@ function retryLoadTable() {
 }
 
 // Sélectionner un élève
-function selectStudent(id, nom, prenom, matricule, classe, status, classe_id) {
-    selectedStudent = { id, nom, prenom, matricule, classe, status, classe_id };
+function selectStudent(id, nom, prenom, matricule, classe, status, classe_id, totalFrais = 0, totalPaye = 0, soldeRestant = 0) {
+    selectedStudent = { id, nom, prenom, matricule, classe, status, classe_id, totalFrais, totalPaye, soldeRestant };
     
     // Mettre à jour l'affichage des informations
     document.getElementById('selected-student-name').textContent = `${nom} ${prenom}`;
@@ -895,8 +1089,14 @@ function selectStudent(id, nom, prenom, matricule, classe, status, classe_id) {
     document.getElementById('selected-student-class').textContent = `Classe: ${classe}`;
     document.getElementById('selected-student-status').textContent = `Statut: ${status}`;
     
-    // Afficher la section de confirmation
+    // Mettre à jour les informations financières
+    document.getElementById('selected-student-total-frais').textContent = `${parseFloat(totalFrais).toLocaleString()} <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>`;
+    document.getElementById('selected-student-total-paye').textContent = `${parseFloat(totalPaye).toLocaleString()} <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>`;
+    document.getElementById('selected-student-solde-restant').textContent = `${parseFloat(soldeRestant).toLocaleString()} <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>`;
+    
+    // Afficher la section de confirmation et les informations financières
     document.getElementById('eleve-selection-info').style.display = 'block';
+    document.getElementById('student-financial-info').style.display = 'block';
     
     // Mettre en surbrillance la ligne sélectionnée
     $('#eleveTable tbody tr').removeClass('eleve-selected');
@@ -911,7 +1111,7 @@ function confirmStudentSelection() {
         document.getElementById('eleve_classe_id').value = selectedStudent.classe_id;
         document.getElementById('eleve_display').value = `${selectedStudent.nom} ${selectedStudent.prenom} (${selectedStudent.matricule}) - ${selectedStudent.classe}`;
     
-    // Afficher les informations de l'élève
+        // Afficher les informations de l'élève
         showStudentInfo(selectedStudent);
         
         // Fermer le modal
@@ -925,11 +1125,234 @@ function confirmStudentSelection() {
         // Retirer la surbrillance
         $('#eleveTable tbody tr').removeClass('eleve-selected');
         
-        // Mettre à jour les options de frais si un type de paiement est déjà sélectionné
-        if (document.getElementById('type_paiement').value) {
-            updateFraisOptions();
-        }
+        // Récupérer et afficher le type de frais prioritaire
+        const eleveId = document.getElementById('eleve_id').value;
+        loadPriorityFeeType(eleveId);
     }
+}
+
+// Fonction pour charger le type de frais prioritaire
+function loadPriorityFeeType(eleveId) {
+    const anneeScolaireId = <?php echo $current_year['id']; ?>;
+    
+    // Afficher un indicateur de chargement
+    const typeSelect = document.getElementById('type_paiement');
+    const originalValue = typeSelect.value;
+    const originalOptions = typeSelect.innerHTML; // Sauvegarder les options originales
+    typeSelect.innerHTML = '<option value="">Chargement du type prioritaire...</option>';
+    typeSelect.disabled = true;
+    
+    // Faire la requête AJAX
+    fetch(`get-priority-fee-type.php?eleve_id=${eleveId}&annee_scolaire_id=${anneeScolaireId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Restaurer les options originales
+            typeSelect.innerHTML = originalOptions;
+            
+            if (data.priority_fee) {
+                // Attendre un court délai pour s'assurer que les options sont restaurées
+                setTimeout(() => {
+                    console.log('=== DEBUG SÉLECTION AUTOMATIQUE ===');
+                    console.log('Type prioritaire à sélectionner:', data.priority_fee.type_nom);
+                    console.log('Options disponibles dans le select:');
+                    Array.from(typeSelect.options).forEach((opt, index) => {
+                        console.log(`  [${index}] Valeur: "${opt.value}", Texte: "${opt.textContent}"`);
+                    });
+                    
+                    // Vérifier si l'option existe
+                    const targetOption = Array.from(typeSelect.options).find(opt => opt.value === data.priority_fee.type_nom);
+                    if (targetOption) {
+                        console.log('✓ Option trouvée, sélection en cours...');
+                        typeSelect.value = data.priority_fee.type_nom;
+                        console.log('Valeur sélectionnée:', typeSelect.value);
+                        console.log('Option sélectionnée:', typeSelect.selectedOptions[0]?.textContent);
+                    } else {
+                        console.error('✗ Option non trouvée pour:', data.priority_fee.type_nom);
+                        console.log('Tentative de sélection forcée...');
+                        typeSelect.value = data.priority_fee.type_nom;
+                    }
+                    
+                    // Désactiver les options de priorité plus basse
+                    updateTypeSelectOptions(data.payment_status, data.priority_fee.type_priorite);
+                    
+                    // Afficher une notification
+                    showPriorityNotification(data.priority_fee, data.payment_status);
+                    
+                    // Mettre à jour les options de frais
+                    updateFraisOptions();
+                    console.log('=== FIN DEBUG ===');
+                }, 100);
+            } else {
+                // Tous les frais sont soldés - permettre tous les types
+                enableAllTypeOptions();
+                showAllFeesPaidNotification(data.payment_status);
+            }
+        } else {
+            console.error('Erreur:', data.error);
+            typeSelect.innerHTML = originalOptions;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors du chargement du type prioritaire:', error);
+        typeSelect.innerHTML = originalOptions;
+    })
+    .finally(() => {
+        typeSelect.disabled = false;
+    });
+}
+
+// Fonction pour restaurer le sélecteur de type
+function restoreTypeSelect() {
+    const typeSelect = document.getElementById('type_paiement');
+    typeSelect.innerHTML = `
+        <option value="">Sélectionner un élève d'abord...</option>
+        <?php if (!empty($types_frais)): ?>
+            <?php foreach ($types_frais as $type): ?>
+                <option value="<?php echo htmlspecialchars($type['nom']); ?>" 
+                        data-priorite="<?php echo $type['priorite']; ?>"
+                        data-type-id="<?php echo $type['id']; ?>">
+                    <?php echo htmlspecialchars($type['nom']); ?> 
+                    (Priorité <?php echo $type['priorite']; ?>)
+                </option>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    `;
+}
+
+// Fonction pour mettre à jour les options du sélecteur selon la priorité
+function updateTypeSelectOptions(paymentStatus, currentPriority) {
+    const typeSelect = document.getElementById('type_paiement');
+    const options = typeSelect.querySelectorAll('option[data-priorite]');
+    
+    options.forEach(option => {
+        const priorite = parseInt(option.dataset.priorite);
+        const typeNom = option.value;
+        
+        // Trouver le statut de ce type dans paymentStatus
+        const typeStatus = paymentStatus.find(status => status.nom === typeNom);
+        
+        if (typeStatus) {
+            if (priorite < currentPriority) {
+                // Désactiver les types de priorité plus haute non soldés
+                if (!typeStatus.soldé) {
+                    option.disabled = true;
+                    option.textContent = `${typeNom} (Priorité ${priorite}) - Non soldé`;
+                    option.style.color = '#dc3545';
+                } else {
+                    option.disabled = false;
+                    option.textContent = `${typeNom} (Priorité ${priorite}) - Soldé`;
+                    option.style.color = '#198754';
+                }
+            } else if (priorite === currentPriority) {
+                // Type prioritaire actuel - sélectionné et activé
+                option.disabled = false;
+                option.selected = true;
+                option.textContent = `${typeNom} (Priorité ${priorite}) - À payer`;
+                option.style.color = '#0d6efd';
+                option.style.fontWeight = 'bold';
+            } else {
+                // Types de priorité plus basse - désactivés
+                option.disabled = true;
+                option.textContent = `${typeNom} (Priorité ${priorite}) - Priorité plus basse`;
+                option.style.color = '#6c757d';
+            }
+        }
+    });
+}
+
+// Fonction pour activer toutes les options (quand tous les frais sont soldés)
+function enableAllTypeOptions() {
+    const typeSelect = document.getElementById('type_paiement');
+    const options = typeSelect.querySelectorAll('option[data-priorite]');
+    
+    options.forEach(option => {
+        option.disabled = false;
+        option.style.color = '';
+        option.style.fontWeight = '';
+        const priorite = option.dataset.priorite;
+        const typeNom = option.value;
+        option.textContent = `${typeNom} (Priorité ${priorite})`;
+    });
+}
+
+// Fonction pour afficher la notification de priorité
+function showPriorityNotification(priorityFee, paymentStatus) {
+    // Créer ou mettre à jour la notification
+    let notification = document.getElementById('priority-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'priority-notification';
+        notification.className = 'alert alert-info alert-dismissible fade show';
+        notification.style.marginTop = '10px';
+        
+        // Insérer après le sélecteur de type
+        const typeSelect = document.getElementById('type_paiement');
+        typeSelect.parentNode.insertBefore(notification, typeSelect.nextSibling);
+    }
+    
+    const montantRestant = parseFloat(priorityFee.montant_restant).toLocaleString();
+    const montantPaye = parseFloat(priorityFee.montant_paye).toLocaleString();
+    
+    // Créer un résumé des autres types de frais
+    let otherFeesSummary = '';
+    const otherFees = paymentStatus.filter(status => status.nom !== priorityFee.type_nom);
+    if (otherFees.length > 0) {
+        otherFeesSummary = '<hr class="my-2"><small class="text-muted"><strong>Autres frais :</strong><br>';
+        otherFees.forEach(fee => {
+            const status = fee.soldé ? '✅ Soldé' : '❌ Non soldé';
+            const color = fee.soldé ? 'text-success' : 'text-danger';
+            otherFeesSummary += `<span class="${color}">${fee.nom} (P${fee.priorite}) - ${status}</span><br>`;
+        });
+        otherFeesSummary += '</small>';
+    }
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-start">
+            <i class="fas fa-exclamation-circle me-2 mt-1"></i>
+            <div class="flex-grow-1">
+                <strong>Type de frais prioritaire sélectionné :</strong> ${priorityFee.type_nom} (Priorité ${priorityFee.type_priorite})
+                <br>
+                <small class="text-muted">
+                    <strong>Montant restant :</strong> ${montantRestant} <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?> 
+                    | <strong>Déjà payé :</strong> ${montantPaye} <?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>
+                </small>
+                ${otherFeesSummary}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+// Fonction pour afficher la notification quand tous les frais sont soldés
+function showAllFeesPaidNotification(paymentStatus) {
+    let notification = document.getElementById('priority-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'priority-notification';
+        notification.className = 'alert alert-success alert-dismissible fade show';
+        notification.style.marginTop = '10px';
+        
+        const typeSelect = document.getElementById('type_paiement');
+        typeSelect.parentNode.insertBefore(notification, typeSelect.nextSibling);
+    }
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle me-2"></i>
+            <div class="flex-grow-1">
+                <strong>Excellent !</strong> Tous les frais sont soldés pour cet élève.
+                <br>
+                <small class="text-muted">Vous pouvez sélectionner n'importe quel type de frais pour un paiement supplémentaire.</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
 }
 
 // Afficher les informations de l'élève sélectionné
@@ -978,6 +1401,15 @@ function changeStudent() {
     
     // Masquer la sélection des frais
     document.getElementById('frais-selection').style.display = 'none';
+    
+    // Nettoyer les notifications de priorité
+    const notification = document.getElementById('priority-notification');
+    if (notification) {
+        notification.remove();
+    }
+    
+    // Réinitialiser le sélecteur de type
+    document.getElementById('type_paiement').value = '';
     
     // Rouvrir le modal
     const modal = new bootstrap.Modal(document.getElementById('eleveModal'));
@@ -1038,7 +1470,7 @@ function updateMontantSymbole() {
     if (selectedOption && selectedOption.dataset.symbole) {
         symboleSpan.textContent = selectedOption.dataset.symbole;
     } else {
-        symboleSpan.textContent = 'FC';
+        symboleSpan.textContent = '<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>';
     }
     
     // Mettre à jour la conversion
@@ -1103,6 +1535,21 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('montant').addEventListener('input', updateConversion);
 document.getElementById('devise_id').addEventListener('change', updateConversion);
 
+// Empêcher la sélection d'options désactivées
+document.getElementById('type_paiement').addEventListener('change', function(e) {
+    const selectedOption = e.target.options[e.target.selectedIndex];
+    if (selectedOption && selectedOption.disabled) {
+        // Revenir à l'option précédente valide
+        const validOptions = Array.from(e.target.options).filter(option => !option.disabled && option.value);
+        if (validOptions.length > 0) {
+            e.target.value = validOptions[0].value;
+        }
+        
+        // Afficher un message d'erreur
+        showError('Vous ne pouvez pas sélectionner ce type de frais. Veuillez d\'abord solder les frais de priorité plus élevée.');
+    }
+});
+
 // Formatage du montant en temps réel
 document.getElementById('montant').addEventListener('input', function() {
     let value = this.value.replace(/\D/g, '');
@@ -1153,11 +1600,51 @@ document.querySelector('form').addEventListener('submit', function(e) {
         }
     });
     
+    // Validation spécifique pour le type de paiement
+    const typeSelect = document.getElementById('type_paiement');
+    const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+    
+    if (selectedOption && selectedOption.disabled) {
+        e.preventDefault();
+        showError('Vous ne pouvez pas sélectionner ce type de frais. Veuillez d\'abord solder les frais de priorité plus élevée.');
+        typeSelect.classList.add('is-invalid');
+        isValid = false;
+    } else {
+        typeSelect.classList.remove('is-invalid');
+    }
+    
     if (!isValid) {
         e.preventDefault();
-        showError('Veuillez remplir tous les champs obligatoires.');
+        if (!typeSelect.classList.contains('is-invalid')) {
+            showError('Veuillez remplir tous les champs obligatoires.');
+        }
     }
 });
+
+// Fonction pour afficher les erreurs
+function showError(message) {
+    // Supprimer les anciennes alertes d'erreur
+    const existingAlert = document.querySelector('.alert-danger');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+    
+    // Créer une nouvelle alerte
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insérer l'alerte en haut du formulaire
+    const form = document.querySelector('form');
+    form.insertBefore(alert, form.firstChild);
+    
+    // Faire défiler vers le haut
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 // Fonction pour mettre à jour les options de frais selon la classe de l'élève
 function updateFraisOptions() {
@@ -1181,7 +1668,7 @@ function updateFraisOptions() {
                 data.frais.forEach(frais => {
                     const option = document.createElement('option');
                     option.value = frais.id;
-                    option.textContent = `${frais.libelle} - ${frais.montant} ${frais.devise_symbole || 'FC'}`;
+                    option.textContent = `${frais.libelle} - ${frais.montant} ${frais.devise_symbole || '<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>'}`;
                     option.dataset.montant = frais.montant;
                     option.dataset.description = frais.description || '';
                     fraisSelect.appendChild(option);
@@ -1231,7 +1718,7 @@ function updatePaiementResume() {
         resumeCard.style.display = 'block';
         
         // Mettre à jour le montant
-        resumeMontant.textContent = `${parseFloat(montant).toLocaleString()} ${selectedOption.dataset.symbole || 'FC'}`;
+        resumeMontant.textContent = `${parseFloat(montant).toLocaleString()} ${selectedOption.dataset.symbole || '<?php echo htmlspecialchars($devise_par_defaut['symbole'] ?? 'FC'); ?>'}`;
         
         // Mettre à jour la devise
         resumeDevise.textContent = selectedOption.text.split(' - ')[0];

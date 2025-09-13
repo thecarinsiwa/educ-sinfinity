@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('finance') && !checkPermission('finance_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'fees', 'read', '../../dashboard.php');
 
 // Récupérer l'ID du frais
 $id = (int)($_GET['id'] ?? 0);
@@ -22,12 +21,14 @@ if (!$id) {
     redirectTo('index.php');
 }
 
-// Récupérer les informations du frais avec devise
+// Récupérer les informations du frais avec devise et type de frais
 $sql = "SELECT f.*, c.nom as classe_nom, c.niveau, c.section,
-               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom
+               d.code as devise_code, d.symbole as devise_symbole, d.nom as devise_nom,
+               tf.nom as type_frais_nom, tf.description as type_frais_description
         FROM frais_scolaires f
         JOIN classes c ON f.classe_id = c.id
         LEFT JOIN devises d ON f.devise_id = d.id
+        LEFT JOIN type_frais tf ON f.type_frais_id = tf.id
         WHERE f.id = ?";
 
 $frais = $database->query($sql, [$id])->fetch();
@@ -65,7 +66,7 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (checkPermission('finance')): ?>
+        <?php if (checkPagePermission('finance')): ?>
             <div class="btn-group">
                 <a href="edit.php?id=<?php echo $frais['id']; ?>" class="btn btn-outline-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -115,30 +116,12 @@ include '../../../includes/header.php';
                             <tr>
                                 <td class="fw-bold">Type de frais :</td>
                                 <td>
-                                    <?php
-                                    $types = [
-                                        'inscription' => 'Frais d\'inscription',
-                                        'mensualite' => 'Mensualité',
-                                        'examen' => 'Frais d\'examen',
-                                        'uniforme' => 'Uniforme scolaire',
-                                        'transport' => 'Transport scolaire',
-                                        'cantine' => 'Cantine',
-                                        'autre' => 'Autre'
-                                    ];
-                                    $type_colors = [
-                                        'inscription' => 'primary',
-                                        'mensualite' => 'success',
-                                        'examen' => 'warning',
-                                        'uniforme' => 'info',
-                                        'transport' => 'secondary',
-                                        'cantine' => 'dark',
-                                        'autre' => 'light'
-                                    ];
-                                    $color = $type_colors[$frais['type_frais']] ?? 'secondary';
-                                    ?>
-                                    <span class="badge bg-<?php echo $color; ?> fs-6">
-                                        <?php echo $types[$frais['type_frais']] ?? ucfirst($frais['type_frais']); ?>
+                                    <span class="badge bg-primary fs-6">
+                                        <?php echo htmlspecialchars($frais['type_frais_nom'] ?? $frais['type_frais']); ?>
                                     </span>
+                                    <?php if (!empty($frais['type_frais_description'])): ?>
+                                        <br><small class="text-muted"><?php echo displayText($frais['type_frais_description']); ?></small>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
@@ -220,7 +203,7 @@ include '../../../includes/header.php';
                 <div class="row mt-3">
                     <div class="col-12">
                         <h6 class="fw-bold">Description :</h6>
-                        <p class="text-muted"><?php echo nl2br(htmlspecialchars($frais['description'])); ?></p>
+                        <p class="text-muted"><?php echo displayFullDescription($frais['description']); ?></p>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -338,7 +321,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPermission('finance')): ?>
+                    <?php if (checkPagePermission('finance')): ?>
                         <a href="edit.php?id=<?php echo $frais['id']; ?>" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-2"></i>
                             Modifier ce frais

@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('library') && !checkPermission('library_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+
+requirePagePermissionFromDB('complementary', 'library', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de la Bibliothèque';
 
@@ -102,7 +101,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('library')): ?>
+        <?php if (checkPagePermission('library')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
@@ -371,7 +370,7 @@ include '../../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun emprunt récent</p>
-                        <?php if (checkPermission('library')): ?>
+                        <?php if (checkPagePermission('library')): ?>
                             <a href="loans/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Nouvel emprunt
@@ -485,7 +484,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPermission('library')): ?>
+<?php if (checkPagePermission('library')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -547,3 +546,4 @@ include '../../../includes/header.php';
 </style>
 
 <?php include '../../../includes/footer.php'; ?>
+

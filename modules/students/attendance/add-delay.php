@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Ajouter un retard
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,16 +7,16 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
 
-// Vérifier l'authentification et les permissions
+// VÃ©rifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students')) {
-    redirectTo('../../../login.php');
-}
+
+requirePagePermissionFromDB('students', 'attendance', 'create', '../../../dashboard.php');
 
 $page_title = "Ajouter un retard";
 
-// Récupérer l'année scolaire active
+// RÃ©cupÃ©rer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();
 
 // Traitement du formulaire
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Validation
         if (!$eleve_id) {
-            throw new Exception('Élève requis');
+            throw new Exception('Ã‰lÃ¨ve requis');
         }
         
         if (!$date_retard || !$heure_retard) {
@@ -39,10 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         if ($duree_retard <= 0) {
-            throw new Exception('Durée du retard requise');
+            throw new Exception('DurÃ©e du retard requise');
         }
         
-        // Vérifier que l'élève existe et est inscrit
+        // VÃ©rifier que l'Ã©lÃ¨ve existe et est inscrit
         $eleve = $database->query(
             "SELECT e.*, c.nom as classe_nom, c.niveau, i.classe_id
              FROM eleves e
@@ -53,20 +53,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->fetch();
         
         if (!$eleve) {
-            throw new Exception('Élève non trouvé ou non inscrit pour cette année scolaire');
+            throw new Exception('Ã‰lÃ¨ve non trouvÃ© ou non inscrit pour cette année scolaire');
         }
         
         // Combiner date et heure
         $datetime_retard = $date_retard . ' ' . $heure_retard;
         
-        // Déterminer le type de retard
+        // DÃ©terminer le type de retard
         $type_retard = $justifie ? 'retard_justifie' : 'retard';
         
         // Commencer une transaction
         $database->beginTransaction();
         
         try {
-            // Insérer le retard
+            // InsÃ©rer le retard
             $database->execute(
                 "INSERT INTO absences (eleve_id, classe_id, type_absence, date_absence, motif, duree_retard, created_at) 
                  VALUES (?, ?, ?, ?, ?, ?, NOW())",
@@ -79,15 +79,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logUserAction(
                 'create_delay',
                 'attendance',
-                'Retard ajouté - Élève: ' . $eleve['nom'] . ' ' . $eleve['prenom'] . 
+                'Retard ajoutÃ© - Ã‰lÃ¨ve: ' . $eleve['nom'] . ' ' . $eleve['prenom'] . 
                 ', Date: ' . formatDateTime($datetime_retard) . 
-                ', Durée: ' . $duree_retard . ' min' .
+                ', DurÃ©e: ' . $duree_retard . ' min' .
                 ($motif ? ', Motif: ' . $motif : ''),
                 $retard_id
             );
             
             $database->commit();
-            showMessage('success', 'Retard ajouté avec succès');
+            showMessage('success', 'Retard ajoutÃ© avec succÃ¨s');
             
             // Rediriger vers la liste ou rester sur la page selon le choix
             if (isset($_POST['action_after']) && $_POST['action_after'] === 'stay') {
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT * FROM classes WHERE annee_scolaire_id = ? ORDER BY niveau, nom",
     [$current_year['id'] ?? 0]
@@ -125,7 +125,7 @@ include '../../../includes/header.php';
         <div class="btn-group me-2">
             <a href="index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour à la liste
+                Retour Ã  la liste
             </a>
         </div>
         <div class="btn-group">
@@ -153,7 +153,7 @@ include '../../../includes/header.php';
                         <div class="col-md-6 mb-3">
                             <label for="classe_filter" class="form-label">Filtrer par classe</label>
                             <select class="form-select" id="classe_filter" onchange="loadStudents()">
-                                <option value="">Sélectionner une classe</option>
+                                <option value="">SÃ©lectionner une classe</option>
                                 <?php foreach ($classes as $class): ?>
                                     <option value="<?php echo $class['id']; ?>">
                                         <?php echo htmlspecialchars($class['niveau'] . ' - ' . $class['nom']); ?>
@@ -163,11 +163,11 @@ include '../../../includes/header.php';
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="eleve_id" class="form-label">Élève <span class="text-danger">*</span></label>
+                            <label for="eleve_id" class="form-label">Ã‰lÃ¨ve <span class="text-danger">*</span></label>
                             <select class="form-select" id="eleve_id" name="eleve_id" required>
-                                <option value="">Sélectionner un élève</option>
+                                <option value="">SÃ©lectionner un Ã©lÃ¨ve</option>
                             </select>
-                            <div class="form-text">Sélectionnez d'abord une classe pour voir les élèves</div>
+                            <div class="form-text">SÃ©lectionnez d'abord une classe pour voir les élèves</div>
                         </div>
                     </div>
                     
@@ -179,16 +179,16 @@ include '../../../includes/header.php';
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            <label for="heure_retard" class="form-label">Heure d'arrivée <span class="text-danger">*</span></label>
+                            <label for="heure_retard" class="form-label">Heure d'arrivÃ©e <span class="text-danger">*</span></label>
                             <input type="time" class="form-control" id="heure_retard" name="heure_retard" 
                                    value="<?php echo date('H:i'); ?>" required>
                         </div>
                         
                         <div class="col-md-4 mb-3">
-                            <label for="duree_retard" class="form-label">Durée (minutes) <span class="text-danger">*</span></label>
+                            <label for="duree_retard" class="form-label">DurÃ©e (minutes) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="duree_retard" name="duree_retard" 
                                    min="1" max="480" placeholder="Ex: 15" required>
-                            <div class="form-text">Durée du retard en minutes</div>
+                            <div class="form-text">DurÃ©e du retard en minutes</div>
                         </div>
                     </div>
                     
@@ -202,18 +202,18 @@ include '../../../includes/header.php';
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="justifie" name="justifie">
                             <label class="form-check-label" for="justifie">
-                                Retard justifié
+                                Retard justifiÃ©
                             </label>
-                            <div class="form-text">Cochez si le retard est justifié (certificat médical, etc.)</div>
+                            <div class="form-text">Cochez si le retard est justifiÃ© (certificat mÃ©dical, etc.)</div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Action après ajout</label>
+                        <label class="form-label">Action aprÃ¨s ajout</label>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="action_after" id="action_list" value="list" checked>
                             <label class="form-check-label" for="action_list">
-                                Retourner à la liste des absences
+                                Retourner Ã  la liste des absences
                             </label>
                         </div>
                         <div class="form-check">
@@ -227,7 +227,7 @@ include '../../../includes/header.php';
                     <div class="d-flex justify-content-end">
                         <button type="button" class="btn btn-secondary me-2" onclick="resetForm()">
                             <i class="fas fa-undo me-1"></i>
-                            Réinitialiser
+                            RÃ©initialiser
                         </button>
                         <button type="submit" class="btn btn-warning">
                             <i class="fas fa-clock me-1"></i>
@@ -251,16 +251,16 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <div class="alert alert-info">
                     <i class="fas fa-lightbulb me-2"></i>
-                    <strong>Conseil :</strong> Un retard est considéré comme significatif à partir de 5 minutes.
+                    <strong>Conseil :</strong> Un retard est considÃ©rÃ© comme significatif Ã  partir de 5 minutes.
                 </div>
                 
                 <h6>Types de retards :</h6>
                 <ul class="list-unstyled">
-                    <li><span class="badge bg-warning me-2">Retard</span> Non justifié</li>
-                    <li><span class="badge bg-info me-2">Retard justifié</span> Avec justification</li>
+                    <li><span class="badge bg-warning me-2">Retard</span> Non justifiÃ©</li>
+                    <li><span class="badge bg-info me-2">Retard justifiÃ©</span> Avec justification</li>
                 </ul>
                 
-                <h6>Durées courantes :</h6>
+                <h6>DurÃ©es courantes :</h6>
                 <div class="d-grid gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setDuration(5)">
                         5 minutes
@@ -305,7 +305,7 @@ include '../../../includes/header.php';
                     </div>
                     <div class="col-6">
                         <h4 class="text-info"><?php echo round($today_stats['duree_moyenne'] ?? 0); ?> min</h4>
-                        <small class="text-muted">Durée moyenne</small>
+                        <small class="text-muted">DurÃ©e moyenne</small>
                     </div>
                 </div>
             </div>
@@ -314,16 +314,16 @@ include '../../../includes/header.php';
 </div>
 
 <script>
-// Charger les élèves selon la classe sélectionnée
+// Charger les élèves selon la classe sÃ©lectionnÃ©e
 function loadStudents() {
     const classeId = document.getElementById('classe_filter').value;
     const eleveSelect = document.getElementById('eleve_id');
     
-    // Réinitialiser la liste des élèves
+    // RÃ©initialiser la liste des élèves
     eleveSelect.innerHTML = '<option value="">Chargement...</option>';
     
     if (!classeId) {
-        eleveSelect.innerHTML = '<option value="">Sélectionner un élève</option>';
+        eleveSelect.innerHTML = '<option value="">SÃ©lectionner un Ã©lÃ¨ve</option>';
         return;
     }
     
@@ -331,7 +331,7 @@ function loadStudents() {
     fetch('get-students.php?classe_id=' + classeId)
         .then(response => response.json())
         .then(data => {
-            eleveSelect.innerHTML = '<option value="">Sélectionner un élève</option>';
+            eleveSelect.innerHTML = '<option value="">SÃ©lectionner un Ã©lÃ¨ve</option>';
             
             if (data.success && data.students) {
                 data.students.forEach(student => {
@@ -341,7 +341,7 @@ function loadStudents() {
                     eleveSelect.appendChild(option);
                 });
             } else {
-                eleveSelect.innerHTML = '<option value="">Aucun élève trouvé</option>';
+                eleveSelect.innerHTML = '<option value="">Aucun Ã©lÃ¨ve trouvÃ©</option>';
             }
         })
         .catch(error => {
@@ -350,17 +350,17 @@ function loadStudents() {
         });
 }
 
-// Définir une durée prédéfinie
+// DÃ©finir une durÃ©e prÃ©dÃ©finie
 function setDuration(minutes) {
     document.getElementById('duree_retard').value = minutes;
 }
 
-// Réinitialiser le formulaire
+// RÃ©initialiser le formulaire
 function resetForm() {
     document.getElementById('addDelayForm').reset();
     document.getElementById('date_retard').value = '<?php echo date('Y-m-d'); ?>';
     document.getElementById('heure_retard').value = '<?php echo date('H:i'); ?>';
-    document.getElementById('eleve_id').innerHTML = '<option value="">Sélectionner un élève</option>';
+    document.getElementById('eleve_id').innerHTML = '<option value="">SÃ©lectionner un Ã©lÃ¨ve</option>';
 }
 
 // Validation du formulaire
@@ -370,29 +370,29 @@ document.getElementById('addDelayForm').addEventListener('submit', function(e) {
     
     if (!eleveId) {
         e.preventDefault();
-        alert('Veuillez sélectionner un élève');
+        alert('Veuillez sÃ©lectionner un Ã©lÃ¨ve');
         return false;
     }
     
     if (dureeRetard <= 0 || dureeRetard > 480) {
         e.preventDefault();
-        alert('La durée du retard doit être entre 1 et 480 minutes');
+        alert('La durÃ©e du retard doit Ãªtre entre 1 et 480 minutes');
         return false;
     }
     
-    // Confirmation pour les retards très longs
+    // Confirmation pour les retards trÃ¨s longs
     if (dureeRetard > 120) {
-        if (!confirm('Le retard est de plus de 2 heures. Êtes-vous sûr ?')) {
+        if (!confirm('Le retard est de plus de 2 heures. ÃŠtes-vous sÃ»r ?')) {
             e.preventDefault();
             return false;
         }
     }
 });
 
-// Calculer automatiquement la durée si l'heure de début de cours est connue
+// Calculer automatiquement la durÃ©e si l'heure de dÃ©but de cours est connue
 document.getElementById('heure_retard').addEventListener('change', function() {
     const heureRetard = this.value;
-    const heureDebut = '08:00'; // Heure de début des cours (à adapter)
+    const heureDebut = '08:00'; // Heure de dÃ©but des cours (Ã  adapter)
     
     if (heureRetard && heureRetard > heureDebut) {
         const [h1, m1] = heureDebut.split(':').map(Number);
@@ -410,3 +410,7 @@ document.getElementById('heure_retard').addEventListener('change', function() {
 </script>
 
 <?php include '../../../includes/footer.php'; ?>
+
+
+
+

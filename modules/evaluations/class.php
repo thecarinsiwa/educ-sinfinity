@@ -7,13 +7,11 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
+require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('evaluations') && !checkPermission('evaluations_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('evaluations', 'class', 'read', '../../dashboard.php');
 
 // Récupérer l'ID de la classe
 $classe_id = (int)($_GET['id'] ?? 0);
@@ -155,7 +153,7 @@ include '../../includes/header.php';
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour aux évaluations
             </a>
-            <?php if (checkPermission('evaluations')): ?>
+            <?php if (checkPagePermission('evaluations')): ?>
                 <a href="evaluations/add.php?classe_id=<?php echo $classe_id; ?>" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
                     Nouvelle évaluation
@@ -474,7 +472,7 @@ include '../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('evaluations')): ?>
+                                        <?php if (checkPagePermission('evaluations')): ?>
                                             <a href="notes/entry.php?evaluation_id=<?php echo $evaluation['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Saisir les notes">
@@ -498,7 +496,7 @@ include '../../includes/header.php';
                 <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucune évaluation pour cette classe</h5>
                 <p class="text-muted">
-                    <?php if (checkPermission('evaluations')): ?>
+                    <?php if (checkPagePermission('evaluations')): ?>
                         <a href="evaluations/add.php?classe_id=<?php echo $classe_id; ?>" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Créer la première évaluation

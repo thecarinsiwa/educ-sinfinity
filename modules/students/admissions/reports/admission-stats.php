@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Module Admissions - Statistiques des admissions
  * Application de gestion scolaire - République Démocratique du Congo
@@ -7,13 +7,12 @@
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
+require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('students') && !checkPermission('students_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('../../../index.php');
-}
+
+requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
 
 $page_title = 'Statistiques des admissions';
 
@@ -77,7 +76,7 @@ $stats_generales = $database->query(
     $params
 )->fetch();
 
-// Évolution mensuelle des demandes
+// Ã‰volution mensuelle des demandes
 $evolution_mensuelle = $database->query(
     "SELECT 
         DATE_FORMAT(created_at, '%Y-%m') as mois,
@@ -91,7 +90,7 @@ $evolution_mensuelle = $database->query(
     $params
 )->fetchAll();
 
-// Répartition par niveau
+// RÃ©partition par niveau
 $repartition_niveau = $database->query(
     "SELECT 
         c.niveau,
@@ -107,7 +106,7 @@ $repartition_niveau = $database->query(
     $params
 )->fetchAll();
 
-// Répartition par classe
+// RÃ©partition par classe
 $repartition_classe = $database->query(
     "SELECT 
         c.nom as classe_nom,
@@ -125,7 +124,7 @@ $repartition_classe = $database->query(
     $params
 )->fetchAll();
 
-// Répartition par sexe
+// RÃ©partition par sexe
 $repartition_sexe = $database->query(
     "SELECT 
         da.sexe,
@@ -164,7 +163,7 @@ $temps_traitement = $database->query(
     $params
 )->fetch();
 
-// Récupérer les classes pour le filtre
+// RÃ©cupÃ©rer les classes pour le filtre
 $classes = $database->query(
     "SELECT c.id, c.nom, c.niveau
      FROM classes c
@@ -173,7 +172,7 @@ $classes = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// Récupérer les périodes d'admission (utiliser la date de création comme période)
+// RÃ©cupÃ©rer les périodes d'admission (utiliser la date de création comme période)
 $periodes = $database->query(
     "SELECT DISTINCT DATE_FORMAT(created_at, '%Y-%m') as periode_admission 
      FROM demandes_admission 
@@ -217,7 +216,7 @@ include '../../../../includes/header.php';
     <div class="card-body">
         <form method="GET" action="" class="row g-3">
             <div class="col-md-2">
-                <label for="periode" class="form-label">Période</label>
+                <label for="periode" class="form-label">PÃ©riode</label>
                 <select class="form-select" id="periode" name="periode">
                     <option value="">Toutes les périodes</option>
                     <?php foreach ($periodes as $p): ?>
@@ -235,7 +234,7 @@ include '../../../../includes/header.php';
                     <option value="maternelle" <?php echo $niveau_filter === 'maternelle' ? 'selected' : ''; ?>>Maternelle</option>
                     <option value="primaire" <?php echo $niveau_filter === 'primaire' ? 'selected' : ''; ?>>Primaire</option>
                     <option value="secondaire" <?php echo $niveau_filter === 'secondaire' ? 'selected' : ''; ?>>Secondaire</option>
-                    <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>Supérieur</option>
+                    <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>SupÃ©rieur</option>
                 </select>
             </div>
             
@@ -252,7 +251,7 @@ include '../../../../includes/header.php';
             </div>
             
             <div class="col-md-2">
-                <label for="date_debut" class="form-label">Date début</label>
+                <label for="date_debut" class="form-label">Date dÃ©but</label>
                 <input type="date" class="form-control" id="date_debut" name="date_debut" value="<?php echo $date_debut; ?>">
             </div>
             
@@ -268,7 +267,7 @@ include '../../../../includes/header.php';
                 </button>
                 <a href="?" class="btn btn-outline-secondary">
                     <i class="fas fa-times me-1"></i>
-                    Réinitialiser
+                    RÃ©initialiser
                 </a>
             </div>
         </form>
@@ -297,7 +296,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h3 class="text-success"><?php echo $stats_generales['acceptees']; ?></h3>
-                <p class="card-text">Acceptées</p>
+                <p class="card-text">AcceptÃ©es</p>
             </div>
         </div>
     </div>
@@ -305,7 +304,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h3 class="text-danger"><?php echo $stats_generales['refusees']; ?></h3>
-                <p class="card-text">Refusées</p>
+                <p class="card-text">RefusÃ©es</p>
             </div>
         </div>
     </div>
@@ -334,7 +333,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-pie me-2"></i>
-                    Répartition par statut
+                    RÃ©partition par statut
                 </h5>
             </div>
             <div class="card-body">
@@ -348,7 +347,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-line me-2"></i>
-                    Évolution mensuelle
+                    Ã‰volution mensuelle
                 </h5>
             </div>
             <div class="card-body">
@@ -358,14 +357,14 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Répartition par niveau -->
+<!-- RÃ©partition par niveau -->
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-list me-2"></i>
-                    Répartition par niveau
+                    RÃ©partition par niveau
                 </h5>
             </div>
             <div class="card-body">
@@ -375,15 +374,15 @@ include '../../../../includes/header.php';
                             <tr>
                                 <th>Niveau</th>
                                 <th>Total demandes</th>
-                                <th>Acceptées</th>
-                                <th>Refusées</th>
+                                <th>AcceptÃ©es</th>
+                                <th>RefusÃ©es</th>
                                 <th>Taux d'acceptation</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($repartition_niveau as $niveau): ?>
                                 <tr>
-                                    <td><strong><?php echo ucfirst($niveau['niveau'] ?? 'Non spécifié'); ?></strong></td>
+                                    <td><strong><?php echo ucfirst($niveau['niveau'] ?? 'Non spÃ©cifiÃ©'); ?></strong></td>
                                     <td><span class="badge bg-primary"><?php echo $niveau['total_demandes']; ?></span></td>
                                     <td><span class="badge bg-success"><?php echo $niveau['acceptees']; ?></span></td>
                                     <td><span class="badge bg-danger"><?php echo $niveau['refusees']; ?></span></td>
@@ -402,7 +401,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-pie me-2"></i>
-                    Répartition par sexe
+                    RÃ©partition par sexe
                 </h5>
             </div>
             <div class="card-body">
@@ -417,7 +416,7 @@ include '../../../../includes/header.php';
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-trophy me-2"></i>
-            Top 15 des classes les plus demandées
+            Top 15 des classes les plus demandÃ©es
         </h5>
     </div>
     <div class="card-body">
@@ -429,8 +428,8 @@ include '../../../../includes/header.php';
                         <th>Classe</th>
                         <th>Niveau</th>
                         <th>Total demandes</th>
-                        <th>Acceptées</th>
-                        <th>Refusées</th>
+                        <th>AcceptÃ©es</th>
+                        <th>RefusÃ©es</th>
                         <th>Taux d'acceptation</th>
                     </tr>
                 </thead>
@@ -438,8 +437,8 @@ include '../../../../includes/header.php';
                     <?php foreach ($repartition_classe as $index => $classe): ?>
                         <tr>
                             <td><?php echo $index + 1; ?></td>
-                            <td><strong><?php echo htmlspecialchars($classe['classe_nom'] ?? 'Non spécifiée'); ?></strong></td>
-                            <td><?php echo ucfirst($classe['niveau'] ?? 'Non spécifié'); ?></td>
+                            <td><strong><?php echo htmlspecialchars($classe['classe_nom'] ?? 'Non spÃ©cifiÃ©e'); ?></strong></td>
+                            <td><?php echo ucfirst($classe['niveau'] ?? 'Non spÃ©cifiÃ©'); ?></td>
                             <td><span class="badge bg-primary"><?php echo $classe['total_demandes']; ?></span></td>
                             <td><span class="badge bg-success"><?php echo $classe['acceptees']; ?></span></td>
                             <td><span class="badge bg-danger"><?php echo $classe['refusees']; ?></span></td>
@@ -494,12 +493,12 @@ include '../../../../includes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Graphique de répartition par statut
+    // Graphique de rÃ©partition par statut
     const ctx1 = document.getElementById('statutChart').getContext('2d');
     new Chart(ctx1, {
         type: 'doughnut',
         data: {
-            labels: ['En attente', 'Acceptées', 'Refusées', 'Annulées'],
+            labels: ['En attente', 'AcceptÃ©es', 'RefusÃ©es', 'AnnulÃ©es'],
             datasets: [{
                 data: [
                     <?php echo $stats_generales['en_attente']; ?>,
@@ -527,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Graphique d'évolution mensuelle
+    // Graphique d'Ã©volution mensuelle
     const ctx2 = document.getElementById('evolutionChart').getContext('2d');
     new Chart(ctx2, {
         type: 'line',
@@ -542,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: true,
                 tension: 0.1
             }, {
-                label: 'Acceptées',
+                label: 'AcceptÃ©es',
                 data: [<?php echo implode(',', array_map(function($item) { return $item['acceptees']; }, $evolution_mensuelle)); ?>],
                 borderColor: 'rgba(40, 167, 69, 1)',
                 backgroundColor: 'rgba(40, 167, 69, 0.2)',
@@ -561,12 +560,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Graphique de répartition par sexe
+    // Graphique de rÃ©partition par sexe
     const ctx3 = document.getElementById('sexeChart').getContext('2d');
     new Chart(ctx3, {
         type: 'pie',
         data: {
-                         labels: [<?php echo implode(',', array_map(function($item) { return '"' . addslashes($item['sexe'] ?? 'Non spécifié') . '"'; }, $repartition_sexe)); ?>],
+                         labels: [<?php echo implode(',', array_map(function($item) { return '"' . addslashes($item['sexe'] ?? 'Non spÃ©cifiÃ©') . '"'; }, $repartition_sexe)); ?>],
             datasets: [{
                 data: [<?php echo implode(',', array_map(function($item) { return $item['total_demandes']; }, $repartition_sexe)); ?>],
                 backgroundColor: [
@@ -591,3 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include '../../../../includes/footer.php'; ?>
+
+
+
+

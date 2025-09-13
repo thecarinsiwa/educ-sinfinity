@@ -7,13 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-if (!checkPermission('academic') && !checkPermission('academic_view')) {
-    showMessage('error', 'Accès refusé à ce module.');
-    redirectTo('../index.php');
-}
+requirePagePermissionFromDB('academic', 'classes', 'read', '../../../dashboard.php', 'index');
 
 $page_title = 'Gestion des Classes';
 
@@ -83,7 +82,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPermission('academic')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -91,6 +90,7 @@ include '../../../includes/header.php';
                 </a>
             </div>
         <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('academic', 'classes', 'export')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-download me-1"></i>
@@ -105,6 +105,7 @@ include '../../../includes/header.php';
                 </a></li>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -276,17 +277,19 @@ include '../../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPermission('academic')): ?>
-                                            <a href="edit.php?id=<?php echo $classe['id']; ?>" 
-                                               class="btn btn-outline-primary" 
-                                               title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
-                                               class="btn btn-outline-warning" 
-                                               title="Emploi du temps">
-                                                <i class="fas fa-calendar"></i>
-                                            </a>
+                                        <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
+                                        <a href="edit.php?id=<?php echo $classe['id']; ?>" 
+                                           class="btn btn-outline-primary" 
+                                           title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'schedule', 'read')): ?>
+                                        <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
+                                           class="btn btn-outline-warning" 
+                                           title="Emploi du temps">
+                                            <i class="fas fa-calendar"></i>
+                                        </a>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -328,7 +331,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-school fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucune classe trouvée</h5>
                 <p class="text-muted">
-                    <?php if (checkPermission('academic')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Créer la première classe

@@ -7,6 +7,7 @@
 require_once '../config/config.php';
 require_once '../config/database.php';
 require_once '../includes/functions.php';
+require_once '../includes/permissions.php';
 
 // Rediriger si déjà connecté
 if (isLoggedIn()) {
@@ -15,6 +16,15 @@ if (isLoggedIn()) {
 
 $error_message = '';
 $success_message = '';
+
+// Initialiser la connexion à la base de données
+$database = new Database();
+$database = $database->connect();
+
+// Récupérer les rôles actifs pour le formulaire
+$stmt = $database->prepare("SELECT id, nom, description FROM roles WHERE actif = 1 ORDER BY nom");
+$stmt->execute();
+$roles = $stmt->fetchAll();
 
 // Traitement du formulaire d'inscription
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -26,11 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prenom = sanitizeInput($_POST['prenom'] ?? '');
         $email = sanitizeInput($_POST['email'] ?? '');
         $telephone = sanitizeInput($_POST['telephone'] ?? '');
-        $role = sanitizeInput($_POST['role'] ?? 'enseignant'); // Rôle par défaut
+        $role_id = (int)($_POST['role_id'] ?? 0); // ID du rôle sélectionné
         
         // Validation des champs
         if (empty($username) || empty($password) || empty($nom) || empty($prenom)) {
             throw new Exception('Veuillez remplir tous les champs obligatoires.');
+        }
+        
+        if (!$role_id) {
+            throw new Exception('Veuillez sélectionner un rôle.');
         }
         
         if (strlen($username) < 3) {
@@ -49,11 +63,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Format d\'email invalide.');
         }
         
+        // Vérifier que le rôle sélectionné existe et est actif
+        $stmt = $database->prepare("SELECT id, nom FROM roles WHERE id = ? AND actif = 1");
+        $stmt->execute([$role_id]);
+        $role_exists = $stmt->fetch();
+        
+        if (!$role_exists) {
+            throw new Exception('Le rôle sélectionné n\'est pas valide.');
+        }
+        
         // Vérifier que le nom d'utilisateur n'existe pas
-        $existing_user = $database->query(
-            "SELECT id FROM users WHERE username = ?",
-            [$username]
-        )->fetch();
+        $stmt = $database->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        $existing_user = $stmt->fetch();
         
         if ($existing_user) {
             throw new Exception('Ce nom d\'utilisateur est déjà utilisé.');
@@ -61,10 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Vérifier que l'email n'existe pas (si fourni)
         if ($email) {
-            $existing_email = $database->query(
-                "SELECT id FROM users WHERE email = ?",
-                [$email]
-            )->fetch();
+            $stmt = $database->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            $existing_email = $stmt->fetch();
             
             if ($existing_email) {
                 throw new Exception('Cette adresse email est déjà utilisée.');
@@ -78,11 +99,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Créer l'utilisateur avec statut "inactif" par défaut
             $password_hash = hashPassword($password);
             
-            $database->query(
-                "INSERT INTO users (username, password, nom, prenom, email, telephone, role, status, created_at) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'inactif', NOW())",
-                [$username, $password_hash, $nom, $prenom, $email, $telephone, $role]
+            $stmt = $database->prepare(
+                "INSERT INTO users (username, password, nom, prenom, email, telephone, role_id, status, created_at) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'inactif', NOW())"
             );
+            $stmt->execute([$username, $password_hash, $nom, $prenom, $email, $telephone, $role_id]);
             
             $user_id = $database->lastInsertId();
             
@@ -91,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logUserAction(
                     'user_signup',
                     'auth',
-                    'Inscription d\'un nouvel utilisateur: ' . $username . ' (' . $nom . ' ' . $prenom . ') - Statut: inactif',
+                    'Inscription d\'un nouvel utilisateur: ' . $username . ' (' . $nom . ' ' . $prenom . ') - Rôle: ' . $role_exists['nom'] . ' - Statut: inactif',
                     $user_id
                 );
             }
@@ -314,22 +335,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="mb-4">
-                    <label for="role" class="form-label">Rôle souhaité</label>
-                    <select class="form-select" id="role" name="role">
-                        <option value="enseignant" <?php echo ($_POST['role'] ?? 'enseignant') === 'enseignant' ? 'selected' : ''; ?>>
-                            Enseignant
-                        </option>
-                        <option value="secretaire" <?php echo ($_POST['role'] ?? '') === 'secretaire' ? 'selected' : ''; ?>>
-                            Secrétaire
-                        </option>
-                        <option value="comptable" <?php echo ($_POST['role'] ?? '') === 'comptable' ? 'selected' : ''; ?>>
-                            Comptable
-                        </option>
-                        <option value="surveillant" <?php echo ($_POST['role'] ?? '') === 'surveillant' ? 'selected' : ''; ?>>
-                            Surveillant
-                        </option>
+                    <label for="role_id" class="form-label">Rôle souhaité <span class="required">*</span></label>
+                    <select class="form-select" id="role_id" name="role_id" required>
+                        <option value="">Sélectionner un rôle</option>
+                        <?php 
+                        $selected_role_id = (int)($_POST['role_id'] ?? 0);
+                        foreach ($roles as $role): 
+                        ?>
+                            <option value="<?php echo $role['id']; ?>"
+                                    <?php echo $selected_role_id === $role['id'] ? 'selected' : ''; ?>
+                                    title="<?php echo htmlspecialchars($role['description']); ?>">
+                                <?php echo htmlspecialchars(ucfirst($role['nom'])); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
-                    <div class="form-text">Votre rôle pourra être modifié par un administrateur</div>
+                    <div class="form-text">
+                        Votre rôle pourra être modifié par un administrateur. 
+                        <a href="../modules/users/roles/" class="text-decoration-none" target="_blank">
+                            <i class="fas fa-info-circle me-1"></i>Voir les permissions des rôles
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Affichage des permissions du rôle sélectionné -->
+                <div class="mb-4" id="role-permissions" style="display: none;">
+                    <label class="form-label">Permissions du rôle sélectionné</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="permissions-content">
+                                <!-- Contenu des permissions généré par JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="d-grid">
@@ -419,6 +456,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const suggestion = prenom.charAt(0) + nom;
                 usernameField.placeholder = 'Suggestion: ' + suggestion;
             }
+        }
+        
+        // Affichage des permissions du rôle sélectionné
+        document.getElementById('role_id').addEventListener('change', function() {
+            const roleId = this.value;
+            const permissionsDiv = document.getElementById('role-permissions');
+            const permissionsContent = document.getElementById('permissions-content');
+            
+            if (roleId) {
+                // Récupérer les permissions du rôle via AJAX
+                fetch(`../modules/users/roles/get-role-permissions.php?id=${roleId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            displayPermissions(data.permissions, data.role_name);
+                            permissionsDiv.style.display = 'block';
+                        } else {
+                            permissionsDiv.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors du chargement des permissions:', error);
+                        permissionsDiv.style.display = 'none';
+                    });
+            } else {
+                permissionsDiv.style.display = 'none';
+            }
+        });
+        
+        function displayPermissions(permissions, roleName) {
+            const modules = {
+                'students': 'Gestion des élèves',
+                'users': 'Gestion des utilisateurs',
+                'finance': 'Gestion financière',
+                'academic': 'Gestion académique',
+                'reports': 'Rapports',
+                'settings': 'Paramètres'
+            };
+            
+            const actions = {
+                'read': 'Lire',
+                'create': 'Créer',
+                'edit': 'Modifier',
+                'delete': 'Supprimer'
+            };
+            
+            let html = `<h6>Rôle: <strong>${roleName}</strong></h6>`;
+            html += '<div class="row">';
+            
+            for (const moduleKey in modules) {
+                if (permissions[moduleKey] && permissions[moduleKey].length > 0) {
+                    html += '<div class="col-md-6 mb-3">';
+                    html += `<div class="card border-primary">`;
+                    html += `<div class="card-header bg-primary text-white">`;
+                    html += `<h6 class="mb-0">${modules[moduleKey]}</h6>`;
+                    html += `</div>`;
+                    html += `<div class="card-body">`;
+                    
+                    permissions[moduleKey].forEach(action => {
+                        html += `<span class="badge bg-success me-1 mb-1">${actions[action]}</span>`;
+                    });
+                    
+                    html += `</div></div></div>`;
+                }
+            }
+            
+            html += '</div>';
+            permissionsContent.innerHTML = html;
         }
     </script>
 </body>

@@ -7,16 +7,14 @@
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 
 // Vérifier l'authentification
 if (!isLoggedIn()) {
     redirectTo('auth/login.php');
 }
 
-// Vérifier les permissions
-if (!hasPermission('cartes_eleves', 'read')) {
-    redirectTo('dashboard.php?error=permission_denied');
-}
+requirePagePermissionFromDB('cartes_eleves', 'download', 'read', '../dashboard.php');
 
 // Récupérer l'ID de la carte
 $carte_id = intval($_GET['id'] ?? 0);
