@@ -12,7 +12,7 @@ require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/view', 'read', '../../dashboard.php');
 
 // Récupérer l'ID du frais
 $id = (int)($_GET['id'] ?? 0);

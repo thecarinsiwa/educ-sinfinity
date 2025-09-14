@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'transfers/certificate', 'read', '../../../dashboard.php');
 
 // RÃ©cupÃ©rer l'ID du transfert
 $transfer_id = $_GET['id'] ?? null;

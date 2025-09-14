@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'evaluations', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'evaluations/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Évaluations';
 
@@ -114,7 +115,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('evaluations')): ?>
+        <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -402,30 +403,34 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $evaluation['id']; ?>" 
                                            class="btn btn-outline-info" 
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPagePermission('evaluations')): ?>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('evaluations', 'notes/entry', 'create')): ?>
                                             <a href="../notes/entry.php?evaluation_id=<?php echo $evaluation['id']; ?>" 
                                                class="btn btn-outline-success" 
                                                title="Saisir notes">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/edit', 'update')): ?>
                                             <a href="edit.php?id=<?php echo $evaluation['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
                                                 <i class="fas fa-pen"></i>
                                             </a>
-                                            <?php if ($evaluation['status'] !== 'terminee'): ?>
-                                                <a href="delete.php?id=<?php echo $evaluation['id']; ?>" 
-                                                   class="btn btn-outline-danger" 
-                                                   title="Supprimer"
-                                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <?php if ($evaluation['status'] !== 'terminee' && hasPagePermissionFromDB('evaluations', 'evaluations/delete', 'delete')): ?>
+                                            <a href="delete.php?id=<?php echo $evaluation['id']; ?>" 
+                                               class="btn btn-outline-danger" 
+                                               title="Supprimer"
+                                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette évaluation ?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         <?php endif; ?>
                                     </div>
                                 </td>

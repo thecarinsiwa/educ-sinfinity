@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification
 requireLogin();
-requirePagePermissionFromDB('reports', 'financial', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('reports', 'financial/index', 'read', '../../dashboard.php');
 
 $page_title = 'Rapports Financiers';
 

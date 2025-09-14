@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'templates', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/templates/index', 'read', '../../../dashboard.php');
 
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -158,12 +159,14 @@ include '../../../includes/header.php';
                 Retour à la communication
             </a>
         </div>
+        <?php if (hasPagePermissionFromDB('communication', 'communication/templates/add', 'create')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
                 <i class="fas fa-plus me-1"></i>
                 Nouveau template
             </button>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -384,16 +387,21 @@ include '../../../includes/header.php';
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
+                                                <?php if (hasPagePermissionFromDB('communication', 'communication/templates/view', 'read')): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-primary" 
                                                         onclick="viewTemplate(<?php echo htmlspecialchars(json_encode($template)); ?>)" 
                                                         title="Voir détails">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
+                                                <?php endif; ?>
+                                                <?php if (hasPagePermissionFromDB('communication', 'communication/templates/edit', 'update')): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-warning" 
                                                         onclick="editTemplate(<?php echo htmlspecialchars(json_encode($template)); ?>)" 
                                                         title="Modifier">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
+                                                <?php endif; ?>
+                                                <?php if (hasPagePermissionFromDB('communication', 'communication/templates/delete', 'delete')): ?>
                                                 <form method="POST" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce template ?')">
                                                     <input type="hidden" name="action" value="delete_template">
                                                     <input type="hidden" name="id" value="<?php echo $template['id']; ?>">
@@ -401,6 +409,7 @@ include '../../../includes/header.php';
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>

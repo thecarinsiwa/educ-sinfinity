@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('complementary', 'discipline', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('complementary', 'discipline/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de la Discipline';
 

@@ -13,11 +13,7 @@ require_once '../../../includes/permissions-pages.php';
 requireLogin();
 
 // Vérifier l'accès à cette page
-requireCurrentPageAccess('read');
-if (!checkPagePermission('finance')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('index.php');
-}
+requirePagePermissionFromDB('finance', 'expenses/integration_paiements', 'read', '../../dashboard.php');
 
 $page_title = 'Intégration Paiements - Caisses';
 

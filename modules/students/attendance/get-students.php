@@ -16,7 +16,7 @@ if (!isLoggedIn()) {
 }
 
 require_once '../../../includes/permissions-pages.php';
-requirePagePermissionFromDB('students', 'attendance', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/get-students', 'read', '../../../dashboard.php');
 
 $classe_id = (int)($_GET['classe_id'] ?? 0);
 $include_attendance = isset($_GET['include_attendance']);

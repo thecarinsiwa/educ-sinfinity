@@ -57,7 +57,7 @@
             padding: 10px;
             background-color: #f8f9fa;
         }
-        
+            
         .info-box h3 {
             margin: 0 0 10px 0;
             font-size: 14px;

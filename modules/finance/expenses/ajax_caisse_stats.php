@@ -13,7 +13,7 @@ require_once '../../../includes/permissions-pages.php';
 requireLogin();
 
 // Vérifier l'accès à cette page
-requireCurrentPageAccess('read');
+requirePagePermissionFromDB('finance', 'expenses/ajax_caisse_stats', 'read', '../../dashboard.php');
 
 // Obtenir la devise par défaut
 $devise_par_defaut = getDefaultCurrency();

@@ -9,7 +9,7 @@ require_once '../../includes/functions.php';
 require_once '../includes/permissions-pages.php';
 requireLogin();
 
-requirePagePermissionFromDB('cartes_eleves', 'regenerate-all', 'edit', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/regenerate-all', 'edit', '../dashboard.php');
 
 try {
     $database->beginTransaction();

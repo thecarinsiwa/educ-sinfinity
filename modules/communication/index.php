@@ -8,10 +8,11 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'index', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/index', 'read', '../../dashboard.php');
 
 // Statistiques générales
 try {
@@ -102,18 +103,22 @@ include '../../includes/header.php';
         Module Communication
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('communication', 'communication/messages/compose', 'create')): ?>
         <div class="btn-group me-2">
             <a href="messages/compose.php" class="btn btn-primary">
                 <i class="fas fa-pen me-1"></i>
                 Nouveau message
             </a>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('communication', 'communication/annonces/add', 'create')): ?>
         <div class="btn-group me-2">
             <a href="annonces/add.php" class="btn btn-success">
                 <i class="fas fa-bullhorn me-1"></i>
                 Nouvelle annonce
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -400,30 +405,38 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('communication', 'communication/messages/compose', 'create')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="messages/compose.php" class="btn btn-outline-primary w-100">
                             <i class="fas fa-pen fa-2x mb-2"></i>
                             <br>Composer un message
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('communication', 'communication/annonces/add', 'create')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="annonces/add.php" class="btn btn-outline-success w-100">
                             <i class="fas fa-bullhorn fa-2x mb-2"></i>
                             <br>Publier une annonce
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('communication', 'communication/sms/send', 'create')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="sms/send.php" class="btn btn-outline-info w-100">
                             <i class="fas fa-mobile-alt fa-2x mb-2"></i>
                             <br>Envoyer un SMS
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('communication', 'communication/templates/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="templates/" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-file-alt fa-2x mb-2"></i>
                             <br>Gérer les templates
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

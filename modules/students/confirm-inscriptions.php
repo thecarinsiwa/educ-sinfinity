@@ -11,7 +11,8 @@ require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('students', 'confirm-inscriptions', 'edit', '../../dashboard.php');
+
+requirePagePermissionFromDB('students', 'confirm-inscriptions', 'edit', '../../dashboard.php');
 
 $page_title = 'Confirmation des inscriptions';
 
@@ -152,19 +153,21 @@ $inscriptions_en_attente = $database->query(
      JOIN classes c ON i.classe_id = c.id
      JOIN annees_scolaires a ON i.annee_scolaire_id = a.id
      LEFT JOIN (
-         SELECT eleve_id, annee_scolaire_id, 
-                SUM(montant_devise_par_defaut) as montant_devise_par_defaut, 
-                MAX(devise_id) as devise_id
-         FROM paiements 
-         WHERE type_paiement = 'inscription'
-         GROUP BY eleve_id, annee_scolaire_id
+         SELECT p.eleve_id, p.annee_scolaire_id, 
+                SUM(p.montant_devise_par_defaut) as montant_devise_par_defaut, 
+                MAX(p.devise_id) as devise_id
+         FROM paiements p
+         JOIN type_frais tf ON p.type_frais_id = tf.id
+         WHERE tf.nom = 'Frais d\'inscription' OR tf.nom LIKE '%inscription%'
+         GROUP BY p.eleve_id, p.annee_scolaire_id
      ) p ON i.eleve_id = p.eleve_id AND i.annee_scolaire_id = p.annee_scolaire_id
      LEFT JOIN (
-         SELECT eleve_id, annee_scolaire_id, 
-                GROUP_CONCAT(recu_numero ORDER BY created_at ASC SEPARATOR ', ') as numeros_recu
-         FROM paiements 
-         WHERE type_paiement = 'inscription'
-         GROUP BY eleve_id, annee_scolaire_id
+         SELECT p.eleve_id, p.annee_scolaire_id, 
+                GROUP_CONCAT(p.recu_numero ORDER BY p.created_at ASC SEPARATOR ', ') as numeros_recu
+         FROM paiements p
+         JOIN type_frais tf ON p.type_frais_id = tf.id
+         WHERE tf.nom = 'Frais d\'inscription' OR tf.nom LIKE '%inscription%'
+         GROUP BY p.eleve_id, p.annee_scolaire_id
      ) p2 ON i.eleve_id = p2.eleve_id AND i.annee_scolaire_id = p2.annee_scolaire_id
      LEFT JOIN devises d ON p.devise_id = d.id
      WHERE i.status = 'en_attente' AND i.annee_scolaire_id = ?

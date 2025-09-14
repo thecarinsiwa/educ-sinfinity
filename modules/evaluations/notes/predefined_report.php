@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('evaluations', 'notes', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'notes/predefined_report', 'read', '../../../dashboard.php');
 
 // Récupérer le type de rapport
 $type = sanitizeInput($_GET['type'] ?? '');

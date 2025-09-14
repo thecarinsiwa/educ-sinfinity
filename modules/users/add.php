@@ -11,7 +11,7 @@ require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'add', 'create', '../../dashboard.php');
+requirePagePermission('admin', 'users/add', 'create', '../../dashboard.php');
 
 $page_title = 'Ajouter un Utilisateur';
 

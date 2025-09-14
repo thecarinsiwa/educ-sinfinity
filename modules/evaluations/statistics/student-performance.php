@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'statistics', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'statistics/student-performance', 'read', '../../../dashboard.php');
 
 $page_title = 'Performance des élèves';
 

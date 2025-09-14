@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('admissions', 'applications', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/applications/list', 'read', '../../../dashboard.php');
 
 $page_title = 'Liste des Demandes d\'Admission';
 

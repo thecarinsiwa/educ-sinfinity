@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'attendance', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/add-delay', 'create', '../../../dashboard.php');
 
 $page_title = "Ajouter un retard";
 

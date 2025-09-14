@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'messages', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/messages/index', 'read', '../../../dashboard.php');
 
 // Vérifier et créer la table messages si nécessaire
 try {
@@ -223,18 +224,22 @@ include '../../../includes/header.php';
         <span class="badge bg-secondary ms-2"><?php echo number_format($total ?? 0); ?></span>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('communication', 'communication/messages/compose', 'create')): ?>
         <div class="btn-group me-2">
             <a href="compose.php" class="btn btn-primary">
                 <i class="fas fa-pen me-1"></i>
                 Nouveau message
             </a>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('communication', 'communication/messages/export', 'read')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-outline-success" onclick="exportData()">
                 <i class="fas fa-file-excel me-1"></i>
                 Exporter
             </button>
         </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="../index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -608,20 +613,24 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('communication', 'communication/messages/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $message['id']; ?>"
                                            class="btn btn-outline-primary" title="Voir le message">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if ($message['expediteur_id'] == $_SESSION['user_id'] && $message['status'] === 'brouillon'): ?>
+                                        <?php endif; ?>
+                                        <?php if ($message['expediteur_id'] == $_SESSION['user_id'] && $message['status'] === 'brouillon' && hasPagePermissionFromDB('communication', 'communication/messages/edit', 'update')): ?>
                                             <a href="compose.php?edit=<?php echo $message['id']; ?>"
                                                class="btn btn-outline-warning" title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('communication', 'communication/messages/reply', 'create')): ?>
                                         <a href="compose.php?reply=<?php echo $message['id']; ?>"
                                            class="btn btn-outline-success" title="Répondre">
                                             <i class="fas fa-reply"></i>
                                         </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

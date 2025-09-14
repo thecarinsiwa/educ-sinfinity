@@ -1,7 +1,7 @@
 ﻿<?php
 /**
- * Module de gestion financiÃ¨re - Ajouter un type de frais
- * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
+ * Module de gestion financière - Ajouter un type de frais
+    * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
@@ -12,15 +12,15 @@ require_once 'functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'create', '../../../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/types/add', 'create', '../../../../dashboard.php');
 
 $page_title = 'Ajouter un type de frais';
 
-// Obtenir l'annÃ©e scolaire actuelle
+// Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year || !isset($current_year['id'])) {
-    showMessage('error', 'Aucune annÃ©e scolaire active ou ID manquant.');
+    showMessage('error', 'Aucune année scolaire active ou ID manquant.');
     redirectTo('../../index.php');
 }
 
@@ -29,7 +29,7 @@ $success = false;
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validation des donnÃ©es
+    // Validation des données
     $nom = cleanInputText(sanitizeInput($_POST['nom'] ?? ''));
     $description = cleanInputText(sanitizeInput($_POST['description'] ?? ''));
     $priorite = (int)($_POST['priorite'] ?? 10);
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Le nom du type de frais est obligatoire.';
     }
     
-    // VÃ©rifier que le nom n'existe pas dÃ©jÃ  pour cette annÃ©e scolaire
+    // Vérifier que le nom n'existe pas déjà pour cette année scolaire
     if (!empty($nom)) {
         $existing = $database->query(
             "SELECT id FROM type_frais WHERE nom = ? AND annee_scolaire_id = ?",
@@ -48,21 +48,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->fetch();
         
         if ($existing) {
-            $errors[] = 'Un type de frais avec ce nom existe dÃ©jÃ  pour cette annÃ©e scolaire.';
+            $errors[] = 'Un type de frais avec ce nom existe déjà pour cette année scolaire.';
         }
     }
     
     // Validation de la longueur
     if (strlen($nom) > 100) {
-        $errors[] = 'Le nom ne peut pas dÃ©passer 100 caractÃ¨res.';
+            $errors[] = 'Le nom ne peut pas dépasser 100 caractères.';
     }
     
-    // Validation de la prioritÃ©
+    // Validation de la priorité
     if ($priorite < 1 || $priorite > 100) {
-        $errors[] = 'La prioritÃ© doit Ãªtre comprise entre 1 et 100.';
+        $errors[] = 'La priorité doit être comprise entre 1 et 100.';
     }
     
-    // Si pas d'erreurs, insÃ©rer le type de frais
+    // Si pas d'erreurs, insérer le type de frais
     if (empty($errors)) {
         try {
             $database->beginTransaction();
@@ -80,16 +80,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $type_id = $database->lastInsertId();
             
             // Enregistrer l'action dans les logs
-            logAction('type_frais_created', "Type de frais crÃ©Ã©: {$nom}", $type_id);
+            logAction('type_frais_created', "Type de frais créé: {$nom}", $type_id);
             
             $database->commit();
             
-            showMessage('success', 'Type de frais crÃ©Ã© avec succÃ¨s !');
+            showMessage('success', 'Type de frais créé avec succès !');
             redirectTo('index.php');
             
         } catch (Exception $e) {
             $database->rollback();
-            $errors[] = 'Erreur lors de la crÃ©ation : ' . $e->getMessage();
+            $errors[] = 'Erreur lors de la création : ' . $e->getMessage();
         }
     }
 }
@@ -112,7 +112,7 @@ include '../../../../includes/header.php';
         <div class="btn-group me-2">
             <span class="btn btn-outline-info">
                 <i class="fas fa-calendar me-1"></i>
-                AnnÃ©e: <?php echo htmlspecialchars($current_year['annee'] ?? 'Non dÃ©finie'); ?>
+                Année: <?php echo htmlspecialchars($current_year['annee'] ?? 'Non définie'); ?>
             </span>
         </div>
     </div>
@@ -120,7 +120,7 @@ include '../../../../includes/header.php';
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
-        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs dÃ©tectÃ©es :</h6>
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs détectées :</h6>
         <ul class="mb-0">
             <?php foreach ($errors as $error): ?>
                 <li><?php echo htmlspecialchars($error); ?></li>
@@ -150,18 +150,18 @@ include '../../../../includes/header.php';
                                    class="form-control" 
                                    id="nom" 
                                    name="nom" 
-                                   placeholder="Ex: Inscription, MensualitÃ©, Examen..."
+                                   placeholder="Ex: Inscription, Mensualité, Examen..."
                                    value="<?php echo htmlspecialchars($_POST['nom'] ?? ''); ?>"
                                    maxlength="100"
                                    required>
                             <div class="form-text">
-                                Nom unique pour cette annÃ©e scolaire (max 100 caractÃ¨res)
+                                Nom unique pour cette année scolaire (max 100 caractères)
                             </div>
                         </div>
                         
                         <div class="col-md-3 mb-3">
                             <label for="priorite" class="form-label">
-                                PrioritÃ© <span class="text-danger">*</span>
+                                Priorité <span class="text-danger">*</span>
                             </label>
                             <input type="number" 
                                    class="form-control" 
@@ -172,7 +172,7 @@ include '../../../../includes/header.php';
                                    value="<?php echo htmlspecialchars($_POST['priorite'] ?? '10'); ?>"
                                    required>
                             <div class="form-text">
-                                Plus le chiffre est bas, plus la prioritÃ© est haute (1 = prioritÃ© maximale)
+                                    Plus le chiffre est bas, plus la priorité est haute (1 = priorité maximale)
                             </div>
                         </div>
                         
@@ -200,7 +200,7 @@ include '../../../../includes/header.php';
                                   id="description" 
                                   name="description" 
                                   rows="4" 
-                                  placeholder="Description dÃ©taillÃ©e du type de frais (optionnel)..."><?php echo prepareFormText($_POST['description'] ?? ''); ?></textarea>
+                                  placeholder="Description détaillée du type de frais (optionnel)..."><?php echo prepareFormText($_POST['description'] ?? ''); ?></textarea>
                         <div class="form-text">
                             Description optionnelle pour clarifier l'usage de ce type de frais
                         </div>
@@ -234,26 +234,26 @@ include '../../../../includes/header.php';
                 <h6>Types de frais courants :</h6>
                 <ul class="small">
                     <li><strong>Inscription</strong> - Frais d'inscription annuels</li>
-                    <li><strong>MensualitÃ©</strong> - Frais de scolaritÃ© mensuels</li>
-                    <li><strong>Examen</strong> - Frais d'examens et Ã©valuations</li>
+                    <li><strong>Mensualité</strong> - Frais de scolarité mensuels</li>
+                    <li><strong>Examen</strong> - Frais d'examens et évaluations</li>
                     <li><strong>Uniforme</strong> - Frais d'uniforme scolaire</li>
                     <li><strong>Transport</strong> - Frais de transport scolaire</li>
                     <li><strong>Cantine</strong> - Frais de restauration</li>
-                    <li><strong>MatÃ©riel</strong> - Frais de matÃ©riel pÃ©dagogique</li>
-                    <li><strong>ActivitÃ©s</strong> - Frais d'activitÃ©s extra-scolaires</li>
+                    <li><strong>Matériel</strong> - Frais de matériel pédagogique</li>
+                    <li><strong>Activités</strong> - Frais d'activités extra-scolaires</li>
                 </ul>
                 
                 <div class="alert alert-info mt-3">
                     <small>
                         <i class="fas fa-info-circle me-1"></i>
-                        <strong>Conseil :</strong> CrÃ©ez des types de frais gÃ©nÃ©riques qui pourront Ãªtre utilisÃ©s pour toutes les classes.
+                        <strong>Conseil :</strong> Créez des types de frais génériques qui pourront être utilisés pour toutes les classes.
                     </small>
                 </div>
                 
                 <div class="alert alert-warning mt-3">
                     <small>
                         <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>Important :</strong> Une fois qu'un type de frais est utilisÃ© dans des configurations, il ne pourra plus Ãªtre supprimÃ©.
+                        <strong>Important :</strong> Une fois qu'un type de frais est utilisé dans des configurations, il ne pourra plus être supprimé.
                     </small>
                 </div>
             </div>
@@ -287,7 +287,7 @@ include '../../../../includes/header.php';
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-muted small mb-0">Aucun type de frais crÃ©Ã© pour cette annÃ©e.</p>
+                    <p class="text-muted small mb-0">Aucun type de frais créé pour cette année.</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -312,13 +312,13 @@ include '../../../../includes/header.php';
     }, false);
 })();
 
-// Compteur de caractÃ¨res pour le nom
+// Compteur de caractères pour le nom
 document.getElementById('nom').addEventListener('input', function() {
     const maxLength = 100;
     const currentLength = this.value.length;
     const remaining = maxLength - currentLength;
     
-    // CrÃ©er ou mettre Ã  jour l'indicateur
+    // Créer ou mettre à jour l'indicateur
     let indicator = document.getElementById('char-count');
     if (!indicator) {
         indicator = document.createElement('small');
@@ -333,7 +333,7 @@ document.getElementById('nom').addEventListener('input', function() {
         indicator.className = 'form-text text-muted';
     }
     
-    indicator.textContent = `${currentLength}/${maxLength} caractÃ¨res`;
+    indicator.textContent = `${currentLength}/${maxLength} caractères`;
 });
 </script>
 

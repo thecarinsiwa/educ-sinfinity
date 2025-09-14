@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'evaluations', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'evaluations/add', 'create', '../../../dashboard.php');
 
 $page_title = 'Créer une évaluation';
 

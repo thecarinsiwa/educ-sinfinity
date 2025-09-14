@@ -8,11 +8,12 @@ require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
 require_once '../../../../includes/permissions-pages.php';
+require_once '../../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/reports/admission-stats', 'read', '../../../../dashboard.php');
 
 $page_title = 'Statistiques des admissions';
 
@@ -196,12 +197,14 @@ include '../../../../includes/header.php';
                 Retour aux admissions
             </a>
         </div>
+        <?php if (hasPagePermissionFromDB('students', 'admissions/reports/export', 'read')): ?>
         <div class="btn-group">
             <a href="../exports/applications.php?format=excel" class="btn btn-outline-success">
                 <i class="fas fa-file-excel me-1"></i>
                 Exporter Excel
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

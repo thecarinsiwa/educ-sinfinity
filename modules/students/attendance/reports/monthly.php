@@ -11,7 +11,8 @@ require_once '../../../../includes/permissions-pages.php';
 
 requireLogin();
 
-requirePagePermissionFromDB('students', 'reports', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/reports/monthly', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/reports/monthly', 'export', '../../../../dashboard.php');
 
 $page_title = "Rapport mensuel des absences";
 

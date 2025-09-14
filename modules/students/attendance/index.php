@@ -12,7 +12,7 @@ require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('students', 'attendance', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Suivi des Absences et Retards';
 

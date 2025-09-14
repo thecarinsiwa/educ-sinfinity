@@ -8,16 +8,20 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'tracking', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'student-tracking/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Suivi des Élèves';
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
+
+// Obtenir les informations de l'utilisateur connecté
+$current_user = getCurrentUser($database);
 
 // Statistiques générales du suivi
 $stats = [];
@@ -114,7 +118,9 @@ try {
 try {
     $eleves_attention = $database->query(
         "SELECT e.*, c.nom as classe_nom, 
-                (SELECT COUNT(*) FROM paiements p WHERE p.eleve_id = e.id AND p.type_paiement = 'mensualite' AND p.status = 'en_attente') as paiements_en_retard,
+                (SELECT COUNT(*) FROM paiements p 
+                 JOIN type_frais tf ON p.type_frais_id = tf.id 
+                 WHERE p.eleve_id = e.id AND tf.nom = 'mensualite' AND p.status = 'en_attente') as paiements_en_retard,
                 (SELECT COUNT(*) FROM sanctions s WHERE s.eleve_id = e.id AND s.status = 'active') as sanctions_actives
          FROM eleves e
          LEFT JOIN inscriptions i ON e.id = i.eleve_id
@@ -153,190 +159,215 @@ try {
 include '../../../includes/header.php';
 ?>
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="fas fa-user-check me-2"></i>
-            Suivi des Élèves
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="../index.php" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>
-                Retour
-            </a>
-        </div>
-        <div class="btn-group">
-            <a href="../admissions/new-application.php" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>
-                Nouvelle demande
-            </a>
-        </div>
-    </div>
-</div>
-
 <?php displayMessage(); ?>
 
 <div class="container-fluid">
-    <!-- Statistiques générales -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $stats['en_cours_traitement']; ?></h4>
-                        <p class="mb-0">En cours de traitement</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-clock fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $stats['evaluations_attente']; ?></h4>
-                        <p class="mb-0">Évaluations en attente</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-clipboard-check fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $stats['decisions_attente']; ?></h4>
-                        <p class="mb-0">Décisions en attente</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-user-check fa-2x"></i>
+    <!-- En-tête du dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body bg-primary text-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="card-title mb-2">
+                                <i class="fas fa-user-graduate me-3"></i>
+                                Suivi des Élèves
+                            </h1>
+                            <p class="card-text mb-0">Tableau de bord de suivi et de gestion des élèves</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <div class="btn-group me-2">
+                                    <a href="../index.php" class="btn btn-light btn-sm">
+                                        <i class="fas fa-arrow-left me-1"></i>
+                                        Retour
+                                    </a>
+                                </div>
+                                <?php if (hasPagePermissionFromDB('students', 'admissions/new-application', 'create')): ?>
+                                <div class="btn-group">
+                                    <a href="../admissions/new-application.php" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Nouvelle demande
+                                    </a>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="h6 mb-0 mt-2">
+                                <?php echo date('d/m/Y H:i'); ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $stats['eleves_actifs']; ?></h4>
-                        <p class="mb-0">Élèves actifs</p>
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-cogs fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-0">En Traitement</h5>
+                            <h3 class="text-primary mb-0"><?php echo $stats['en_cours_traitement']; ?></h3>
+                            <small class="text-muted">Demandes en cours</small>
+                        </div>
                     </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-users fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clipboard-check fa-2x text-warning"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-0">Évaluations</h5>
+                            <h3 class="text-warning mb-0"><?php echo $stats['evaluations_attente']; ?></h3>
+                            <small class="text-muted">En attente</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-check fa-2x text-info"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-0">Décisions</h5>
+                            <h3 class="text-info mb-0"><?php echo $stats['decisions_attente']; ?></h3>
+                            <small class="text-muted">En attente</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users fa-2x text-success"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-0">Élèves Actifs</h5>
+                            <h3 class="text-success mb-0"><?php echo $stats['eleves_actifs']; ?></h3>
+                            <small class="text-muted">Total inscrits</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Section principale -->
-<div class="row mb-4">
-    <!-- Progression par étapes -->
-    <div class="col-lg-8 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-tasks me-2"></i>
-                    Progression par Étapes
-                </h5>
-                <p class="text-muted mb-0">Suivi de l'avancement des demandes d'admission</p>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($progression_etapes)): ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Étape</th>
-                                    <th>Total</th>
-                                    <th>Terminées</th>
-                                    <th>En cours</th>
-                                    <th>En attente</th>
-                                    <th>Progression</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($progression_etapes as $etape): ?>
-                                    <?php 
-                                    $total = $etape['total_demandes'];
-                                    $terminees = $etape['terminees'];
-                                    $en_cours = $etape['en_cours'];
-                                    $en_attente = $etape['en_attente'];
-                                    $progression = $total > 0 ? round(($terminees / $total) * 100) : 0;
-                                    ?>
+    <!-- Section principale -->
+    <div class="row mb-4">
+        <!-- Progression par étapes -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-1">
+                        <i class="fas fa-tasks me-2 text-primary"></i>
+                        Progression par Étapes
+                    </h5>
+                    <p class="text-muted mb-0">Suivi de l'avancement des demandes d'admission</p>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($progression_etapes)): ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <span class="badge bg-primary rounded-circle">
-                                                        <?php echo $etape['ordre']; ?>
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <strong><?php echo $etape['nom']; ?></strong>
-                                                    <br><small class="text-muted">Étape <?php echo $etape['ordre']; ?></small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark"><?php echo $total; ?></span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-success"><?php echo $terminees; ?></span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-warning"><?php echo $en_cours; ?></span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-secondary"><?php echo $en_attente; ?></span>
-                                        </td>
-                                        <td>
-                                            <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar bg-success" role="progressbar" 
-                                                     style="width: <?php echo $progression; ?>%" 
-                                                     aria-valuenow="<?php echo $progression; ?>" 
-                                                     aria-valuemin="0" aria-valuemax="100">
-                                                    <?php echo $progression; ?>%
-                                                </div>
-                                            </div>
-                                        </td>
+                                        <th>Étape</th>
+                                        <th>Total</th>
+                                        <th>Terminées</th>
+                                        <th>En cours</th>
+                                        <th>En attente</th>
+                                        <th>Progression</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="fas fa-info-circle text-muted" style="font-size: 48px;"></i>
-                        <p class="text-muted mt-2">Aucune donnée de progression disponible</p>
-                    </div>
-                <?php endif; ?>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($progression_etapes as $etape): ?>
+                                        <?php 
+                                        $total = $etape['total_demandes'];
+                                        $terminees = $etape['terminees'];
+                                        $en_cours = $etape['en_cours'];
+                                        $en_attente = $etape['en_attente'];
+                                        $progression = $total > 0 ? round(($terminees / $total) * 100) : 0;
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <span class="badge bg-primary rounded-circle">
+                                                            <?php echo $etape['ordre']; ?>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <strong><?php echo $etape['nom']; ?></strong>
+                                                        <br><small class="text-muted">Étape <?php echo $etape['ordre']; ?></small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark"><?php echo $total; ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success"><?php echo $terminees; ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning"><?php echo $en_cours; ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary"><?php echo $en_attente; ?></span>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar bg-success" role="progressbar" 
+                                                         style="width: <?php echo $progression; ?>%" 
+                                                         aria-valuenow="<?php echo $progression; ?>" 
+                                                         aria-valuemin="0" aria-valuemax="100">
+                                                        <?php echo $progression; ?>%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-info-circle text-muted" style="font-size: 48px;"></i>
+                            <p class="text-muted mt-3">Aucune donnée de progression disponible</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
 
         <!-- Actions rapides -->
         <div class="col-lg-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt me-2"></i>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-1">
+                        <i class="fas fa-bolt me-2 text-warning"></i>
                         Actions Rapides
                     </h5>
+                    <p class="text-muted mb-0">Accès rapide aux fonctions principales</p>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
@@ -358,7 +389,7 @@ include '../../../includes/header.php';
                         </a>
                         <a href="decisions/" class="btn btn-secondary">
                             <i class="fas fa-gavel me-2"></i>
-                                Prendre les décisions
+                            Prendre les décisions
                         </a>
                         <a href="follow-up/" class="btn btn-dark">
                             <i class="fas fa-user-check me-2"></i>
@@ -369,192 +400,194 @@ include '../../../includes/header.php';
             </div>
         </div>
     </div>
-</div>
 
-<!-- Section des tableaux -->
-<div class="row">
-    <!-- Demandes récentes -->
-    <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-clock me-2"></i>
-                    Demandes Récentes (7 derniers jours)
-                </h5>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($demandes_recentes)): ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Élève</th>
-                                    <th>Classe</th>
-                                    <th>Statut</th>
-                                    <th>Date</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($demandes_recentes as $demande): ?>
+    <!-- Section des tableaux -->
+    <div class="row">
+        <!-- Demandes récentes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-1">
+                        <i class="fas fa-clock me-2 text-info"></i>
+                        Demandes Récentes
+                    </h5>
+                    <p class="text-muted mb-0">7 derniers jours</p>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($demandes_recentes)): ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <span class="badge bg-primary rounded-circle">
-                                                        <?php echo strtoupper(substr($demande['prenom_eleve'], 0, 1)); ?>
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <strong><?php echo $demande['prenom_eleve'] . ' ' . $demande['nom_eleve']; ?></strong>
-                                                    <br><small class="text-muted"><?php echo $demande['numero_demande']; ?></small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark">
-                                                <?php echo $demande['classe_demandee']; ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            $status_class = '';
-                                            switch ($demande['status']) {
-                                                case 'en_attente':
-                                                    $status_class = 'bg-warning';
-                                                    break;
-                                                case 'en_cours_traitement':
-                                                    $status_class = 'bg-info';
-                                                    break;
-                                                case 'acceptee':
-                                                    $status_class = 'bg-success';
-                                                    break;
-                                                case 'refusee':
-                                                    $status_class = 'bg-danger';
-                                                    break;
-                                                case 'inscrit':
-                                                    $status_class = 'bg-primary';
-                                                    break;
-                                                default:
-                                                    $status_class = 'bg-secondary';
-                                            }
-                                            ?>
-                                            <span class="badge <?php echo $status_class; ?>">
-                                                <?php echo $demande['status_lisible']; ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                <?php echo date('d/m/Y', strtotime($demande['created_at'])); ?>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <a href="../admissions/view.php?id=<?php echo $demande['id']; ?>" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </td>
+                                        <th>Élève</th>
+                                        <th>Classe</th>
+                                        <th>Statut</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="fas fa-info-circle text-muted" style="font-size: 48px;"></i>
-                        <p class="text-muted mt-2">Aucune nouvelle demande récente</p>
-                    </div>
-                <?php endif; ?>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($demandes_recentes as $demande): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <span class="badge bg-primary rounded-circle">
+                                                            <?php echo strtoupper(substr($demande['prenom_eleve'], 0, 1)); ?>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <strong><?php echo $demande['prenom_eleve'] . ' ' . $demande['nom_eleve']; ?></strong>
+                                                        <br><small class="text-muted"><?php echo $demande['numero_demande']; ?></small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark">
+                                                    <?php echo $demande['classe_demandee']; ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $status_class = '';
+                                                switch ($demande['status']) {
+                                                    case 'en_attente':
+                                                        $status_class = 'bg-warning';
+                                                        break;
+                                                    case 'en_cours_traitement':
+                                                        $status_class = 'bg-info';
+                                                        break;
+                                                    case 'acceptee':
+                                                        $status_class = 'bg-success';
+                                                        break;
+                                                    case 'refusee':
+                                                        $status_class = 'bg-danger';
+                                                        break;
+                                                    case 'inscrit':
+                                                        $status_class = 'bg-primary';
+                                                        break;
+                                                    default:
+                                                        $status_class = 'bg-secondary';
+                                                }
+                                                ?>
+                                                <span class="badge <?php echo $status_class; ?>">
+                                                    <?php echo $demande['status_lisible']; ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <?php echo date('d/m/Y', strtotime($demande['created_at'])); ?>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <a href="../admissions/view.php?id=<?php echo $demande['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-info-circle text-muted" style="font-size: 48px;"></i>
+                            <p class="text-muted mt-3">Aucune nouvelle demande récente</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
 
         <!-- Élèves nécessitant une attention -->
         <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="mb-1">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
                         Élèves Nécessitant une Attention
                     </h5>
+                    <p class="text-muted mb-0">Paiements en retard ou sanctions actives</p>
                 </div>
-            <div class="card-body">
-                <?php if (!empty($eleves_attention)): ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Élève</th>
-                                    <th>Classe</th>
-                                    <th>Paiements</th>
-                                    <th>Sanctions</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($eleves_attention as $eleve): ?>
+                <div class="card-body">
+                    <?php if (!empty($eleves_attention)): ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3">
-                                                    <?php if ($eleve['photo']): ?>
-                                                        <img src="../../../uploads/photos/<?php echo $eleve['photo']; ?>" 
-                                                             class="rounded-circle" width="40" height="40" alt="Photo">
-                                                    <?php else: ?>
-                                                        <span class="badge bg-primary rounded-circle">
-                                                            <?php echo strtoupper(substr($eleve['prenom'], 0, 1)); ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div>
-                                                    <strong><?php echo $eleve['prenom'] . ' ' . $eleve['nom']; ?></strong>
-                                                    <br><small class="text-muted"><?php echo $eleve['numero_matricule']; ?></small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark">
-                                                <?php echo $eleve['classe_nom'] ?? 'Non assigné'; ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <?php if ($eleve['paiements_en_retard'] > 0): ?>
-                                                <span class="badge bg-danger">
-                                                    <?php echo $eleve['paiements_en_retard']; ?> en retard
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge bg-success">À jour</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($eleve['sanctions_actives'] > 0): ?>
-                                                <span class="badge bg-warning">
-                                                    <?php echo $eleve['sanctions_actives']; ?> active(s)
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge bg-success">Aucune</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <a href="../view.php?id=<?php echo $eleve['id']; ?>" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </td>
+                                        <th>Élève</th>
+                                        <th>Classe</th>
+                                        <th>Paiements</th>
+                                        <th>Sanctions</th>
+                                        <th>Action</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="text-center py-4">
-                        <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
-                        <p class="text-success mt-2">Tous les élèves sont à jour !</p>
-                    </div>
-                <?php endif; ?>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($eleves_attention as $eleve): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <?php if ($eleve['photo']): ?>
+                                                            <img src="../../../uploads/photos/<?php echo $eleve['photo']; ?>" 
+                                                                 class="rounded-circle" width="40" height="40" alt="Photo">
+                                                        <?php else: ?>
+                                                            <span class="badge bg-primary rounded-circle">
+                                                                <?php echo strtoupper(substr($eleve['prenom'], 0, 1)); ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div>
+                                                        <strong><?php echo $eleve['prenom'] . ' ' . $eleve['nom']; ?></strong>
+                                                        <br><small class="text-muted"><?php echo $eleve['numero_matricule']; ?></small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark">
+                                                    <?php echo $eleve['classe_nom'] ?? 'Non assigné'; ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php if ($eleve['paiements_en_retard'] > 0): ?>
+                                                    <span class="badge bg-danger">
+                                                        <?php echo $eleve['paiements_en_retard']; ?> en retard
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success">À jour</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($eleve['sanctions_actives'] > 0): ?>
+                                                    <span class="badge bg-warning">
+                                                        <?php echo $eleve['sanctions_actives']; ?> active(s)
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success">Aucune</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <a href="../view.php?id=<?php echo $eleve['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+                            <p class="text-success mt-3">Tous les élèves sont à jour !</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 
 <script>

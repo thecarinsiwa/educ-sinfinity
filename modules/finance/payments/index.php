@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'payments/index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Paiements';
 
@@ -125,7 +126,7 @@ include '../../../includes/header.php';
                 </button>
             </div>
         <?php endif; ?>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'payments/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -403,30 +404,36 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('finance', 'payments/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $paiement['id']; ?>" 
                                            class="btn btn-outline-info" 
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'payments/receipt', 'read')): ?>
                                         <a href="receipt.php?id=<?php echo $paiement['id']; ?>" 
                                            class="btn btn-outline-success" 
                                            title="Reçu"
                                            target="_blank">
                                             <i class="fas fa-receipt"></i>
                                         </a>
-                                        <?php if (checkPagePermission('finance') && $paiement['status'] !== 'annule'): ?>
+                                        <?php endif; ?>
+                                        <?php if ($paiement['status'] !== 'annule' && hasPagePermissionFromDB('finance', 'payments/edit', 'update')): ?>
                                             <a href="edit.php?id=<?php echo $paiement['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <?php if ($paiement['status'] === 'en_attente'): ?>
-                                                <a href="validate.php?id=<?php echo $paiement['id']; ?>" 
-                                                   class="btn btn-outline-success" 
-                                                   title="Valider">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <?php if ($paiement['status'] === 'en_attente' && hasPagePermissionFromDB('finance', 'payments/validate', 'update')): ?>
+                                            <a href="validate.php?id=<?php echo $paiement['id']; ?>" 
+                                               class="btn btn-outline-success" 
+                                               title="Valider">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'payments/cancel', 'update')): ?>
                                             <a href="cancel.php?id=<?php echo $paiement['id']; ?>" 
                                                class="btn btn-outline-danger" 
                                                title="Annuler"

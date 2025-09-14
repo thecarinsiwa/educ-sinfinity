@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'cartes', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'cartes/view', 'read', '../../dashboard.php');
 
 $page_title = 'Détails de la Carte';
 

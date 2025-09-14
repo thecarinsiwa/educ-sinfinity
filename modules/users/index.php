@@ -8,10 +8,11 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'index', 'read', '../../dashboard.php');
+requirePagePermission('admin', 'users/index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Utilisateurs';
 
@@ -77,63 +78,87 @@ include '../../includes/header.php';
         Gestion des Utilisateurs
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <?php if (checkPagePermission('admin')): ?>
+        <?php if (hasPagePermissionFromDB('users', 'add', 'create') || hasPagePermissionFromDB('users', 'bulk-import', 'create') || hasPagePermissionFromDB('users', 'pending-users', 'read') || hasPagePermissionFromDB('users', 'roles/manage', 'update')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('users', 'add', 'create')): ?>
                     <li><a class="dropdown-item" href="add.php">
                         <i class="fas fa-user-plus me-2"></i>Nouvel utilisateur
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('users', 'bulk-import', 'create')): ?>
                     <li><a class="dropdown-item" href="bulk-import.php">
                         <i class="fas fa-file-import me-2"></i>Import en masse
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('users', 'pending-users', 'read')): ?>
                     <li><a class="dropdown-item" href="../admin/pending-users.php">
                         <i class="fas fa-user-clock me-2"></i>Comptes en attente
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('users', 'roles/manage', 'update')): ?>
                     <li><a class="dropdown-item" href="roles/manage.php">
                         <i class="fas fa-shield-alt me-2"></i>Gérer les rôles
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('users', 'exports/users-list', 'read') || hasPagePermissionFromDB('users', 'exports/users-report', 'read')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-file-export me-1"></i>
                 Exporter
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('users', 'exports/users-list', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/users-list.php">
                     <i class="fas fa-file-excel me-2"></i>Liste Excel
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('users', 'exports/users-report', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/users-report.php">
                     <i class="fas fa-file-pdf me-2"></i>Rapport PDF
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('users', 'logs/index', 'read') || hasPagePermissionFromDB('users', 'sessions/index', 'read') || hasPagePermissionFromDB('users', 'permissions/index', 'read') || hasPagePermissionFromDB('users', 'security/index', 'read')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-tools me-1"></i>
                 Outils
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('users', 'logs/index', 'read')): ?>
                 <li><a class="dropdown-item" href="logs/">
                     <i class="fas fa-history me-2"></i>Historique des actions
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('users', 'sessions/index', 'read')): ?>
                 <li><a class="dropdown-item" href="sessions/">
                     <i class="fas fa-desktop me-2"></i>Sessions actives
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('users', 'permissions/index', 'read')): ?>
                 <li><a class="dropdown-item" href="permissions/">
                     <i class="fas fa-shield-alt me-2"></i>Permissions
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('users', 'security/index', 'read')): ?>
                 <li><a class="dropdown-item" href="security/">
                     <i class="fas fa-lock me-2"></i>Sécurité
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

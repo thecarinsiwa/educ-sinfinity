@@ -12,7 +12,57 @@ require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'classes', 'read', '../../../dashboard.php', 'index');
+requirePagePermissionFromDB('academic', 'classes/index', 'read', '../../../dashboard.php');
+
+// Définir l'encodage pour la page
+header('Content-Type: text/html; charset=UTF-8');
+
+/**
+ * Fonction pour nettoyer l'encodage des données de la base de données
+ */
+function fixEncoding($text) {
+    if (empty($text)) {
+        return $text;
+    }
+    
+    // Décoder les entités HTML de manière récursive jusqu'à ce qu'il n'y en ait plus
+    $previous_text = '';
+    while ($text !== $previous_text) {
+        $previous_text = $text;
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+    
+    // Détecter et corriger l'encodage si nécessaire
+    $encoding = mb_detect_encoding($text, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
+    
+    if ($encoding !== 'UTF-8') {
+        // Convertir vers UTF-8
+        $text = mb_convert_encoding($text, 'UTF-8', $encoding);
+    }
+    
+    // Nettoyer les caractères de contrôle
+    $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $text);
+    
+    // Nettoyer les espaces multiples
+    $text = preg_replace('/\s+/', ' ', trim($text));
+    
+    return $text;
+}
+
+/**
+ * Fonction pour nettoyer les données d'une classe
+ */
+function cleanClassData($classe) {
+    $fields_to_clean = ['nom', 'description', 'titulaire_nom', 'titulaire_prenom', 'salle'];
+    
+    foreach ($fields_to_clean as $field) {
+        if (isset($classe[$field])) {
+            $classe[$field] = fixEncoding($classe[$field]);
+        }
+    }
+    
+    return $classe;
+}
 
 $page_title = 'Gestion des Classes';
 
@@ -20,7 +70,7 @@ $page_title = 'Gestion des Classes';
 $current_year = getCurrentAcademicYear();
 
 // Paramètres de recherche et filtrage
-$search = sanitizeInput($_GET['search'] ?? '');
+$search = fixEncoding(sanitizeInput($_GET['search'] ?? ''));
 $niveau_filter = sanitizeInput($_GET['niveau'] ?? '');
 
 // Construction de la requête
@@ -56,7 +106,13 @@ $sql .= " GROUP BY c.id ORDER BY
               ELSE 4 
           END, c.nom";
 
-$classes = $database->query($sql, $params)->fetchAll();
+$classes_raw = $database->query($sql, $params)->fetchAll();
+
+// Nettoyer l'encodage des données
+$classes = [];
+foreach ($classes_raw as $classe) {
+    $classes[] = cleanClassData($classe);
+}
 
 // Statistiques
 $stats = [
@@ -82,7 +138,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'classes/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -277,7 +333,7 @@ include '../../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'classes/edit', 'edit')): ?>
                                         <a href="edit.php?id=<?php echo $classe['id']; ?>" 
                                            class="btn btn-outline-primary" 
                                            title="Modifier">
@@ -289,6 +345,15 @@ include '../../../includes/header.php';
                                            class="btn btn-outline-warning" 
                                            title="Emploi du temps">
                                             <i class="fas fa-calendar"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'classes/delete', 'delete')): ?>
+                                        <a href="delete.php?id=<?php echo $classe['id']; ?>" 
+                                           class="btn btn-outline-danger btn-delete" 
+                                           title="Supprimer"
+                                           data-name="<?php echo htmlspecialchars($classe['nom']); ?>"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer la classe <?php echo htmlspecialchars($classe['nom']); ?> ?')">
+                                            <i class="fas fa-trash"></i>
                                         </a>
                                         <?php endif; ?>
                                     </div>
@@ -331,7 +396,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-school fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucune classe trouvée</h5>
                 <p class="text-muted">
-                    <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'classes/add', 'create')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Créer la première classe

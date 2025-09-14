@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'campaigns', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'campaigns/details', 'read', '../../dashboard.php');
 
 $page_title = 'Détails de la campagne';
 

@@ -24,7 +24,7 @@ require_once '../fees/types/priority-functions-simple.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'payments', 'create', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'payments/add', 'create', '../../dashboard.php');
 
 $page_title = 'Enregistrer un paiement';
 

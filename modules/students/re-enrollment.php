@@ -666,9 +666,13 @@ include '../../includes/header.php';
                     <div class="col-md-6">
                         <label for="annee_verification" class="form-label">Année scolaire</label>
                         <select class="form-select" id="annee_verification">
-                            <option value="<?php echo $current_year['id'] - 1; ?>"><?php echo ($current_year['annee'] - 1) . '-' . ($current_year['annee']); ?></option>
+                            <?php 
+                            // Extraire la première année de la chaîne (ex: "2024-2025" -> 2024)
+                            $annee_courante = (int)explode('-', $current_year['annee'])[0];
+                            ?>
+                            <option value="<?php echo $current_year['id'] - 1; ?>"><?php echo ($annee_courante - 1) . '-' . $annee_courante; ?></option>
                             <?php if ($current_year['id'] > 2): ?>
-                                <option value="<?php echo $current_year['id'] - 2; ?>"><?php echo ($current_year['annee'] - 2) . '-' . ($current_year['annee'] - 1); ?></option>
+                                <option value="<?php echo $current_year['id'] - 2; ?>"><?php echo ($annee_courante - 2) . '-' . ($annee_courante - 1); ?></option>
                             <?php endif; ?>
                         </select>
                     </div>

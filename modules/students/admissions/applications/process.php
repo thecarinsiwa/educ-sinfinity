@@ -9,10 +9,10 @@ require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
 require_once '../../../../includes/permissions-pages.php';
 
-// VÃ©rifier l'authentification et les permissions
+// Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'edit', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/applications/process', 'edit', '../../../../dashboard.php');
 
 $candidature_id = intval($_GET['id'] ?? 0);
 
@@ -35,19 +35,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $frais_scolarite = floatval($_POST['frais_scolarite'] ?? 0);
                 $reduction_accordee = floatval($_POST['reduction_accordee'] ?? 0);
                 
-                // VÃ©rifier que le statut est valide
+                // Vérifier que le statut est valide
                 $valid_statuses = ['en_attente', 'acceptee', 'refusee', 'en_cours_traitement', 'inscrit'];
                 if (!in_array($new_status, $valid_statuses)) {
                     throw new Exception('Statut invalide.');
                 }
                 
-                // PrÃ©parer la date/heure d'entretien
+                // Préparer la date/heure d'entretien
                 $datetime_entretien = null;
                 if ($date_entretien && $heure_entretien) {
                     $datetime_entretien = $date_entretien . ' ' . $heure_entretien;
                 }
                 
-                // Mettre Ã  jour la candidature
+                // Mettre à jour la candidature
                 $database->execute(
                     "UPDATE demandes_admission 
                      SET status = ?, traite_par = ?, date_traitement = NOW(), updated_at = NOW(),
@@ -60,46 +60,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Messages de confirmation selon le statut
                 $status_messages = [
-                    'acceptee' => 'Candidature acceptÃ©e avec succÃ¨s.',
-                    'refusee' => 'Candidature refusÃ©e.',
+                    'acceptee' => 'Candidature acceptée avec succès.',
+                    'refusee' => 'Candidature refusée.',
                     'en_cours_traitement' => 'Candidature mise en cours de traitement.',
-                    'inscrit' => 'Candidat marquÃ© comme inscrit.',
+                    'inscrit' => 'Candidat marqué comme inscrit.',
                     'en_attente' => 'Candidature remise en attente.'
                 ];
                 
-                $message = $status_messages[$new_status] ?? 'Statut mis Ã  jour avec succÃ¨s.';
+                $message = $status_messages[$new_status] ?? 'Statut mis à jour avec succès.';
                 showMessage('success', $message);
                 
-                // Si acceptÃ©e, proposer de crÃ©er l'Ã©lÃ¨ve
+                // Si acceptée, proposer de créer l'éléve
                 if ($new_status === 'acceptee') {
                     $_SESSION['create_student_from_application'] = $candidature_id;
-                    showMessage('info', 'Vous pouvez maintenant crÃ©er le dossier Ã©lÃ¨ve Ã  partir de cette candidature.');
+                    showMessage('info', 'Vous pouvez maintenant créer le dossier éléve à partir de cette candidature.');
                 }
                 
                 break;
                 
             case 'create_student':
-                // RÃ©cupÃ©rer les donnÃ©es de la candidature
+                // Récupérer les données de la candidature
                 $candidature = $database->query(
                     "SELECT * FROM demandes_admission WHERE id = ? AND status = 'acceptee'",
                     [$candidature_id]
                 )->fetch();
                 
                 if (!$candidature) {
-                    throw new Exception('Candidature non trouvÃ©e ou non acceptÃ©e.');
+                        throw new Exception('Candidature non trouvée ou non acceptée.');
                 }
                 
-                // VÃ©rifier si l'Ã©lÃ¨ve n'existe pas dÃ©jÃ 
+                // Vérifier si l'éléve n'existe pas déjà
                 $existing_student = $database->query(
                     "SELECT id FROM eleves WHERE nom = ? AND prenom = ? AND date_naissance = ?",
                     [$candidature['nom_eleve'], $candidature['prenom_eleve'], $candidature['date_naissance']]
                 )->fetch();
                 
                 if ($existing_student) {
-                    throw new Exception('Un Ã©lÃ¨ve avec ces informations existe dÃ©jÃ .');
+                    throw new Exception('Un éléve avec ces informations existe déjà.');
                 }
                 
-                // GÃ©nÃ©rer un numÃ©ro d'Ã©lÃ¨ve unique
+                // Générer un numéro d'éléve unique
                 $annee_courante = date('Y');
                 $last_student = $database->query(
                     "SELECT numero_eleve FROM eleves WHERE numero_eleve LIKE ? ORDER BY numero_eleve DESC LIMIT 1",
@@ -115,10 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $numero_eleve = $annee_courante . str_pad($new_number, 4, '0', STR_PAD_LEFT);
                 
-                // GÃ©nÃ©rer le numÃ©ro de matricule
+                // Générer le numéro de matricule
                 $numero_matricule = generateMatricule();
                 
-                // CrÃ©er l'Ã©lÃ¨ve
+                // Créer l'éléve
                 $database->execute(
                     "INSERT INTO eleves (
                         numero_eleve, numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe,
@@ -140,13 +140,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $student_id = $database->lastInsertId();
                 
-                // Mettre Ã  jour le statut de la candidature
+                // Mettre à jour le statut de la candidature
                 $database->execute(
                     "UPDATE demandes_admission SET status = 'inscrit', eleve_cree_id = ? WHERE id = ?",
                     [$student_id, $candidature_id]
                 );
                 
-                showMessage('success', "Ã‰lÃ¨ve crÃ©Ã© avec succÃ¨s. NumÃ©ro d'Ã©lÃ¨ve : $numero_eleve");
+                showMessage('success', "Éléve créé avec succès. Numéro d'éléve : $numero_eleve");
                 unset($_SESSION['create_student_from_application']);
                 
                 break;
@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// RÃ©cupÃ©rer les dÃ©tails de la candidature
+// Récupérer les détails de la candidature
 try {
     $candidature = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,

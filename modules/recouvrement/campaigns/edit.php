@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'campaigns', 'edit', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'campaigns/edit', 'edit', '../../dashboard.php');
 
 $page_title = 'Édition de campagne';
 

@@ -12,7 +12,7 @@ require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'create', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/duplicate', 'create', '../../dashboard.php');
 
 // Récupérer l'ID du frais à dupliquer
 $id = (int)($_GET['id'] ?? 0);

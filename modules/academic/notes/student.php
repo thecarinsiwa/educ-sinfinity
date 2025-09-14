@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'notes', 'read', '../../../dashboard.php', 'student');
+requirePagePermissionFromDB('academic', 'notes/student', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de l'étudiant
 $eleve_id = (int)($_GET['eleve_id'] ?? 0);

@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'books', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'books/view', 'read', '../../dashboard.php');
 
 // Récupérer l'ID du livre
 $livre_id = intval($_GET['id'] ?? 0);

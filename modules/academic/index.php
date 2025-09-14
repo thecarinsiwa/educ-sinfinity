@@ -87,23 +87,23 @@ include '../../includes/header.php';
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
-                    <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'classes/add', 'create')): ?>
                     <li><a class="dropdown-item" href="classes/add.php">
                         <i class="fas fa-school me-2"></i>Nouvelle classe
                     </a></li>
                     <?php endif; ?>
-                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects/add', 'create')): ?>
                     <li><a class="dropdown-item" href="subjects/add.php">
                         <i class="fas fa-book-open me-2"></i>Nouvelle matière
                     </a></li>
                     <?php endif; ?>
-                    <?php if (hasPagePermissionFromDB('academic', 'schedule', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'timetables/add', 'create')): ?>
                     <li><a class="dropdown-item" href="schedule/add.php">
                         <i class="fas fa-calendar-plus me-2"></i>Emploi du temps
                     </a></li>
                     <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
-                    <?php if (hasPagePermissionFromDB('academic', 'years', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'years/add', 'create')): ?>
                     <li><a class="dropdown-item" href="years/add.php">
                         <i class="fas fa-calendar-check me-2"></i>Année scolaire
                     </a></li>
@@ -293,7 +293,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucune classe configurée</p>
-                        <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
+                        <?php if (hasPagePermissionFromDB('academic', 'classes/add', 'create')): ?>
                             <a href="classes/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Créer une classe
@@ -344,7 +344,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-school fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucune classe créée</p>
-                        <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
+                        <?php if (hasPagePermissionFromDB('academic', 'classes/add', 'create')): ?>
                             <a href="classes/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Créer la première classe
@@ -370,7 +370,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
-                    <?php if (hasPagePermissionFromDB('academic', 'classes', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'classes/add', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
                             <a href="classes/add.php" class="btn btn-outline-primary">
@@ -380,7 +380,7 @@ include '../../includes/header.php';
                         </div>
                     </div>
                     <?php endif; ?>
-                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects/add', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
                             <a href="subjects/add.php" class="btn btn-outline-success">
@@ -390,7 +390,7 @@ include '../../includes/header.php';
                         </div>
                     </div>
                     <?php endif; ?>
-                    <?php if (hasPagePermissionFromDB('academic', 'schedule', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'timetables/add', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
                             <a href="schedule/generate.php" class="btn btn-outline-warning">

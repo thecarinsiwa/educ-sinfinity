@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'reports', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'reports/monthly', 'read', '../../dashboard.php');
 
 $page_title = 'Rapport Mensuel';
 

@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('complementary', 'transport', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('complementary', 'transport/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion du Transport Scolaire';
 

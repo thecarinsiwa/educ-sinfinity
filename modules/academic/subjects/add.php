@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'subjects', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'subjects/add', 'create', '../../../dashboard.php');
 
 $page_title = 'Ajouter une matière';
 

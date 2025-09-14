@@ -524,53 +524,87 @@ function hasPagePermissionFromDB($module, $page, $action, $subpage = null) {
         
         $module_permissions = $permissions[$module];
         
-        if (!isset($module_permissions['pages'][$page])) {
-            return false;
+        // Construire la clé de page selon le format utilisé dans la base de données
+        $page_key = $subpage ? "$page/$subpage" : $page;
+        
+        // Vérifier d'abord si le module a une structure 'pages'
+        if (isset($module_permissions['pages'])) {
+            $pages = $module_permissions['pages'];
+            
+            // Chercher la page dans le format "page/subpage"
+            if (isset($pages[$page_key])) {
+                $page_data = $pages[$page_key];
+                
+                // Vérifier les permissions de la page
+                if (is_array($page_data)) {
+                    // Format avec objet : {"name": "...", "permissions": ["read"]}
+                    if (isset($page_data['permissions']) && is_array($page_data['permissions'])) {
+                        return in_array($action, $page_data['permissions']);
+                    }
+                    // Format direct : ["read", "create"] (fallback)
+                    elseif (!isset($page_data['name']) && !isset($page_data['pages'])) {
+                        return in_array($action, $page_data);
+                    }
+                }
+            }
+            
+            // Si la page exacte n'est pas trouvée, essayer de chercher avec la page seule
+            if (!$subpage && isset($pages[$page])) {
+                $page_data = $pages[$page];
+                if (is_array($page_data)) {
+                    if (isset($page_data['permissions']) && is_array($page_data['permissions'])) {
+                        return in_array($action, $page_data['permissions']);
+                    }
+                }
+            }
         }
         
-        $page_data = $module_permissions['pages'][$page];
-        
-        if ($subpage) {
-            // Vérifier dans les sous-pages
-            // Structure 1: page_data contient directement les sous-pages
-            if (isset($page_data[$subpage])) {
-                $subpage_data = $page_data[$subpage];
-                // Gérer les deux formats : array direct ou objet avec 'permissions'
-                if (is_array($subpage_data) && !isset($subpage_data['permissions'])) {
-                    return in_array($action, $subpage_data);
-                } elseif (isset($subpage_data['permissions']) && is_array($subpage_data['permissions'])) {
-                    return in_array($action, $subpage_data['permissions']);
-                }
-            }
-            // Structure 2: page_data a une propriété 'pages' qui contient les sous-pages
-            elseif (isset($page_data['pages'][$subpage])) {
-                $subpage_data = $page_data['pages'][$subpage];
-                if (is_array($subpage_data) && !isset($subpage_data['permissions'])) {
-                    return in_array($action, $subpage_data);
-                } elseif (isset($subpage_data['permissions']) && is_array($subpage_data['permissions'])) {
-                    return in_array($action, $subpage_data['permissions']);
-                }
-            }
-        } else {
-            // Pour les pages sans sous-page, vérifier d'abord si la page a des permissions directes
-            if (is_array($page_data)) {
-                // Format direct : ["read", "create"]
-                if (!isset($page_data['permissions']) && !isset($page_data['pages'])) {
-                    return in_array($action, $page_data);
-                }
-                // Format avec objet : {"name": "...", "permissions": ["read"]}
-                elseif (isset($page_data['permissions']) && is_array($page_data['permissions'])) {
-                    return in_array($action, $page_data['permissions']);
-                }
-                // Si la page a des sous-pages mais pas de permissions directes,
-                // vérifier si l'utilisateur a accès à au moins une sous-page avec cette action
-                elseif (isset($page_data['pages']) && is_array($page_data['pages'])) {
-                    foreach ($page_data['pages'] as $subpage_name => $subpage_data) {
-                        if (is_array($subpage_data)) {
-                            // Vérifier les permissions de la sous-page
-                            if (isset($subpage_data['permissions']) && is_array($subpage_data['permissions'])) {
-                                if (in_array($action, $subpage_data['permissions'])) {
-                                    return true; // L'utilisateur a la permission sur au moins une sous-page
+        // Fallback: chercher dans la structure directe du module (ancien format)
+        if (!isset($module_permissions['pages'])) {
+            if (isset($module_permissions[$page])) {
+                $page_data = $module_permissions[$page];
+                
+                if ($subpage) {
+                    // Chercher dans les sous-pages
+                    if (isset($page_data[$subpage])) {
+                        $subpage_data = $page_data[$subpage];
+                        if (is_array($subpage_data) && !isset($subpage_data['permissions'])) {
+                            return in_array($action, $subpage_data);
+                        } elseif (isset($subpage_data['permissions']) && is_array($subpage_data['permissions'])) {
+                            return in_array($action, $subpage_data['permissions']);
+                        }
+                    }
+                    // Structure 2: page_data a une propriété 'pages' qui contient les sous-pages
+                    elseif (isset($page_data['pages'][$subpage])) {
+                        $subpage_data = $page_data['pages'][$subpage];
+                        if (is_array($subpage_data) && !isset($subpage_data['permissions'])) {
+                            return in_array($action, $subpage_data);
+                        } elseif (isset($subpage_data['permissions']) && is_array($subpage_data['permissions'])) {
+                            return in_array($action, $subpage_data['permissions']);
+                        }
+                    }
+                } else {
+                    // Pour les pages sans sous-page, vérifier d'abord si la page a des permissions directes
+                    if (is_array($page_data)) {
+                        // Format direct : ["read", "create"]
+                        if (!isset($page_data['permissions']) && !isset($page_data['pages'])) {
+                            return in_array($action, $page_data);
+                        }
+                        // Format avec objet : {"name": "...", "permissions": ["read"]}
+                        elseif (isset($page_data['permissions']) && is_array($page_data['permissions'])) {
+                            return in_array($action, $page_data['permissions']);
+                        }
+                        // Si la page a des sous-pages mais pas de permissions directes,
+                        // vérifier si l'utilisateur a accès à au moins une sous-page avec cette action
+                        elseif (isset($page_data['pages']) && is_array($page_data['pages'])) {
+                            foreach ($page_data['pages'] as $subpage_name => $subpage_data) {
+                                if (is_array($subpage_data)) {
+                                    // Vérifier les permissions de la sous-page
+                                    if (isset($subpage_data['permissions']) && is_array($subpage_data['permissions'])) {
+                                        if (in_array($action, $subpage_data['permissions'])) {
+                                            return true; // L'utilisateur a la permission sur au moins une sous-page
+                                        }
+                                    }
                                 }
                             }
                         }

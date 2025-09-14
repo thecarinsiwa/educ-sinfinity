@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/edit', 'edit', '../../../dashboard.php');
 
 $page_title = "Modifier une absence/retard";
 $absence_id = (int)($_GET['id'] ?? 0);

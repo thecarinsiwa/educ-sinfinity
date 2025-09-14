@@ -70,24 +70,42 @@ include '../../includes/header.php';
         Gestion du Personnel
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <?php if (hasPagePermission('personnel', 'add', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('personnel', 'add', 'create') || hasPagePermissionFromDB('personnel', 'import', 'create')): ?>
             <div class="btn-group me-2">
-                <?php echo generatePermissionLink('add.php', 'btn btn-primary', 'Nouveau membre', 'fas fa-plus me-1', 'personnel', 'add', 'create'); ?>
-                <?php echo generatePermissionLink('import.php', 'btn btn-outline-primary', 'Importer', 'fas fa-upload me-1', 'personnel', 'add', 'create'); ?>
+                <?php if (hasPagePermissionFromDB('personnel', 'add', 'create')): ?>
+                <a href="add.php" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    Nouveau membre
+                </a>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('personnel', 'import', 'create')): ?>
+                <a href="import.php" class="btn btn-outline-primary">
+                    <i class="fas fa-upload me-1"></i>
+                    Importer
+                </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('personnel', 'export/excel', 'read') || hasPagePermissionFromDB('personnel', 'export/pdf', 'read') || hasPagePermissionFromDB('personnel', 'payroll', 'read')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-download me-1"></i>
                 Exporter
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('personnel', 'export/excel', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?format=excel"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('personnel', 'export/pdf', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?format=pdf"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
+                <?php if (hasPagePermissionFromDB('personnel', 'payroll', 'read')): ?>
                 <li><a class="dropdown-item" href="payroll.php"><i class="fas fa-money-bill-wave me-2"></i>Fiche de paie</a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -284,7 +302,7 @@ include '../../includes/header.php';
                                 </td>
                                 <td>
                                     <?php if ($membre['salaire_base']): ?>
-                                        <strong><?php echo formatMoney($membre['salaire_base']); ?></strong>
+                                        <strong><?php echo formatCurrency($membre['salaire_base']); ?></strong>
                                     <?php else: ?>
                                         <span class="text-muted">Non défini</span>
                                     <?php endif; ?>
@@ -314,14 +332,35 @@ include '../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('personnel', 'view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $membre['id']; ?>" 
                                            class="btn btn-outline-info" 
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php echo generatePermissionLink('edit.php?id=' . $membre['id'], 'btn btn-outline-primary', 'Modifier', 'fas fa-edit', 'personnel', 'edit', 'update'); ?>
-                                        <?php echo generatePermissionLink('payslip.php?id=' . $membre['id'], 'btn btn-outline-success', 'Fiche de paie', 'fas fa-money-bill', 'personnel', 'payslip', 'read'); ?>
-                                        <?php echo generatePermissionLink('delete.php?id=' . $membre['id'], 'btn btn-outline-danger btn-delete', 'Supprimer', 'fas fa-trash', 'personnel', 'delete', 'delete', ['data-name' => htmlspecialchars($membre['nom'] . ' ' . $membre['prenom'])]); ?>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('personnel', 'edit', 'edit')): ?>
+                                        <a href="edit.php?id=<?php echo $membre['id']; ?>" 
+                                           class="btn btn-outline-primary" 
+                                           title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('personnel', 'payslip', 'read')): ?>
+                                        <a href="payslip.php?id=<?php echo $membre['id']; ?>" 
+                                           class="btn btn-outline-success" 
+                                           title="Fiche de paie">
+                                            <i class="fas fa-money-bill"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('personnel', 'delete', 'delete')): ?>
+                                        <a href="delete.php?id=<?php echo $membre['id']; ?>" 
+                                           class="btn btn-outline-danger btn-delete" 
+                                           title="Supprimer"
+                                           data-name="<?php echo htmlspecialchars($membre['nom'] . ' ' . $membre['prenom']); ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
@@ -334,7 +373,7 @@ include '../../includes/header.php';
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun membre du personnel trouvé</h5>
                 <p class="text-muted">
-                    <?php if (checkPagePermission('personnel', 'add', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('personnel', 'add', 'create')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Ajouter le premier membre

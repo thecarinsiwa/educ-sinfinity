@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'statistics', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'statistics/evaluation-reports', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports d\'évaluations';
 

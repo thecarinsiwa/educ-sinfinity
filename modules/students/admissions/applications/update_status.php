@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'edit', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/applications/update_status', 'edit', '../../../../dashboard.php');
 
 $candidature_id = intval($_GET['id'] ?? 0);
 $new_status = $_GET['status'] ?? '';

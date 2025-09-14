@@ -8,11 +8,12 @@ require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
 require_once '../../../../includes/permissions-pages.php';
+require_once '../../../../includes/ui-permissions.php';
 
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'create', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/enrollment/index', 'read', '../../../../dashboard.php');
 
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -35,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 )->fetch();
                 
                 if (!$candidature) {
-                    throw new Exception('Candidature non trouvÃ©e ou non acceptÃ©e.');
+                    throw new Exception('Candidature non trouvée ou non acceptée.');
                 }
                 
                 // VÃ©rifier si l'Ã©lÃ¨ve n'existe pas dÃ©jÃ 
@@ -45,10 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 )->fetch();
                 
                 if ($existing_student) {
-                    throw new Exception('Un Ã©lÃ¨ve avec ces informations existe dÃ©jÃ .');
+                    throw new Exception('Un élève avec ces informations existe déjà.');
                 }
                 
-                // GÃ©nÃ©rer un numÃ©ro d'Ã©lÃ¨ve unique
+                // Générer un numéro d'élève unique
                 $annee_courante = date('Y');
                 $last_student = $database->query(
                     "SELECT numero_eleve FROM eleves WHERE numero_eleve LIKE ? ORDER BY numero_eleve DESC LIMIT 1",
@@ -68,10 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $database->beginTransaction();
                 
                 try {
-                    // GÃ©nÃ©rer le numÃ©ro de matricule
+                    // Générer le numéro de matricule
                     $numero_matricule = generateMatricule();
                     
-                    // CrÃ©er l'Ã©lÃ¨ve
+                    // Créer l'élève
                     $database->execute(
                         "INSERT INTO eleves (
                             numero_eleve, numero_matricule, nom, prenom, date_naissance, lieu_naissance, sexe,
@@ -93,11 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $student_id = $database->lastInsertId();
                     
-                    // GÃ©nÃ©rer automatiquement la carte d'Ã©lÃ¨ve
+                    // Générer automatiquement la carte d'élève
                     require_once '../../../cartes_eleves/auto-generate.php';
                     $carte_id = autoGenerateStudentCard($student_id, $candidature['annee_scolaire_id']);
                     
-                    // CrÃ©er l'enregistrement financier
+                    // Créer l'enregistrement financier
                     $database->execute(
                         "INSERT INTO frais_eleves (
                             eleve_id, annee_scolaire_id, frais_inscription, frais_scolarite, 
@@ -110,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]
                     );
                     
-                    // Mettre Ã  jour le statut de la candidature
+                    // Mettre à jour le statut de la candidature    
                     $database->execute(
                         "UPDATE demandes_admission 
                          SET status = 'inscrit', eleve_cree_id = ?, date_inscription = ?, 
@@ -143,8 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 foreach ($candidatures as $candidature_id) {
                     try {
-                        // Logique similaire Ã  l'inscription individuelle
-                        // (code simplifiÃ© pour la dÃ©mo)
+                        // Logique similaire à l'inscription individuelle
+                        // (code simplifié pour la démo)
                         $enrolled_count++;
                     } catch (Exception $e) {
                         $errors[] = "Candidature $candidature_id : " . $e->getMessage();
@@ -152,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 if ($enrolled_count > 0) {
-                    showMessage('success', "$enrolled_count Ã©lÃ¨ve(s) inscrit(s) avec succÃ¨s.");
+                    showMessage('success', "$enrolled_count élève(s) inscrit(s) avec succès.");
                 }
                 if (!empty($errors)) {
                     showMessage('warning', 'Erreurs : ' . implode(', ', $errors));
@@ -165,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// RÃ©cupÃ©rer les candidatures acceptÃ©es (prÃªtes Ã  Ãªtre inscrites)
+// Récupérer les candidatures acceptées (prêtes à être inscrites)
 try {
     $candidatures_acceptees = $database->query(
         "SELECT da.*, c.nom as classe_demandee, c.niveau, c.section,
@@ -180,7 +181,7 @@ try {
     showMessage('error', 'Erreur lors du chargement : ' . $e->getMessage());
 }
 
-// RÃ©cupÃ©rer les classes disponibles
+// Récupérer les classes disponibles
 try {
     $classes = $database->query("SELECT * FROM classes ORDER BY niveau, nom")->fetchAll();
 } catch (Exception $e) {
@@ -216,12 +217,14 @@ include '../../../../includes/header.php';
                 Retour aux Admissions
             </a>
         </div>
+        <?php if (hasPagePermissionFromDB('students', 'admissions/enrollment/bulk', 'create')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkEnrollmentModal">
                 <i class="fas fa-users me-1"></i>
                 Inscription en lot
             </button>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -232,7 +235,7 @@ include '../../../../includes/header.php';
             <div class="card-body">
                 <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
                                         <h5 class="card-title"><?php echo number_format($stats['acceptees']); ?></h5>
-                        <p class="card-text text-muted">Candidatures acceptÃ©es</p>
+                        <p class="card-text text-muted">Candidatures acceptées</p>
             </div>
         </div>
     </div>
@@ -241,7 +244,7 @@ include '../../../../includes/header.php';
             <div class="card-body">
                 <i class="fas fa-user-graduate fa-2x text-primary mb-2"></i>
                 <h5 class="card-title"><?php echo number_format($stats['inscrites']); ?></h5>
-                <p class="card-text text-muted">DÃ©jÃ  inscrites</p>
+                <p class="card-text text-muted">Déjà inscrites</p>
             </div>
         </div>
     </div>
@@ -256,20 +259,20 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Liste des candidatures acceptÃ©es -->
+<!-- Liste des candidatures acceptées -->
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-list me-2"></i>
-            Candidatures acceptÃ©es Ã  inscrire (<?php echo count($candidatures_acceptees); ?>)
+            Candidatures acceptées à inscrire (<?php echo count($candidatures_acceptees); ?>)
         </h5>
     </div>
     <div class="card-body">
         <?php if (empty($candidatures_acceptees)): ?>
             <div class="text-center py-4">
                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune candidature acceptÃ©e</h5>
-                <p class="text-muted">Toutes les candidatures acceptÃ©es ont dÃ©jÃ  Ã©tÃ© inscrites.</p>
+                <h5 class="text-muted">Aucune candidature acceptée</h5>
+                <p class="text-muted">Toutes les candidatures acceptées ont déjà été inscrites.</p>
             </div>
         <?php else: ?>
             <div class="table-responsive">
@@ -280,9 +283,9 @@ include '../../../../includes/header.php';
                                 <input type="checkbox" id="selectAll" class="form-check-input">
                             </th>
                             <th>Candidat</th>
-                            <th>Classe demandÃ©e</th>
+                            <th>Classe demandée</th>
                             <th>Date d'acceptation</th>
-                            <th>DÃ©lai</th>
+                            <th>Délai</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -321,7 +324,7 @@ include '../../../../includes/header.php';
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a href="../applications/view.php?id=<?php echo $candidature['id']; ?>" 
-                                           class="btn btn-outline-info" title="Voir les dÃ©tails">
+                                           class="btn btn-outline-info" title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <button type="button" class="btn btn-outline-success" 
@@ -364,7 +367,7 @@ include '../../../../includes/header.php';
                                     Classe d'inscription *
                                 </label>
                                 <select class="form-select" id="classe_finale_id" name="classe_finale_id" required>
-                                    <option value="">-- SÃ©lectionner une classe --</option>
+                                    <option value="">-- Sélectionner une classe --</option>
                                     <?php foreach ($classes as $classe): ?>
                                         <option value="<?php echo $classe['id']; ?>">
                                             <?php echo htmlspecialchars($classe['nom'] . ' - ' . $classe['niveau']); ?>
@@ -400,7 +403,7 @@ include '../../../../includes/header.php';
                             <div class="mb-3">
                                 <label for="frais_scolarite" class="form-label">
                                     <i class="fas fa-coins me-1"></i>
-                                    Frais de scolaritÃ© (FC) *
+                                    Frais de scolarité (FC) *
                                 </label>
                                 <input type="number" class="form-control" id="frais_scolarite"
                                        name="frais_scolarite" min="0" step="1000" required>
@@ -410,7 +413,7 @@ include '../../../../includes/header.php';
                             <div class="mb-3">
                                 <label for="reduction_accordee" class="form-label">
                                     <i class="fas fa-percent me-1"></i>
-                                    RÃ©duction (%)
+                                    Réduction (%)
                                 </label>
                                 <input type="number" class="form-control" id="reduction_accordee"
                                        name="reduction_accordee" min="0" max="100" step="5" value="0">
@@ -432,8 +435,8 @@ include '../../../../includes/header.php';
 
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Attention :</strong> Cette action crÃ©era dÃ©finitivement le dossier Ã©lÃ¨ve
-                        et ne pourra pas Ãªtre annulÃ©e.
+                        <strong>Attention :</strong> Cette action créera définitivement le dossier élève
+                        et ne pourra pas être annulée.
                     </div>
                 </div>
 
@@ -444,7 +447,7 @@ include '../../../../includes/header.php';
                     </button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-user-check me-1"></i>
-                        Inscrire l'Ã©lÃ¨ve
+                        Inscrire l'élève
                     </button>
                 </div>
             </form>
@@ -469,7 +472,7 @@ include '../../../../includes/header.php';
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        SÃ©lectionnez d'abord les candidatures dans la liste, puis dÃ©finissez les paramÃ¨tres communs.
+                        Sélectionnez d'abord les candidatures dans la liste, puis définissez les paramètres communs.
                     </div>
 
                     <div class="row">
@@ -516,7 +519,7 @@ include '../../../../includes/header.php';
                             <div class="mb-3">
                                 <label for="bulk_frais_scolarite" class="form-label">
                                     <i class="fas fa-coins me-1"></i>
-                                    Frais de scolaritÃ© (FC) *
+                                    Frais de scolarité (FC) *
                                 </label>
                                 <input type="number" class="form-control" id="bulk_frais_scolarite"
                                        name="bulk_frais_scolarite" min="0" step="1000" required>
@@ -525,7 +528,7 @@ include '../../../../includes/header.php';
                     </div>
 
                     <div id="selectedCandidatesCount" class="text-muted">
-                        Aucune candidature sÃ©lectionnÃ©e
+                        Aucune candidature sélectionnée
                     </div>
                 </div>
 
@@ -546,7 +549,7 @@ include '../../../../includes/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestion de la sÃ©lection multiple
+    // Gestion de la sélection multiple
     const selectAllCheckbox = document.getElementById('selectAll');
     const candidatureCheckboxes = document.querySelectorAll('.candidature-checkbox');
 
@@ -568,8 +571,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const countElement = document.getElementById('selectedCandidatesCount');
         if (countElement) {
             countElement.textContent = selectedCount > 0
-                ? `${selectedCount} candidature(s) sÃ©lectionnÃ©e(s)`
-                : 'Aucune candidature sÃ©lectionnÃ©e';
+                ? `${selectedCount} candidature(s) sélectionnée(s)`
+                : 'Aucune candidature sélectionnée';
         }
     }
 
@@ -599,15 +602,15 @@ document.addEventListener('DOMContentLoaded', function() {
 function openEnrollmentModal(candidatureId) {
     document.getElementById('modal_candidature_id').value = candidatureId;
 
-    // Charger les donnÃ©es de la candidature
+    // Charger les données de la candidature
     fetch(`get-candidature.php?id=${candidatureId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // PrÃ©-sÃ©lectionner la classe demandÃ©e
+                // Pré-sélectionner la classe demandée
                 document.getElementById('classe_finale_id').value = data.classe_demandee_id || '';
 
-                // PrÃ©-remplir les frais si disponibles
+                // Pré-remplir les frais si disponibles
                 document.getElementById('frais_inscription').value = data.frais_inscription || '';
                 document.getElementById('frais_scolarite').value = data.frais_scolarite || '';
                 document.getElementById('reduction_accordee').value = data.reduction_accordee || 0;
@@ -625,7 +628,7 @@ function submitBulkEnrollment() {
     const fraisScolarite = document.getElementById('bulk_frais_scolarite').value;
 
     if (selectedCheckboxes.length === 0) {
-        alert('Veuillez sÃ©lectionner au moins une candidature.');
+        alert('Veuillez sélectionner au moins une candidature.');
         return;
     }
 
@@ -634,11 +637,11 @@ function submitBulkEnrollment() {
         return;
     }
 
-    if (confirm(`ÃŠtes-vous sÃ»r de vouloir inscrire ${selectedCheckboxes.length} candidat(s) ? Cette action ne peut pas Ãªtre annulÃ©e.`)) {
+    if (confirm(`Êtes-vous sûr de vouloir inscrire ${selectedCheckboxes.length} candidat(s) ? Cette action ne peut pas être annulée.`)) {
         // Soumettre le formulaire avec les candidatures sÃ©lectionnÃ©es
         const form = document.getElementById('bulkEnrollmentForm');
 
-        // Ajouter les candidatures sÃ©lectionnÃ©es au formulaire
+        // Ajouter les candidatures sélectionnées au formulaire
         selectedCheckboxes.forEach(checkbox => {
             const input = document.createElement('input');
             input.type = 'hidden';

@@ -7,11 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-require_once '../../../includes/permissions-pages.php';
-requirePagePermissionFromDB('recouvrement', 'presences', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'presences/index', 'read', '../../../dashboard.php');
 
 $errors = [];
 
@@ -130,18 +131,22 @@ include '../../../includes/header.php';
         <span class="badge bg-secondary ms-2"><?php echo number_format($total ?? 0); ?></span>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('recouvrement', 'presences/scan', 'create')): ?>
         <div class="btn-group me-2">
             <a href="../scan-qr.php" class="btn btn-primary">
                 <i class="fas fa-qrcode me-1"></i>
                 Scanner QR
             </a>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('recouvrement', 'presences/export', 'read')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-success" onclick="exportData()">
                 <i class="fas fa-file-excel me-1"></i>
                 Exporter
             </button>
         </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="../index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>

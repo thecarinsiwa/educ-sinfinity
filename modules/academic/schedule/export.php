@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'schedule', 'read', '../../../dashboard.php', 'export');
+requirePagePermissionFromDB('academic', 'schedule/export', 'export', '../../../dashboard.php');
 
 // Récupérer l'année scolaire active
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active' LIMIT 1")->fetch();

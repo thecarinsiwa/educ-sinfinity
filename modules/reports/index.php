@@ -8,6 +8,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -136,12 +137,14 @@ include '../../includes/header.php';
                 <?php echo $current_year['annee'] ?? 'Aucune année active'; ?>
             </button>
         </div>
+        <?php if (hasPagePermissionFromDB('reports', 'exports/dashboard', 'read') || hasPagePermissionFromDB('reports', 'exports/custom', 'read')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-file-export me-1"></i>
                 Exporter
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('reports', 'exports/dashboard', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/dashboard.php?format=pdf">
                     <i class="fas fa-file-pdf me-2"></i>Tableau de bord PDF
                 </a></li>
@@ -149,28 +152,40 @@ include '../../includes/header.php';
                     <i class="fas fa-file-excel me-2"></i>Données Excel
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('reports', 'exports/custom', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/custom.php">
                     <i class="fas fa-cog me-2"></i>Export personnalisé
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('reports', 'settings/dashboard', 'update') || hasPagePermissionFromDB('reports', 'settings/reports', 'update') || hasPagePermissionFromDB('reports', 'settings/alerts', 'update')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-cog me-1"></i>
                 Paramètres
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('reports', 'settings/dashboard', 'update')): ?>
                 <li><a class="dropdown-item" href="settings/dashboard.php">
                     <i class="fas fa-tachometer-alt me-2"></i>Personnaliser tableau de bord
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('reports', 'settings/reports', 'update')): ?>
                 <li><a class="dropdown-item" href="settings/reports.php">
                     <i class="fas fa-file-alt me-2"></i>Configuration rapports
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('reports', 'settings/alerts', 'update')): ?>
                 <li><a class="dropdown-item" href="settings/alerts.php">
                     <i class="fas fa-bell me-2"></i>Alertes automatiques
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -244,6 +259,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('reports', 'academic/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="academic/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -257,7 +273,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('reports', 'financial/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="financial/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -271,7 +289,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('reports', 'administrative/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="administrative/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -285,7 +305,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('reports', 'custom/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="custom/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -299,6 +321,7 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

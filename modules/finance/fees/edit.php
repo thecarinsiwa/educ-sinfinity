@@ -17,7 +17,7 @@ function escapeHtml($string) {
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'edit', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/edit', 'edit', '../../dashboard.php');
 
 // Récupérer l'ID du frais
 $id = (int)($_GET['id'] ?? 0);

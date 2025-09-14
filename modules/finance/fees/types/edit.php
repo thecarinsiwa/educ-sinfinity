@@ -1,7 +1,7 @@
 ﻿<?php
 /**
- * Module de gestion financiÃ¨re - Modifier un type de frais
- * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
+ * Module de gestion financière - Modifier un type de frais
+ * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
@@ -12,19 +12,19 @@ require_once 'functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'edit', '../../../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/types/edit', 'edit', '../../../../dashboard.php');
 
 $page_title = 'Modifier un type de frais';
 
-// RÃ©cupÃ©rer l'ID du type de frais
+// Récupérer l'ID du type de frais
 $id = (int)($_GET['id'] ?? 0);
 
 if (!$id) {
-    showMessage('error', 'Type de frais non spÃ©cifiÃ©.');
+    showMessage('error', 'Type de frais non spécifié.');    
     redirectTo('index.php');
 }
 
-// RÃ©cupÃ©rer les informations du type de frais
+// Récupérer les informations du type de frais  
 $type_frais = $database->query(
     "SELECT tf.*, as_annee.annee, as_annee.date_debut, as_annee.date_fin
      FROM type_frais tf
@@ -34,11 +34,11 @@ $type_frais = $database->query(
 )->fetch();
 
 if (!$type_frais) {
-    showMessage('error', 'Type de frais non trouvÃ©.');
+    showMessage('error', 'Type de frais non trouvé.');
     redirectTo('index.php');
 }
 
-// VÃ©rifier si le type de frais est utilisÃ©
+// Vérifier si le type de frais est utilisé
 $usage_count = $database->query(
     "SELECT COUNT(*) as count FROM frais_scolaires WHERE type_frais_id = ? AND annee_scolaire_id = ?",
     [$type_frais['id'], $type_frais['annee_scolaire_id']]
@@ -49,7 +49,7 @@ $success = false;
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validation des donnÃ©es
+    // Validation des données
     $nom = cleanInputText(sanitizeInput($_POST['nom'] ?? ''));
     $description = cleanInputText(sanitizeInput($_POST['description'] ?? ''));
     $priorite = (int)($_POST['priorite'] ?? 10);
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Le nom du type de frais est obligatoire.';
     }
     
-    // VÃ©rifier que le nom n'existe pas dÃ©jÃ  pour cette annÃ©e scolaire (sauf pour le type actuel)
+    // Vérifier que le nom n'existe pas déjà pour cette année scolaire (sauf pour le type actuel)
     if (!empty($nom) && $nom !== $type_frais['nom']) {
         $existing = $database->query(
             "SELECT id FROM type_frais WHERE nom = ? AND annee_scolaire_id = ? AND id != ?",
@@ -68,26 +68,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )->fetch();
         
         if ($existing) {
-            $errors[] = 'Un type de frais avec ce nom existe dÃ©jÃ  pour cette annÃ©e scolaire.';
+            $errors[] = 'Un type de frais avec ce nom existe déjà pour cette année scolaire.';
         }
     }
     
-    // Si le type est utilisÃ©, on ne peut pas changer le nom
+    // Si le type est utilisé, on ne peut pas changer le nom
     if ($usage_count > 0 && $nom !== $type_frais['nom']) {
-        $errors[] = 'Impossible de modifier le nom car ce type de frais est dÃ©jÃ  utilisÃ© dans ' . $usage_count . ' configuration(s).';
+        $errors[] = 'Impossible de modifier le nom car ce type de frais est déjà utilisé dans ' . $usage_count . ' configuration(s).';
     }
     
     // Validation de la longueur
     if (strlen($nom) > 100) {
-        $errors[] = 'Le nom ne peut pas dÃ©passer 100 caractÃ¨res.';
+        $errors[] = 'Le nom ne peut pas dépasser 100 caractères.';
     }
     
-    // Validation de la prioritÃ©
+    // Validation de la priorité
     if ($priorite < 1 || $priorite > 100) {
-        $errors[] = 'La prioritÃ© doit Ãªtre comprise entre 1 et 100.';
+            $errors[] = 'La priorité doit être comprise entre 1 et 100.';
     }
     
-    // Si pas d'erreurs, mettre Ã  jour le type de frais
+    // Si pas d'erreurs, mettre à jour le type de frais
     if (empty($errors)) {
         try {
             $database->beginTransaction();
@@ -103,14 +103,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             
             // Note: Avec la nouvelle structure, les frais scolaires utilisent type_frais_id
-            // donc pas besoin de mettre Ã  jour les frais scolaires quand le nom change
+            // donc pas besoin de mettre à jour les frais scolaires quand le nom change
             
             // Enregistrer l'action dans les logs
-            logAction('type_frais_updated', "Type de frais modifiÃ©: {$nom}", $id);
+            logAction('type_frais_updated', "Type de frais modifié: {$nom}", $id);
             
             $database->commit();
             
-            showMessage('success', 'Type de frais modifiÃ© avec succÃ¨s !');
+            showMessage('success', 'Type de frais modifié avec succès !');
             redirectTo('index.php');
             
         } catch (Exception $e) {
@@ -138,7 +138,7 @@ include '../../../../includes/header.php';
         <div class="btn-group me-2">
             <span class="btn btn-outline-info">
                 <i class="fas fa-calendar me-1"></i>
-                AnnÃ©e: <?php echo htmlspecialchars($type_frais['annee'] ?? 'Non dÃ©finie'); ?>
+                Année: <?php echo htmlspecialchars($type_frais['annee'] ?? 'Non définie'); ?>
             </span>
         </div>
     </div>
@@ -146,7 +146,7 @@ include '../../../../includes/header.php';
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-danger">
-        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs dÃ©tectÃ©es :</h6>
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erreurs détectées :</h6>
         <ul class="mb-0">
             <?php foreach ($errors as $error): ?>
                 <li><?php echo htmlspecialchars($error); ?></li>
@@ -176,16 +176,16 @@ include '../../../../includes/header.php';
                                    class="form-control" 
                                    id="nom" 
                                    name="nom" 
-                                   placeholder="Ex: Inscription, MensualitÃ©, Examen..."
+                                   placeholder="Ex: Inscription, Mensualité, Examen..."
                                    value="<?php echo htmlspecialchars($_POST['nom'] ?? $type_frais['nom']); ?>"
                                    maxlength="100"
                                    required>
                             <div class="form-text">
-                                Nom unique pour cette annÃ©e scolaire (max 100 caractÃ¨res)
+                                Nom unique pour cette année scolaire (max 100 caractères)
                                 <?php if ($usage_count > 0): ?>
                                     <br><span class="text-warning">
                                         <i class="fas fa-exclamation-triangle me-1"></i>
-                                        Ce type est utilisÃ© dans <?php echo $usage_count; ?> configuration(s)
+                                        Ce type est utilisé dans <?php echo $usage_count; ?> configuration(s)
                                     </span>
                                 <?php endif; ?>
                             </div>
@@ -193,7 +193,7 @@ include '../../../../includes/header.php';
                         
                         <div class="col-md-3 mb-3">
                             <label for="priorite" class="form-label">
-                                PrioritÃ© <span class="text-danger">*</span>
+                                Priorité <span class="text-danger">*</span>
                             </label>
                             <input type="number" 
                                    class="form-control" 
@@ -204,7 +204,7 @@ include '../../../../includes/header.php';
                                    value="<?php echo htmlspecialchars($_POST['priorite'] ?? $type_frais['priorite']); ?>"
                                    required>
                             <div class="form-text">
-                                Plus le chiffre est bas, plus la prioritÃ© est haute (1 = prioritÃ© maximale)
+                                Plus le chiffre est bas, plus la priorité est haute (1 = priorité maximale)
                             </div>
                         </div>
                         
@@ -232,7 +232,7 @@ include '../../../../includes/header.php';
                                   id="description" 
                                   name="description" 
                                   rows="4" 
-                                  placeholder="Description dÃ©taillÃ©e du type de frais (optionnel)..."><?php echo prepareFormText($_POST['description'] ?? $type_frais['description']); ?></textarea>
+                                    placeholder="Description détaillée du type de frais (optionnel)..."><?php echo prepareFormText($_POST['description'] ?? $type_frais['description']); ?></textarea>
                         <div class="form-text">
                             Description optionnelle pour clarifier l'usage de ce type de frais
                         </div>
@@ -269,21 +269,21 @@ include '../../../../includes/header.php';
                         <td><?php echo $type_frais['id']; ?></td>
                     </tr>
                     <tr>
-                        <td class="fw-bold">CrÃ©Ã© le:</td>
+                        <td class="fw-bold">Créé le:</td>
                         <td><?php echo formatDate($type_frais['date_creation']); ?></td>
                     </tr>
                     <tr>
-                        <td class="fw-bold">DerniÃ¨re modification:</td>
+                        <td class="fw-bold">Dernière modification:</td>
                         <td>
                             <?php if ($type_frais['updated_at']): ?>
                                 <?php echo formatDate($type_frais['updated_at']); ?>
                             <?php else: ?>
-                                <span class="text-muted">Jamais modifiÃ©</span>
+                                <span class="text-muted">Jamais modifié</span>
                             <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
-                        <td class="fw-bold">UtilisÃ© dans:</td>
+                        <td class="fw-bold">Utilisé dans:</td>
                         <td>
                             <?php if ($usage_count > 0): ?>
                                 <span class="badge bg-info"><?php echo $usage_count; ?> configuration(s)</span>
@@ -308,14 +308,14 @@ include '../../../../includes/header.php';
                 <div class="alert alert-info">
                     <small>
                         <i class="fas fa-info-circle me-1"></i>
-                        <strong>Modification du nom :</strong> Si ce type de frais est dÃ©jÃ  utilisÃ©, le nom ne peut pas Ãªtre modifiÃ©.
+                        <strong>Modification du nom :</strong> Si ce type de frais est déjà utilisé, le nom ne peut pas être modifié.
                     </small>
                 </div>
                 
                 <div class="alert alert-warning">
                     <small>
                         <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>DÃ©sactivation :</strong> DÃ©sactiver un type de frais le rendra indisponible pour les nouvelles configurations.
+                        <strong>Désactivation :</strong> Désactiver un type de frais le rendra indisponible pour les nouvelles configurations.
                     </small>
                 </div>
             </div>
@@ -341,13 +341,13 @@ include '../../../../includes/header.php';
     }, false);
 })();
 
-// Compteur de caractÃ¨res pour le nom
+// Compteur de caractères pour le nom
 document.getElementById('nom').addEventListener('input', function() {
     const maxLength = 100;
     const currentLength = this.value.length;
     const remaining = maxLength - currentLength;
     
-    // CrÃ©er ou mettre Ã  jour l'indicateur
+    // Créer ou mettre à jour l'indicateur
     let indicator = document.getElementById('char-count');
     if (!indicator) {
         indicator = document.createElement('small');
@@ -362,7 +362,7 @@ document.getElementById('nom').addEventListener('input', function() {
         indicator.className = 'form-text text-muted';
     }
     
-    indicator.textContent = `${currentLength}/${maxLength} caractÃ¨res`;
+    indicator.textContent = `${currentLength}/${maxLength} caractères`;
 });
 </script>
 

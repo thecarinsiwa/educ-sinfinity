@@ -7,12 +7,17 @@
 require_once 'config/config.php';
 require_once 'config/database.php';
 require_once 'includes/functions.php';
+require_once 'includes/dashboard-router.php';
 require_once 'includes/permissions.php';
 require_once 'includes/sidebar-permissions.php';
 require_once 'includes/sidebar-url-fixer.php';
 
 // Vérifier l'authentification
 requireLogin();
+
+// Rediriger vers le dashboard approprié selon la nature de l'utilisateur
+$user_nature = $_SESSION['user_nature'] ?? 'staff';
+redirectToDashboard($user_nature);
 
 $page_title = 'Tableau de bord';
 

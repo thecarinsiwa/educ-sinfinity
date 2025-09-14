@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'books', 'create', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'books/import', 'create', '../../dashboard.php');
 
 $errors = [];
 $success_message = '';

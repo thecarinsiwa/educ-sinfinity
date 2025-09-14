@@ -12,7 +12,7 @@ require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'transfers/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Transferts et Sorties';
 
@@ -262,15 +262,21 @@ include '../../../includes/header.php';
                 Outils
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('students', 'transfers/reports', 'read')): ?>
                 <li><a class="dropdown-item" href="reports/transfers.php">
                     <i class="fas fa-chart-bar me-2"></i>Rapport des transferts
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('students', 'transfers/exports', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/movements.php">
                     <i class="fas fa-file-export me-2"></i>Exporter mouvements
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('students', 'transfers/certificates', 'create')): ?>
                 <li><a class="dropdown-item" href="certificates/generate.php">
                     <i class="fas fa-certificate me-2"></i>Certificats de scolarité
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>

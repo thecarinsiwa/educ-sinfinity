@@ -19,6 +19,9 @@
     
     <!-- Permissions UI CSS -->
     <link href="<?php echo APP_URL; ?>/assets/css/permissions-ui.css" rel="stylesheet">
+    
+    <!-- Settings CSS -->
+    <link href="<?php echo APP_URL; ?>/assets/css/settings.css" rel="stylesheet">
 
     <!-- Print CSS -->
     <link href="<?php echo APP_URL; ?>/assets/css/print.css" rel="stylesheet" media="print">

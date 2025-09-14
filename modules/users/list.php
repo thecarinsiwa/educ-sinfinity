@@ -8,10 +8,11 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'list', 'read', '../../dashboard.php');
+requirePagePermission('admin', 'users/list', 'read', '../../dashboard.php');
 
 $page_title = 'Liste des Utilisateurs';
 
@@ -85,7 +86,7 @@ include '../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('admin')): ?>
+        <?php if (hasPagePermissionFromDB('users', 'add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -93,19 +94,24 @@ include '../../includes/header.php';
                 </a>
             </div>
         <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('users', 'exports/users-list', 'read') || hasPagePermissionFromDB('users', 'exports/users-report', 'read') || hasPagePermissionFromDB('users', 'bulk-actions', 'update')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-tools me-1"></i>
                 Actions
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('users', 'exports/users-list', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/users-list.php?<?php echo http_build_query($_GET); ?>">
                     <i class="fas fa-file-excel me-2"></i>Exporter Excel
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('users', 'exports/users-report', 'read')): ?>
                 <li><a class="dropdown-item" href="exports/users-report.php?<?php echo http_build_query($_GET); ?>">
                     <i class="fas fa-file-pdf me-2"></i>Rapport PDF
                 </a></li>
-                <?php if (checkPagePermission('admin')): ?>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('users', 'bulk-actions', 'update')): ?>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="bulk-actions.php">
                         <i class="fas fa-tasks me-2"></i>Actions en masse
@@ -113,6 +119,7 @@ include '../../includes/header.php';
                 <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -271,49 +278,59 @@ include '../../includes/header.php';
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
+                                            <?php if (hasPagePermissionFromDB('users', 'view', 'read')): ?>
                                             <a href="view.php?id=<?php echo $user['id']; ?>" 
                                                class="btn btn-outline-info" title="Voir profil">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPagePermission('admin') || $user['id'] == $_SESSION['user_id']): ?>
+                                            <?php endif; ?>
+                                            <?php if ((hasPagePermissionFromDB('users', 'edit', 'update') && $user['id'] != $_SESSION['user_id']) || $user['id'] == $_SESSION['user_id']): ?>
                                                 <a href="edit.php?id=<?php echo $user['id']; ?>" 
                                                    class="btn btn-outline-primary" title="Modifier">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                             <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('users', 'history', 'read')): ?>
                                             <button type="button" class="btn btn-outline-secondary" 
                                                     onclick="showUserHistory(<?php echo $user['id']; ?>)" 
                                                     title="Historique">
                                                 <i class="fas fa-history"></i>
                                                 <span class="badge bg-secondary"><?php echo $user['nb_actions']; ?></span>
                                             </button>
-                                            <?php if (checkPagePermission('admin') && $user['id'] != $_SESSION['user_id']): ?>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('users', 'admin-actions', 'update') && $user['id'] != $_SESSION['user_id']): ?>
                                                 <div class="btn-group btn-group-sm">
                                                     <button type="button" class="btn btn-outline-warning dropdown-toggle" 
                                                             data-bs-toggle="dropdown" title="Actions">
                                                         <i class="fas fa-cog"></i>
                                                     </button>
                                                     <ul class="dropdown-menu">
+                                                        <?php if (hasPagePermissionFromDB('users', 'reset-password', 'update')): ?>
                                                         <li><a class="dropdown-item" href="#" 
                                                                onclick="resetPassword(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username']); ?>')">
                                                             <i class="fas fa-key me-2"></i>Réinitialiser mot de passe
                                                         </a></li>
+                                                        <?php endif; ?>
+                                                        <?php if (hasPagePermissionFromDB('users', 'toggle-status', 'update')): ?>
                                                         <li><a class="dropdown-item" href="#" 
                                                                onclick="toggleUserStatus(<?php echo $user['id']; ?>, '<?php echo $user['status']; ?>')">
                                                             <i class="fas fa-<?php echo $user['status'] === 'actif' ? 'ban' : 'check'; ?> me-2"></i>
                                                             <?php echo $user['status'] === 'actif' ? 'Désactiver' : 'Activer'; ?>
                                                         </a></li>
-                                                        <?php if ($user['compte_verrouille']): ?>
+                                                        <?php endif; ?>
+                                                        <?php if ($user['compte_verrouille'] && hasPagePermissionFromDB('users', 'unlock', 'update')): ?>
                                                             <li><a class="dropdown-item" href="#" 
                                                                    onclick="unlockUser(<?php echo $user['id']; ?>)">
                                                                 <i class="fas fa-unlock me-2"></i>Déverrouiller
                                                             </a></li>
                                                         <?php endif; ?>
                                                         <li><hr class="dropdown-divider"></li>
+                                                        <?php if (hasPagePermissionFromDB('users', 'delete', 'delete')): ?>
                                                         <li><a class="dropdown-item text-danger" href="#"
                                                                onclick="deleteUser(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username']); ?>')">
                                                             <i class="fas fa-trash me-2"></i>Supprimer
                                                         </a></li>
+                                                        <?php endif; ?>
                                                     </ul>
                                                 </div>
                                             <?php endif; ?>

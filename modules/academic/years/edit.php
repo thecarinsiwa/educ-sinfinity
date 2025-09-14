@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'years', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'years/edit', 'edit', '../../../dashboard.php');
 
 $page_title = 'Modifier une année scolaire';
 

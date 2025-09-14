@@ -12,7 +12,7 @@ require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('students', 'admissions', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Inscriptions et Admissions';
 

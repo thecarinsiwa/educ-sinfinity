@@ -8,6 +8,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -120,26 +121,34 @@ include '../../includes/header.php';
                 </button>
             </div>
         <?php endif; ?>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'payments/add', 'create') || hasPagePermissionFromDB('finance', 'fees/add', 'create') || hasPagePermissionFromDB('finance', 'expenses/add', 'create') || hasPagePermissionFromDB('finance', 'reports/generate', 'create')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('finance', 'payments/add', 'create')): ?>
                     <li><a class="dropdown-item" href="payments/add.php">
                         <i class="fas fa-money-bill me-2"></i>Enregistrer paiement
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('finance', 'fees/add', 'create')): ?>
                     <li><a class="dropdown-item" href="fees/add.php">
                         <i class="fas fa-tags me-2"></i>Configurer frais
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('finance', 'expenses/add', 'create')): ?>
                     <li><a class="dropdown-item" href="expenses/add.php">
                         <i class="fas fa-receipt me-2"></i>Nouvelle dépense
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('finance', 'reports/generate', 'create')): ?>
                     <li><a class="dropdown-item" href="reports/generate.php">
                         <i class="fas fa-chart-bar me-2"></i>Générer rapport
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
@@ -287,6 +296,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('finance', 'payments/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="payments/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -303,7 +313,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('finance', 'fees/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="fees/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -320,7 +332,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('finance', 'expenses/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="expenses/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -337,7 +351,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('finance', 'reports/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="reports/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -354,7 +370,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('finance', 'devises/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="devises/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -371,6 +389,7 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

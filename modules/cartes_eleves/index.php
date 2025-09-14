@@ -8,11 +8,12 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
+require_once dirname(__DIR__, 2) . '/includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('cartes_eleves', 'index', 'read', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/index', 'read', '../dashboard.php');
 
 $page_title = 'Cartes d\'Élèves';
 
@@ -139,7 +140,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('cartes_eleves', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('cartes_eleves', 'cartes_eleves/create', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="generate_card.php" class="btn btn-primary">
                     <i class="fas fa-id-card me-1"></i>
@@ -385,7 +386,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                                    title="Télécharger PDF">
                                                     <i class="fas fa-download"></i>
                                                 </a>
-                                                <?php if (checkPagePermission('cartes_eleves', 'edit')): ?>
+                                                <?php if (hasPagePermissionFromDB('cartes_eleves', 'cartes_eleves/edit', 'update')): ?>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
                                                                 data-bs-toggle="dropdown" title="Actions">
@@ -418,7 +419,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <p class="text-muted">
                             Aucune carte d'élève ne correspond aux critères de recherche.
                         </p>
-                        <?php if (checkPagePermission('cartes_eleves', 'create')): ?>
+                        <?php if (hasPagePermissionFromDB('cartes_eleves', 'cartes_eleves/create', 'create')): ?>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateCardsModal">
                                 <i class="fas fa-plus me-1"></i>
                                 Générer des cartes
@@ -545,7 +546,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPagePermission('cartes_eleves', 'create')): ?>
+<?php if (hasPagePermissionFromDB('cartes_eleves', 'cartes_eleves/create', 'create')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">

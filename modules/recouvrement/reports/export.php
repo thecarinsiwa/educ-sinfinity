@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'reports', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'reports/export', 'read', '../../../dashboard.php');
 
 // Obtenir l'annÃ©e scolaire actuelle
 $current_year = getCurrentAcademicYear();

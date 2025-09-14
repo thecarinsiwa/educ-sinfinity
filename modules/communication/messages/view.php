@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'messages', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/messages/view', 'read', '../../../dashboard.php');
 
 $message_id = intval($_GET['id'] ?? 0);
 

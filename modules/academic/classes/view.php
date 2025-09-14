@@ -108,7 +108,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour
             </a>
-            <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
+            <?php if (hasPagePermissionFromDB('academic', 'classes/edit', 'edit')): ?>
                 <a href="edit.php?id=<?php echo $classe['id']; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
                     Modifier
@@ -326,7 +326,7 @@ include '../../../includes/header.php';
                         <i class="fas fa-calendar-alt me-2"></i>
                         Emploi du temps
                     </h5>
-                    <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'timetables/edit', 'edit')): ?>
                         <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
                            class="btn btn-sm btn-warning">
                             <i class="fas fa-edit me-1"></i>
@@ -377,7 +377,7 @@ include '../../../includes/header.php';
                             <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">Aucun emploi du temps configuré</h6>
                             <p class="text-muted">L'emploi du temps de cette classe n'a pas encore été défini.</p>
-                            <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
+                            <?php if (hasPagePermissionFromDB('academic', 'timetables/add', 'create')): ?>
                                 <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
                                    class="btn btn-warning">
                                     <i class="fas fa-plus me-1"></i>
@@ -462,7 +462,7 @@ include '../../../includes/header.php';
                             </a>
                         <?php endif; ?>
                         
-                        <?php if (hasPagePermissionFromDB('academic', 'classes', 'update')): ?>
+                        <?php if (hasPagePermissionFromDB('academic', 'timetables/view', 'read')): ?>
                             <a href="../schedule/class.php?id=<?php echo $classe['id']; ?>" 
                                class="btn btn-outline-warning">
                                 <i class="fas fa-calendar me-2"></i>

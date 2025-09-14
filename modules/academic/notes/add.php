@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'notes', 'create', '../../../dashboard.php', 'add');
+requirePagePermissionFromDB('academic', 'notes/add', 'create', '../../../dashboard.php');
 
 $page_title = 'Ajouter une note';
 

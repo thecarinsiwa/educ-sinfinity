@@ -12,7 +12,7 @@ require_once '../../includes/permissions-pages.php';
 // Vérifier l'authentification
 requireLogin();
 
-requirePagePermissionFromDB('complementary', 'index', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('complementary', 'complementary/index', 'read', '../../dashboard.php');
 
 $page_title = 'Modules Complémentaires';
 

@@ -8,11 +8,12 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'records', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'records/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Dossiers Scolaires';
 
@@ -183,24 +184,32 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
+        <?php if (hasPagePermissionFromDB('students', 'records/export', 'read')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-file-export me-1"></i>
                 Exporter
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('students', 'records/export-pdf', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=complete&<?php echo http_build_query($_GET); ?>">
                     <i class="fas fa-file-pdf me-2"></i>Dossiers complets PDF
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('students', 'records/export-excel', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=list&<?php echo http_build_query($_GET); ?>">
                     <i class="fas fa-file-excel me-2"></i>Liste Excel
                 </a></li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
+                <?php if (hasPagePermissionFromDB('students', 'records/export-incomplete', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=incomplete">
                     <i class="fas fa-exclamation-triangle me-2"></i>Dossiers incomplets
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-tools me-1"></i>

@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Frais Scolaires';
 
@@ -146,23 +147,29 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'fees/add', 'create') || hasPagePermissionFromDB('finance', 'fees/bulk-add', 'create') || hasPagePermissionFromDB('finance', 'fees/templates', 'read')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('finance', 'fees/add', 'create')): ?>
                     <li><a class="dropdown-item" href="add.php">
                         <i class="fas fa-plus me-2"></i>Configurer frais
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('finance', 'fees/bulk-add', 'create')): ?>
                     <li><a class="dropdown-item" href="bulk-add.php">
                         <i class="fas fa-layer-group me-2"></i>Configuration en lot
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('finance', 'fees/templates', 'read')): ?>
                     <li><a class="dropdown-item" href="templates.php">
                         <i class="fas fa-copy me-2"></i>Modèles de frais
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
@@ -422,22 +429,28 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $frais_item['id']; ?>" 
                                            class="btn btn-outline-info" 
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPagePermission('finance')): ?>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/edit', 'update')): ?>
                                             <a href="edit.php?id=<?php echo $frais_item['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/duplicate', 'create')): ?>
                                             <a href="duplicate.php?id=<?php echo $frais_item['id']; ?>" 
                                                class="btn btn-outline-secondary" 
                                                title="Dupliquer">
                                                 <i class="fas fa-copy"></i>
                                             </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/delete', 'delete')): ?>
                                             <a href="delete.php?id=<?php echo $frais_item['id']; ?>" 
                                                class="btn btn-outline-danger" 
                                                title="Supprimer"

@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'edit', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/settings/criteria', 'edit', '../../../../dashboard.php');
 
 $page_title = 'CritÃ¨res d\'admission';
 

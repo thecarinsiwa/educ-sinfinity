@@ -13,7 +13,7 @@
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('admissions', 'index', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Admissions';
 
@@ -44,10 +44,12 @@ include '../../includes/header.php';
         Gestion des Admissions
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('students', 'admissions/add', 'create')): ?>
         <a href="../students/add.php" class="btn btn-primary">
             <i class="fas fa-user-plus me-1"></i>
             Nouvelle Demande
         </a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -138,30 +140,38 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/list', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="applications/list.php" class="btn btn-outline-primary w-100">
                             <i class="fas fa-list me-2"></i>
                             Voir Toutes les Demandes
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/pending', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="applications/pending.php" class="btn btn-outline-warning w-100">
                             <i class="fas fa-clock me-2"></i>
                             Demandes en Attente
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'evaluations/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="evaluations/index.php" class="btn btn-outline-info w-100">
                             <i class="fas fa-clipboard-check me-2"></i>
                             Évaluations
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('reports', 'reports/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="reports/index.php" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-chart-bar me-2"></i>
                             Rapports
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -251,16 +261,20 @@ include '../../includes/header.php';
                                             <?php echo date('d/m/Y', strtotime($app['created_at'])); ?>
                                         </td>
                                         <td>
+                                            <?php if (hasPagePermissionFromDB('students', 'admissions/view', 'read')): ?>
                                             <a href="applications/view.php?id=<?php echo $app['id']; ?>" 
                                                class="btn btn-sm btn-outline-primary" 
                                                title="Voir les détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('students', 'admissions/edit', 'update')): ?>
                                             <a href="applications/edit.php?id=<?php echo $app['id']; ?>" 
                                                class="btn btn-sm btn-outline-warning" 
                                                title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'notes', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'notes/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des notes';
 
@@ -145,20 +146,26 @@ include '../../../includes/header.php';
                 Rapports
             </a>
         </div>
-        <?php if (checkPagePermission('evaluations')): ?>
+        <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/add', 'create') || hasPagePermissionFromDB('evaluations', 'notes/batch-entry', 'create') || hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create')): ?>
             <div class="btn-group">
+                <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/add', 'create')): ?>
                 <a href="../evaluations/add.php" class="btn btn-success">
                     <i class="fas fa-plus me-1"></i>
                     Nouvelle évaluation
                 </a>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('evaluations', 'notes/batch-entry', 'create')): ?>
                 <a href="batch-entry.php" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
                     Saisie en lot
                 </a>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create')): ?>
                 <a href="../bulletins/generate.php" class="btn btn-warning">
                     <i class="fas fa-file-alt me-1"></i>
                     Bulletins
                 </a>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
@@ -411,16 +418,20 @@ include '../../../includes/header.php';
                             </div>
                             <div class="card-footer bg-transparent">
                                 <div class="btn-group w-100" role="group">
+                                    <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/view', 'read')): ?>
                                     <a href="../evaluations/view.php?id=<?php echo $evaluation['id']; ?>" 
                                        class="btn btn-outline-info btn-sm">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php if (checkPagePermission('evaluations')): ?>
+                                    <?php endif; ?>
+                                    <?php if (hasPagePermissionFromDB('evaluations', 'notes/entry', 'create')): ?>
                                         <a href="entry.php?evaluation_id=<?php echo $evaluation['id']; ?>" 
                                            class="btn btn-outline-success btn-sm">
                                             <i class="fas fa-edit"></i>
                                             Notes
                                         </a>
+                                    <?php endif; ?>
+                                    <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/edit', 'update')): ?>
                                         <a href="../evaluations/edit.php?id=<?php echo $evaluation['id']; ?>" 
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-pen"></i>
@@ -504,11 +515,13 @@ include '../../../includes/header.php';
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
+                                            <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/view', 'read')): ?>
                                             <a href="../evaluations/view.php?id=<?php echo $evaluation['id']; ?>" 
                                                class="btn btn-outline-info" title="Voir">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPagePermission('evaluations')): ?>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('evaluations', 'notes/entry', 'create')): ?>
                                                 <a href="entry.php?evaluation_id=<?php echo $evaluation['id']; ?>" 
                                                    class="btn btn-outline-success" title="Saisir notes">
                                                     <i class="fas fa-edit"></i>

@@ -11,7 +11,7 @@ require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('reports', 'academic', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('reports', 'academic/bulletins/generate-all', 'read', '../../../../dashboard.php');
 
 $page_title = 'GÃ©nÃ©ration des bulletins';
 $current_year = getCurrentAcademicYear();

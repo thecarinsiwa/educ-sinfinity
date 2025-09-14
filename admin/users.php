@@ -16,11 +16,13 @@ if (!checkUserPermission('users', 'read') && !checkPermission('admin')) {
     redirectTo('../dashboard.php');
 }
 
-$page_title = 'Administration - Gestion des Utilisateurs';
-
 // Récupérer l'ID utilisateur pour l'édition si spécifié
 $edit_user_id = (int)($_GET['edit'] ?? 0);
+$add_user = isset($_GET['add']);
 $edit_user = null;
+
+$page_title = $add_user ? 'Administration - Ajouter un Utilisateur' : 
+              ($edit_user_id ? 'Administration - Modifier l\'Utilisateur' : 'Administration - Gestion des Utilisateurs');
 
 if ($edit_user_id) {
     $edit_user = $database->query(
@@ -53,8 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $prenom = sanitizeInput($_POST['prenom'] ?? '');
                 $email = sanitizeInput($_POST['email'] ?? '');
                 $role = sanitizeInput($_POST['role'] ?? '');
+                $nature = sanitizeInput($_POST['nature'] ?? 'staff');
+                $telephone = sanitizeInput($_POST['telephone'] ?? '');
+                $adresse = sanitizeInput($_POST['adresse'] ?? '');
+                $genre = sanitizeInput($_POST['genre'] ?? '');
+                $date_naissance = sanitizeInput($_POST['date_naissance'] ?? '');
                 
-                if (!$username || !$password || !$nom || !$prenom || !$role) {
+                if (!$username || !$password || !$nom || !$prenom || !$role || !$nature) {
                     throw new Exception('Tous les champs obligatoires doivent être remplis');
                 }
                 
@@ -79,10 +86,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Créer l'utilisateur
                 $password_hash = hashPassword($password);
                 
+                // Convertir la date de naissance si fournie
+                $date_naissance_formatted = null;
+                if ($date_naissance) {
+                    $date_naissance_formatted = date('Y-m-d', strtotime($date_naissance));
+                }
+                
                 $database->execute(
-                    "INSERT INTO users (username, password, nom, prenom, email, role_id, status) 
-                     VALUES (?, ?, ?, ?, ?, ?, 'actif')",
-                    [$username, $password_hash, $nom, $prenom, $email, $role_data['id']]
+                    "INSERT INTO users (username, password, nom, prenom, email, role_id, nature, telephone, adresse, genre, date_naissance, status) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'actif')",
+                    [$username, $password_hash, $nom, $prenom, $email, $role_data['id'], $nature, $telephone, $adresse, $genre, $date_naissance_formatted]
                 );
                 
                 $user_id = $database->lastInsertId();
@@ -98,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 showMessage('success', 'Utilisateur créé avec succès');
+                redirectTo('users.php');
                 break;
                 
             case 'update_user':
@@ -107,9 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $prenom = sanitizeInput($_POST['prenom'] ?? '');
                 $email = sanitizeInput($_POST['email'] ?? '');
                 $role = sanitizeInput($_POST['role'] ?? '');
+                $nature = sanitizeInput($_POST['nature'] ?? 'staff');
                 $status = sanitizeInput($_POST['status'] ?? '');
+                $telephone = sanitizeInput($_POST['telephone'] ?? '');
+                $adresse = sanitizeInput($_POST['adresse'] ?? '');
+                $genre = sanitizeInput($_POST['genre'] ?? '');
+                $date_naissance = sanitizeInput($_POST['date_naissance'] ?? '');
                 
-                if (!$user_id || !$username || !$nom || !$prenom || !$role || !$status) {
+                if (!$user_id || !$username || !$nom || !$prenom || !$role || !$status || !$nature) {
                     throw new Exception('Tous les champs obligatoires doivent être remplis');
                 }
                 
@@ -137,10 +156,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception('Rôle invalide');
                 }
                 
+                // Convertir la date de naissance si fournie
+                $date_naissance_formatted = null;
+                if ($date_naissance) {
+                    $date_naissance_formatted = date('Y-m-d', strtotime($date_naissance));
+                }
+                
                 // Mettre à jour l'utilisateur
                 $database->execute(
-                    "UPDATE users SET username = ?, nom = ?, prenom = ?, email = ?, role_id = ?, status = ? WHERE id = ?",
-                    [$username, $nom, $prenom, $email, $role_data['id'], $status, $user_id]
+                    "UPDATE users SET username = ?, nom = ?, prenom = ?, email = ?, role_id = ?, nature = ?, telephone = ?, adresse = ?, genre = ?, date_naissance = ?, status = ? WHERE id = ?",
+                    [$username, $nom, $prenom, $email, $role_data['id'], $nature, $telephone, $adresse, $genre, $date_naissance_formatted, $status, $user_id]
                 );
                 
                 // Enregistrer l'action
@@ -302,6 +327,13 @@ $stats['total_users'] = count($users);
 $stats['active_users'] = count(array_filter($users, function($u) { return $u['status'] === 'actif'; }));
 $stats['inactive_users'] = $stats['total_users'] - $stats['active_users'];
 
+// Statistiques par nature
+$stats['admin_users'] = count(array_filter($users, function($u) { return $u['nature'] === 'admin'; }));
+$stats['teacher_users'] = count(array_filter($users, function($u) { return $u['nature'] === 'teacher'; }));
+$stats['student_users'] = count(array_filter($users, function($u) { return $u['nature'] === 'student'; }));
+$stats['parent_users'] = count(array_filter($users, function($u) { return $u['nature'] === 'parent'; }));
+$stats['staff_users'] = count(array_filter($users, function($u) { return $u['nature'] === 'staff'; }));
+
 // Utilisateurs connectés récemment (dernières 24h)
 $recent_logins = $database->query(
     "SELECT COUNT(*) as total FROM users WHERE derniere_connexion >= DATE_SUB(NOW(), INTERVAL 24 HOUR)"
@@ -315,10 +347,18 @@ include '../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-users-cog me-2"></i>
-        <?php echo $edit_user ? 'Modifier l\'utilisateur' : 'Gestion des Utilisateurs'; ?>
+        <?php 
+        if ($add_user) {
+            echo 'Ajouter un Utilisateur';
+        } elseif ($edit_user) {
+            echo 'Modifier l\'utilisateur';
+        } else {
+            echo 'Gestion des Utilisateurs';
+        }
+        ?>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <?php if ($edit_user): ?>
+        <?php if ($edit_user || $add_user): ?>
             <div class="btn-group me-2">
                 <a href="users.php" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i>
@@ -327,10 +367,10 @@ include '../includes/header.php';
             </div>
         <?php else: ?>
             <div class="btn-group me-2">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                <a href="users.php?add" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
                     Nouvel utilisateur
-                </button>
+                </a>
                 <a href="roles.php" class="btn btn-outline-primary">
                     <i class="fas fa-user-tag me-1"></i>
                     Gérer les rôles
@@ -444,12 +484,62 @@ include '../includes/header.php';
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
+                                <label for="nature" class="form-label">Nature d'utilisateur <span class="text-danger">*</span></label>
+                                <select class="form-select" id="nature" name="nature" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="admin" <?php echo ($edit_user['nature'] ?? '') === 'admin' ? 'selected' : ''; ?>>Administrateur</option>
+                                    <option value="teacher" <?php echo ($edit_user['nature'] ?? '') === 'teacher' ? 'selected' : ''; ?>>Enseignant</option>
+                                    <option value="student" <?php echo ($edit_user['nature'] ?? '') === 'student' ? 'selected' : ''; ?>>Élève</option>
+                                    <option value="parent" <?php echo ($edit_user['nature'] ?? '') === 'parent' ? 'selected' : ''; ?>>Parent</option>
+                                    <option value="staff" <?php echo ($edit_user['nature'] ?? '') === 'staff' ? 'selected' : ''; ?>>Personnel</option>
+                                </select>
+                                <small class="form-text text-muted">Détermine le dashboard de l'utilisateur</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="telephone" class="form-label">Téléphone</label>
+                                <input type="tel"
+                                       class="form-control"
+                                       id="telephone"
+                                       name="telephone"
+                                       value="<?php echo htmlspecialchars($edit_user['telephone'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="genre" class="form-label">Genre</label>
+                                <select class="form-select" id="genre" name="genre">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="M" <?php echo ($edit_user['genre'] ?? '') === 'M' ? 'selected' : ''; ?>>Masculin</option>
+                                    <option value="F" <?php echo ($edit_user['genre'] ?? '') === 'F' ? 'selected' : ''; ?>>Féminin</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_naissance" class="form-label">Date de naissance</label>
+                                <input type="date"
+                                       class="form-control"
+                                       id="date_naissance"
+                                       name="date_naissance"
+                                       value="<?php echo $edit_user['date_naissance'] ?? ''; ?>">
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label for="status" class="form-label">Statut <span class="text-danger">*</span></label>
                                 <select class="form-select" id="status" name="status" required>
                                     <option value="actif" <?php echo $edit_user['status'] === 'actif' ? 'selected' : ''; ?>>Actif</option>
                                     <option value="inactif" <?php echo $edit_user['status'] === 'inactif' ? 'selected' : ''; ?>>Inactif</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="adresse" class="form-label">Adresse</label>
+                            <textarea class="form-control"
+                                      id="adresse"
+                                      name="adresse"
+                                      rows="3"><?php echo htmlspecialchars($edit_user['adresse'] ?? ''); ?></textarea>
                         </div>
 
                         <div class="d-flex justify-content-between">
@@ -494,6 +584,35 @@ include '../includes/header.php';
                             <td><?php echo formatDateTime($edit_user['derniere_connexion']); ?></td>
                         </tr>
                         <?php endif; ?>
+                        <?php if ($edit_user['nature']): ?>
+                        <tr>
+                            <td class="fw-bold">Nature d'utilisateur :</td>
+                            <td>
+                                <?php
+                                $nature_colors = [
+                                    'admin' => 'danger',
+                                    'teacher' => 'primary',
+                                    'student' => 'success',
+                                    'parent' => 'info',
+                                    'staff' => 'warning'
+                                ];
+                                $nature_color = $nature_colors[$edit_user['nature']] ?? 'secondary';
+                                $nature_labels = [
+                                    'admin' => 'Administrateur',
+                                    'teacher' => 'Enseignant',
+                                    'student' => 'Élève',
+                                    'parent' => 'Parent',
+                                    'staff' => 'Personnel'
+                                ];
+                                $nature_label = $nature_labels[$edit_user['nature']] ?? ucfirst($edit_user['nature']);
+                                ?>
+                                <span class="badge bg-<?php echo $nature_color; ?>">
+                                    <?php echo $nature_label; ?>
+                                </span>
+                                <br><small class="text-muted">Dashboard: <?php echo ucfirst($edit_user['nature']); ?></small>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
                         <?php if ($edit_user['matricule']): ?>
                         <tr>
                             <td class="fw-bold">Personnel associé :</td>
@@ -501,6 +620,26 @@ include '../includes/header.php';
                                 <a href="../modules/personnel/view.php?id=<?php echo $edit_user['id']; ?>" class="text-decoration-none">
                                     <?php echo htmlspecialchars($edit_user['matricule']); ?>
                                     <br><small class="text-muted"><?php echo ucfirst($edit_user['fonction']); ?></small>
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if ($edit_user['telephone']): ?>
+                        <tr>
+                            <td class="fw-bold">Téléphone :</td>
+                            <td>
+                                <a href="tel:<?php echo $edit_user['telephone']; ?>" class="text-decoration-none">
+                                    <?php echo htmlspecialchars($edit_user['telephone']); ?>
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if ($edit_user['email']): ?>
+                        <tr>
+                            <td class="fw-bold">Email :</td>
+                            <td>
+                                <a href="mailto:<?php echo $edit_user['email']; ?>" class="text-decoration-none">
+                                    <?php echo htmlspecialchars($edit_user['email']); ?>
                                 </a>
                             </td>
                         </tr>
@@ -519,6 +658,12 @@ include '../includes/header.php';
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
+                        <?php if ($edit_user['nature']): ?>
+                        <a href="../dashboards/<?php echo $edit_user['nature']; ?>.php" class="btn btn-outline-info btn-sm" target="_blank">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Voir le dashboard
+                        </a>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-outline-warning btn-sm" onclick="changePassword(<?php echo $edit_user['id']; ?>, '<?php echo htmlspecialchars($edit_user['username']); ?>')">
                             <i class="fas fa-key me-1"></i>
                             Changer le mot de passe
@@ -543,10 +688,230 @@ include '../includes/header.php';
         </div>
     </div>
 
+<?php elseif ($add_user): ?>
+    <!-- Page d'ajout d'utilisateur -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Créer un nouvel utilisateur
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="action" value="create_user">
+
+                        <!-- Informations de base -->
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-user me-2"></i>
+                            Informations de base
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="username"
+                                       name="username"
+                                       required
+                                       placeholder="Ex: john.doe">
+                                <div class="form-text">Utilisé pour la connexion au système</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password"
+                                           class="form-control"
+                                           id="password"
+                                           name="password"
+                                           required
+                                           minlength="6">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye" id="password-icon"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Minimum 6 caractères</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="nom"
+                                       name="nom"
+                                       required
+                                       placeholder="Ex: Doe">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="prenom"
+                                       name="prenom"
+                                       required
+                                       placeholder="Ex: John">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email"
+                                       class="form-control"
+                                       id="email"
+                                       name="email"
+                                       placeholder="Ex: john.doe@example.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="telephone" class="form-label">Téléphone</label>
+                                <input type="tel"
+                                       class="form-control"
+                                       id="telephone"
+                                       name="telephone"
+                                       placeholder="Ex: +243 XXX XXX XXX">
+                            </div>
+                        </div>
+
+                        <!-- Rôle et Nature -->
+                        <h6 class="text-primary mb-3 mt-4">
+                            <i class="fas fa-user-tag me-2"></i>
+                            Rôle et Nature
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="">Sélectionner un rôle...</option>
+                                    <?php
+                                    $roles = $database->query("SELECT * FROM roles WHERE actif = 1 ORDER BY nom")->fetchAll();
+                                    foreach ($roles as $role): ?>
+                                        <option value="<?php echo $role['nom']; ?>">
+                                            <?php echo ucfirst($role['nom']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="nature" class="form-label">Nature d'utilisateur <span class="text-danger">*</span></label>
+                                <select class="form-select" id="nature" name="nature" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="admin">Administrateur</option>
+                                    <option value="teacher">Enseignant</option>
+                                    <option value="student">Élève</option>
+                                    <option value="parent">Parent</option>
+                                    <option value="staff">Personnel</option>
+                                </select>
+                                <div class="form-text">Détermine le dashboard de l'utilisateur</div>
+                            </div>
+                        </div>
+
+                        <!-- Informations personnelles -->
+                        <h6 class="text-primary mb-3 mt-4">
+                            <i class="fas fa-id-card me-2"></i>
+                            Informations personnelles
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="genre" class="form-label">Genre</label>
+                                <select class="form-select" id="genre" name="genre">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="M">Masculin</option>
+                                    <option value="F">Féminin</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="date_naissance" class="form-label">Date de naissance</label>
+                                <input type="date"
+                                       class="form-control"
+                                       id="date_naissance"
+                                       name="date_naissance">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="adresse" class="form-label">Adresse</label>
+                            <textarea class="form-control"
+                                      id="adresse"
+                                      name="adresse"
+                                      rows="3"
+                                      placeholder="Adresse complète de l'utilisateur"></textarea>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="users.php" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                Créer l'utilisateur
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Guide d'aide -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Guide d'aide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">Nature vs Rôle</h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Nature :</strong> Détermine le dashboard</li>
+                        <li><strong>Rôle :</strong> Détermine les permissions</li>
+                    </ul>
+                    
+                    <h6 class="text-primary mt-3">Suggestions de cohérence :</h6>
+                    <ul class="list-unstyled small">
+                        <li><span class="badge bg-danger">Admin</span> → Rôles: admin, directeur</li>
+                        <li><span class="badge bg-primary">Enseignant</span> → Rôle: enseignant</li>
+                        <li><span class="badge bg-success">Élève</span> → Rôle: élève</li>
+                        <li><span class="badge bg-info">Parent</span> → Rôle: parent</li>
+                        <li><span class="badge bg-warning">Personnel</span> → Rôles: secrétaire, comptable</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Statistiques rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Statistiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 class="text-primary mb-0"><?php echo $stats['total_users']; ?></h5>
+                            <small class="text-muted">Total</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success mb-0"><?php echo $stats['active_users']; ?></h5>
+                            <small class="text-muted">Actifs</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <?php else: ?>
     <!-- Vue principale - Liste des utilisateurs -->
 
-    <!-- Statistiques -->
+    <!-- Statistiques générales -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card text-center">
@@ -586,6 +951,64 @@ include '../includes/header.php';
         </div>
     </div>
 
+    <!-- Statistiques par nature -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-shield fa-2x text-danger mb-2"></i>
+                    <h5 class="mb-0"><?php echo $stats['admin_users']; ?></h5>
+                    <small class="text-muted">Administrateurs</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chalkboard-teacher fa-2x text-primary mb-2"></i>
+                    <h5 class="mb-0"><?php echo $stats['teacher_users']; ?></h5>
+                    <small class="text-muted">Enseignants</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-graduate fa-2x text-success mb-2"></i>
+                    <h5 class="mb-0"><?php echo $stats['student_users']; ?></h5>
+                    <small class="text-muted">Élèves</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-info mb-2"></i>
+                    <h5 class="mb-0"><?php echo $stats['parent_users']; ?></h5>
+                    <small class="text-muted">Parents</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-briefcase fa-2x text-warning mb-2"></i>
+                    <h5 class="mb-0"><?php echo $stats['staff_users']; ?></h5>
+                    <small class="text-muted">Personnel</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-tachometer-alt fa-2x text-secondary mb-2"></i>
+                    <h5 class="mb-0"><?php echo $stats['total_users']; ?></h5>
+                    <small class="text-muted">Total</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Liste des utilisateurs -->
     <div class="card">
         <div class="card-header">
@@ -604,6 +1027,7 @@ include '../includes/header.php';
                                 <th>Nom complet</th>
                                 <th>Email</th>
                                 <th>Rôle</th>
+                                <th>Nature</th>
                                 <th>Personnel</th>
                                 <th>Statut</th>
                                 <th>Dernière connexion</th>
@@ -646,6 +1070,29 @@ include '../includes/header.php';
                                         </span>
                                     </td>
                                     <td>
+                                        <?php
+                                        $nature_colors = [
+                                            'admin' => 'danger',
+                                            'teacher' => 'primary',
+                                            'student' => 'success',
+                                            'parent' => 'info',
+                                            'staff' => 'warning'
+                                        ];
+                                        $nature_color = $nature_colors[$user['nature']] ?? 'secondary';
+                                        $nature_labels = [
+                                            'admin' => 'Admin',
+                                            'teacher' => 'Enseignant',
+                                            'student' => 'Élève',
+                                            'parent' => 'Parent',
+                                            'staff' => 'Personnel'
+                                        ];
+                                        $nature_label = $nature_labels[$user['nature']] ?? ucfirst($user['nature']);
+                                        ?>
+                                        <span class="badge bg-<?php echo $nature_color; ?>">
+                                            <?php echo $nature_label; ?>
+                                        </span>
+                                    </td>
+                                    <td>
                                         <?php if ($user['matricule']): ?>
                                             <a href="../modules/personnel/view.php?id=<?php echo $user['id']; ?>" class="text-decoration-none">
                                                 <?php echo htmlspecialchars($user['matricule']); ?>
@@ -674,6 +1121,14 @@ include '../includes/header.php';
                                                title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <?php if ($user['nature']): ?>
+                                            <a href="../dashboards/<?php echo $user['nature']; ?>.php"
+                                               class="btn btn-outline-info"
+                                               title="Voir le dashboard"
+                                               target="_blank">
+                                                <i class="fas fa-tachometer-alt"></i>
+                                            </a>
+                                            <?php endif; ?>
                                             <button type="button"
                                                     class="btn btn-outline-warning"
                                                     onclick="changePassword(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username']); ?>')"
@@ -710,84 +1165,16 @@ include '../includes/header.php';
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Aucun utilisateur trouvé</h5>
                     <p class="text-muted">Commencez par créer le premier utilisateur.</p>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    <a href="users.php?add" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Créer un utilisateur
-                    </button>
+                    </a>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>
 
-<!-- Modal de création d'utilisateur -->
-<div class="modal fade" id="createUserModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-user-plus me-2"></i>
-                    Créer un nouvel utilisateur
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <input type="hidden" name="action" value="create_user">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="new_username" class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="new_username" name="username" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="new_password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="new_password" name="password" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="new_nom" class="form-label">Nom <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="new_nom" name="nom" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="new_prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="new_prenom" name="prenom" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="new_email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="new_email" name="email">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="new_role" class="form-label">Rôle <span class="text-danger">*</span></label>
-                            <select class="form-select" id="new_role" name="role" required>
-                                <option value="">Sélectionner...</option>
-                                <?php
-                                $roles = $database->query("SELECT * FROM roles WHERE actif = 1 ORDER BY nom")->fetchAll();
-                                foreach ($roles as $role): ?>
-                                    <option value="<?php echo $role['nom']; ?>">
-                                        <?php echo ucfirst($role['nom']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>
-                        Annuler
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>
-                        Créer l'utilisateur
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Modal de changement de mot de passe -->
 <div class="modal fade" id="passwordModal" tabindex="-1">
@@ -854,21 +1241,96 @@ function exportUsers() {
     alert('Fonctionnalité d\'export à implémenter');
 }
 
-// Validation du formulaire de création
-document.getElementById('new_password').addEventListener('input', function() {
-    if (this.value.length > 0 && this.value.length < 6) {
-        this.setCustomValidity('Le mot de passe doit contenir au moins 6 caractères.');
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId + '-icon');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
     } else {
-        this.setCustomValidity('');
+        field.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
     }
-});
+}
 
-// Validation du changement de mot de passe
-document.getElementById('new_password_field').addEventListener('input', function() {
-    if (this.value.length > 0 && this.value.length < 6) {
-        this.setCustomValidity('Le mot de passe doit contenir au moins 6 caractères.');
-    } else {
-        this.setCustomValidity('');
+// Validation du formulaire de création (si l'élément existe)
+const newPasswordField = document.getElementById('new_password');
+if (newPasswordField) {
+    newPasswordField.addEventListener('input', function() {
+        if (this.value.length > 0 && this.value.length < 6) {
+            this.setCustomValidity('Le mot de passe doit contenir au moins 6 caractères.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+}
+
+// Validation du formulaire de création sur la page dédiée
+const passwordField = document.getElementById('password');
+if (passwordField) {
+    passwordField.addEventListener('input', function() {
+        if (this.value.length > 0 && this.value.length < 6) {
+            this.setCustomValidity('Le mot de passe doit contenir au moins 6 caractères.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+}
+
+
+// Validation cohérence nature/rôle
+function validateNatureRole() {
+    const nature = document.getElementById('nature') || document.getElementById('new_nature');
+    const role = document.getElementById('role') || document.getElementById('new_role');
+    
+    if (nature && role) {
+        const natureValue = nature.value;
+        const roleValue = role.value;
+        
+        // Suggestions de cohérence
+        const suggestions = {
+            'admin': ['admin', 'directeur'],
+            'teacher': ['enseignant'],
+            'student': ['eleve'],
+            'parent': ['parent'],
+            'staff': ['secretaire', 'comptable', 'surveillant']
+        };
+        
+        if (natureValue && roleValue && suggestions[natureValue]) {
+            const compatibleRoles = suggestions[natureValue];
+            if (!compatibleRoles.includes(roleValue.toLowerCase())) {
+                // Afficher un avertissement mais ne pas bloquer
+                console.log('Attention: La nature "' + natureValue + '" est généralement associée aux rôles: ' + compatibleRoles.join(', '));
+            }
+        }
+    }
+}
+
+// Ajouter les event listeners si les éléments existent
+document.addEventListener('DOMContentLoaded', function() {
+    const natureSelect = document.getElementById('nature') || document.getElementById('new_nature');
+    const roleSelect = document.getElementById('role') || document.getElementById('new_role');
+    
+    if (natureSelect) {
+        natureSelect.addEventListener('change', validateNatureRole);
+    }
+    if (roleSelect) {
+        roleSelect.addEventListener('change', validateNatureRole);
+    }
+    
+    // Validation du changement de mot de passe (si l'élément existe)
+    const newPasswordField = document.getElementById('new_password_field');
+    if (newPasswordField) {
+        newPasswordField.addEventListener('input', function() {
+            if (this.value.length > 0 && this.value.length < 6) {
+                this.setCustomValidity('Le mot de passe doit contenir au moins 6 caractères.');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
     }
 });
 </script>

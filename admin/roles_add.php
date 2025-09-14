@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Page simple
                         $page_key = $page_parts[0];
                         if (!isset($permissions_organized[$module]['pages'][$page_key])) {
-                            $page_name = ucwords(str_replace(['_', '-'], [' ', ' '], $page_key));
+                            $page_name = translatePageName($page_key);
                             $permissions_organized[$module]['pages'][$page_key] = [
                                 'name' => $page_name,
                                 'permissions' => []
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $sub_page = $page_parts[1];
                         
                         if (!isset($permissions_organized[$module]['pages'][$parent_page])) {
-                            $parent_name = ucwords(str_replace(['_', '-'], [' ', ' '], $parent_page));
+                            $parent_name = translatePageName($parent_page);
                             $permissions_organized[$module]['pages'][$parent_page] = [
                                 'name' => $parent_name,
                                 'pages' => []
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         
                         if (!isset($permissions_organized[$module]['pages'][$parent_page]['pages'][$sub_page])) {
-                            $sub_name = ucwords(str_replace(['_', '-'], [' ', ' '], $sub_page));
+                            $sub_name = translatePageName($sub_page);
                             $permissions_organized[$module]['pages'][$parent_page]['pages'][$sub_page] = [
                                 'name' => $sub_name,
                                 'permissions' => []
@@ -294,9 +294,9 @@ include '../includes/header.php';
                                                     <div class="col-lg-4 col-md-6 mb-3">
                                                         <div class="card border-light">
                                                             <div class="card-header bg-light">
-                                                                <h6 class="mb-0 text-truncate" title="<?php echo ucwords(str_replace(['/', '_', '-'], [' ', ' ', ' '], $page_key)); ?>">
+                                                                <h6 class="mb-0 text-truncate" title="<?php echo translatePageName($page_key); ?>">
                                                                     <i class="fas fa-file-alt me-1"></i>
-                                                                    <?php echo ucwords(str_replace(['/', '_', '-'], [' ', ' ', ' '], $page_key)); ?>
+                                                                    <?php echo translatePageName($page_key); ?>
                                                                 </h6>
                                                             </div>
                                                             <div class="card-body p-2">

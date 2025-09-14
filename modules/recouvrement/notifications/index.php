@@ -7,11 +7,12 @@
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
-require_once '../../includes/permissions-pages.php';
+require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'notifications', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'notifications/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Notifications de recouvrement';
 
@@ -153,18 +154,22 @@ include '../../../includes/header.php';
         Notifications de recouvrement
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('recouvrement', 'notifications/send', 'create')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sendNotificationModal">
                 <i class="fas fa-paper-plane me-1"></i>
                 Nouvelle notification
             </button>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('recouvrement', 'reports/notifications', 'read')): ?>
         <div class="btn-group">
             <a href="../reports/notifications.php" class="btn btn-outline-info">
                 <i class="fas fa-chart-bar me-1"></i>
                 Rapports
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

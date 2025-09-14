@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'reports', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'reports/index', 'read', '../../dashboard.php');
 
 $page_title = 'Rapports Financiers';
 
@@ -158,6 +159,7 @@ include '../../../includes/header.php';
                 Exporter
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('finance', 'reports/export', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?format=pdf&periode=<?php echo $periode; ?>&date_debut=<?php echo $date_debut; ?>&date_fin=<?php echo $date_fin; ?>">
                     <i class="fas fa-file-pdf me-2"></i>Rapport PDF
                 </a></li>
@@ -165,6 +167,7 @@ include '../../../includes/header.php';
                     <i class="fas fa-file-excel me-2"></i>Données Excel
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
+                <?php endif; ?>
                 <li><a class="dropdown-item" href="#" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>Imprimer
                 </a></li>

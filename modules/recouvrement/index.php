@@ -8,6 +8,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -38,7 +39,7 @@ try {
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
         JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.id = p.type_frais_id
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
              WHERE i.annee_scolaire_id = ? 
                  AND fs.annee_scolaire_id = ?
@@ -70,7 +71,7 @@ try {
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
         JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.id = p.type_frais_id
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
              WHERE i.annee_scolaire_id = ? 
                  AND fs.annee_scolaire_id = ?
@@ -104,7 +105,7 @@ try {
              JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
         JOIN type_frais tf ON fs.type_frais_id = tf.id
              LEFT JOIN paiements p ON e.id = p.eleve_id 
-                 AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+                 AND tf.id = p.type_frais_id
                  AND p.annee_scolaire_id = fs.annee_scolaire_id
              WHERE i.annee_scolaire_id = ? 
                  AND fs.annee_scolaire_id = ?
@@ -123,7 +124,7 @@ try {
     // Dettes par type de frais
     $dettes_par_type = $database->query(
         "SELECT 
-            fs.type_frais,
+            tf.nom as type_frais,
             COUNT(DISTINCT e.id) as nombre_debiteurs,
             SUM(fs.montant - COALESCE(p.montant_paye, 0)) as total_dettes
          FROM eleves e
@@ -133,14 +134,14 @@ try {
          LEFT JOIN (
         SELECT 
                  eleve_id,
-                 type_paiement,
+                 type_frais_id,
                  SUM(montant) as montant_paye
              FROM paiements 
              WHERE annee_scolaire_id = ?
-             GROUP BY eleve_id, type_paiement
-         ) p ON e.id = p.eleve_id AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+             GROUP BY eleve_id, type_frais_id
+         ) p ON e.id = p.eleve_id AND tf.id = p.type_frais_id
          WHERE i.annee_scolaire_id = ? AND fs.annee_scolaire_id = ?
-         GROUP BY fs.type_frais
+         GROUP BY tf.nom
          HAVING total_dettes > 0
          ORDER BY total_dettes DESC",
         [$current_year['id'], $current_year['id'], $current_year['id']]
@@ -230,6 +231,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('recouvrement', 'reports/debtors', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <div class="d-grid">
                             <a href="../finance/reports/debtors.php" class="btn btn-outline-danger">
@@ -238,6 +240,8 @@ include '../../includes/header.php';
                         </a>
                     </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('recouvrement', 'campaigns/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <div class="d-grid">
                             <a href="campaigns/" class="btn btn-outline-primary">
@@ -246,6 +250,8 @@ include '../../includes/header.php';
                         </a>
                     </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('recouvrement', 'notifications/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <div class="d-grid">
                             <a href="notifications/" class="btn btn-outline-warning">
@@ -254,6 +260,8 @@ include '../../includes/header.php';
                         </a>
                     </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('recouvrement', 'reports/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <div class="d-grid">
                             <a href="reports/" class="btn btn-outline-info">
@@ -262,6 +270,7 @@ include '../../includes/header.php';
                         </a>
                     </div>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

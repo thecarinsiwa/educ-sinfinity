@@ -133,4 +133,6 @@ try {
         throw $e;
     }
 }
+
+// Le gestionnaire de paramètres sera initialisé dans config.php
 ?>

@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 requireLogin();
 
 // Vérifier l'accès à cette page
-requirePagePermissionFromDB('academic', 'schedule', 'update', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'schedule/edit-schedule', 'edit', '../../../dashboard.php');
 
 // Récupérer l'ID de l'horaire
 $schedule_id = isset($_GET['id']) ? intval($_GET['id']) : 0;

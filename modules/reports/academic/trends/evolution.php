@@ -11,24 +11,24 @@ require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('reports', 'academic', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('reports', 'academic/trends/evolution', 'read', '../../../../dashboard.php');
 
-$page_title = 'Ã‰volution des tendances';
+$page_title = 'Évolution des tendances';
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year) {
-    showMessage('error', 'Aucune annÃ©e scolaire active.');
+    showMessage('error', 'Aucune année scolaire active.');
     redirectTo('../../../index.php');
 }
 
-// ParamÃ¨tres de filtrage
+// Paramètres de filtrage
 $classe_filter = (int)($_GET['classe'] ?? 0);
 $matiere_filter = (int)($_GET['matiere'] ?? 0);
 $niveau_filter = sanitizeInput($_GET['niveau'] ?? '');
 $periode_debut = sanitizeInput($_GET['periode_debut'] ?? '');
 $periode_fin = sanitizeInput($_GET['periode_fin'] ?? '');
 
-// RÃ©cupÃ©rer les classes pour le filtre
+// Récupérer les classes pour le filtre
 $classes = $database->query(
     "SELECT c.id, c.nom, c.niveau, c.section
      FROM classes c
@@ -37,7 +37,7 @@ $classes = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// RÃ©cupÃ©rer les matiÃ¨res pour le filtre
+// Récupérer les matières pour le filtre
 $matieres = $database->query(
     "SELECT m.id, m.nom, m.coefficient
      FROM matieres m
@@ -48,20 +48,20 @@ $matieres = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// RÃ©cupÃ©rer les pÃ©riodes disponibles
+// Récupérer les périodes disponibles
 $periodes = $database->query(
     "SELECT DISTINCT periode FROM evaluations 
      WHERE annee_scolaire_id = ? 
      ORDER BY 
         CASE periode 
             WHEN '1er trimestre' THEN 1 
-            WHEN '2Ã¨me trimestre' THEN 2 
-            WHEN '3Ã¨me trimestre' THEN 3 
+            WHEN '2ème trimestre' THEN 2 
+            WHEN '3ème trimestre' THEN 3 
         END",
     [$current_year['id']]
 )->fetchAll();
 
-// Construire les conditions WHERE pour les requÃªtes avec alias 'e' pour evaluations
+// Construire les conditions WHERE pour les requêtes avec alias 'e' pour evaluations
 $where_conditions_e = ["e.annee_scolaire_id = ?"];
 $params_e = [$current_year['id']];
 
@@ -78,7 +78,7 @@ if ($periode_debut && $periode_fin) {
 
 $where_clause_e = implode(' AND ', $where_conditions_e);
 
-// Construire les conditions WHERE pour les requÃªtes avec alias 'ev' pour evaluations
+// Construire les conditions WHERE pour les requêtes avec alias 'ev' pour evaluations
 $where_conditions_ev = ["ev.annee_scolaire_id = ?"];
 $params_ev = [$current_year['id']];
 
@@ -105,7 +105,7 @@ if ($periode_debut && $periode_fin) {
 
 $where_clause_ev = implode(' AND ', $where_conditions_ev);
 
-// 1. Ã‰volution des moyennes par pÃ©riode
+// 1. Évolution des moyennes par période
 $evolution_periodes = $database->query(
     "SELECT e.periode,
             COUNT(DISTINCT n.eleve_id) as nb_eleves_evalues,
@@ -129,13 +129,13 @@ $evolution_periodes = $database->query(
      ORDER BY 
         CASE e.periode 
             WHEN '1er trimestre' THEN 1 
-            WHEN '2Ã¨me trimestre' THEN 2 
-            WHEN '3Ã¨me trimestre' THEN 3 
+                WHEN '2ème trimestre' THEN 2 
+            WHEN '3ème trimestre' THEN 3 
         END",
     $params_e
 )->fetchAll();
 
-// 2. Ã‰volution par classe
+// 2. Évolution par classe
 $evolution_classes = $database->query(
     "SELECT c.id, c.nom as classe_nom, c.niveau,
             ev.periode,
@@ -153,13 +153,13 @@ $evolution_classes = $database->query(
      ORDER BY c.nom, 
         CASE ev.periode 
             WHEN '1er trimestre' THEN 1 
-            WHEN '2Ã¨me trimestre' THEN 2 
-            WHEN '3Ã¨me trimestre' THEN 3 
+            WHEN '2ème trimestre' THEN 2 
+            WHEN '3ème trimestre' THEN 3 
         END",
     $params_ev
 )->fetchAll();
 
-// 3. Ã‰volution par matiÃ¨re
+// 3. Évolution par matière
 $evolution_matieres = $database->query(
     "SELECT m.id, m.nom as matiere_nom, m.coefficient,
             e.periode,
@@ -174,13 +174,13 @@ $evolution_matieres = $database->query(
      ORDER BY m.nom, 
         CASE e.periode 
             WHEN '1er trimestre' THEN 1 
-            WHEN '2Ã¨me trimestre' THEN 2 
-            WHEN '3Ã¨me trimestre' THEN 3 
+            WHEN '2ème trimestre' THEN 2 
+            WHEN '3ème trimestre' THEN 3 
         END",
     $params_e
 )->fetchAll();
 
-// 4. Tendances mensuelles (si donnÃ©es disponibles)
+// 4. Tendances mensuelles (si données disponibles)
 $tendances_mensuelles = $database->query(
     "SELECT DATE_FORMAT(e.date_evaluation, '%Y-%m') as mois,
             COUNT(DISTINCT n.eleve_id) as nb_eleves_evalues,
@@ -196,7 +196,7 @@ $tendances_mensuelles = $database->query(
     $params_e
 )->fetchAll();
 
-// 5. Analyse des progrÃ¨s des Ã©lÃ¨ves
+// 5. Analyse des progrès des élèves
 $progres_eleves = $database->query(
     "SELECT e.id, e.nom, e.prenom, c.nom as classe_nom,
             COUNT(DISTINCT ev.periode) as nb_periodes,
@@ -224,7 +224,7 @@ include '../../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-chart-line me-2"></i>
-        Ã‰volution des tendances
+        Évolution des tendances
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -247,7 +247,7 @@ include '../../../../includes/header.php';
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-filter me-2"></i>
-            ParamÃ¨tres d'analyse
+            Paramètres d'analyse
         </h5>
     </div>
     <div class="card-body">
@@ -265,9 +265,9 @@ include '../../../../includes/header.php';
             </div>
             
             <div class="col-md-2">
-                <label for="matiere" class="form-label">MatiÃ¨re</label>
+                <label for="matiere" class="form-label">Matière</label>
                 <select class="form-select" id="matiere" name="matiere">
-                    <option value="">Toutes les matiÃ¨res</option>
+                    <option value="">Toutes les matières</option>
                     <?php foreach ($matieres as $m): ?>
                         <option value="<?php echo $m['id']; ?>" <?php echo $matiere_filter == $m['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($m['nom']); ?>
@@ -283,12 +283,12 @@ include '../../../../includes/header.php';
                     <option value="maternelle" <?php echo $niveau_filter === 'maternelle' ? 'selected' : ''; ?>>Maternelle</option>
                     <option value="primaire" <?php echo $niveau_filter === 'primaire' ? 'selected' : ''; ?>>Primaire</option>
                     <option value="secondaire" <?php echo $niveau_filter === 'secondaire' ? 'selected' : ''; ?>>Secondaire</option>
-                    <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>SupÃ©rieur</option>
+                    <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>Supérieur</option>
                 </select>
             </div>
             
             <div class="col-md-2">
-                <label for="periode_debut" class="form-label">PÃ©riode dÃ©but</label>
+                <label for="periode_debut" class="form-label">Période début</label>
                 <select class="form-select" id="periode_debut" name="periode_debut">
                     <option value="">Toutes</option>
                     <?php foreach ($periodes as $p): ?>
@@ -300,7 +300,7 @@ include '../../../../includes/header.php';
             </div>
             
             <div class="col-md-2">
-                <label for="periode_fin" class="form-label">PÃ©riode fin</label>
+                <label for="periode_fin" class="form-label">Période fin</label>
                 <select class="form-select" id="periode_fin" name="periode_fin">
                     <option value="">Toutes</option>
                     <?php foreach ($periodes as $p): ?>
@@ -318,7 +318,7 @@ include '../../../../includes/header.php';
                 </button>
                 <a href="?" class="btn btn-outline-secondary">
                     <i class="fas fa-times me-1"></i>
-                    RÃ©initialiser
+                    Réinitialiser
                 </a>
             </div>
         </form>
@@ -326,12 +326,12 @@ include '../../../../includes/header.php';
 </div>
 
 <?php if (!empty($evolution_periodes)): ?>
-    <!-- Ã‰volution gÃ©nÃ©rale par pÃ©riode -->
+    <!-- Évolution générale par période -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-chart-line me-2"></i>
-                Ã‰volution gÃ©nÃ©rale par pÃ©riode
+                Évolution générale par période
             </h5>
         </div>
         <div class="card-body">
@@ -339,20 +339,20 @@ include '../../../../includes/header.php';
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>PÃ©riode</th>
-                            <th>Ã‰lÃ¨ves Ã©valuÃ©s</th>
+                            <th>Période</th>
+                            <th>Élèves évalués</th>
                             <th>Notes</th>
                             <th>Moyenne</th>
                             <th>Min</th>
                             <th>Max</th>
-                            <th>Ã‰cart-type</th>
+                            <th>Écart-type</th>
                             <th>Excellent</th>
-                            <th>TrÃ¨s bien</th>
+                            <th>Très bien</th>
                             <th>Bien</th>
                             <th>Satisfaisant</th>
                             <th>Passable</th>
                             <th>Insuffisant</th>
-                            <th>Taux de rÃ©ussite</th>
+                            <th>Taux de réussite</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -380,14 +380,14 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- Graphiques d'Ã©volution -->
+    <!-- Graphiques d'évolution -->
     <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-line me-2"></i>
-                        Ã‰volution des moyennes
+                        Évolution des moyennes
                     </h5>
                 </div>
                 <div class="card-body">
@@ -401,7 +401,7 @@ include '../../../../includes/header.php';
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-area me-2"></i>
-                        Ã‰volution du taux de rÃ©ussite
+                        Évolution du taux de réussite
                     </h5>
                 </div>
                 <div class="card-body">
@@ -411,13 +411,13 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- Ã‰volution par classe -->
+    <!-- Évolution par classe -->
     <?php if (!empty($evolution_classes)): ?>
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-users me-2"></i>
-                    Ã‰volution par classe
+                    Évolution par classe
                 </h5>
             </div>
             <div class="card-body">
@@ -427,11 +427,11 @@ include '../../../../includes/header.php';
                             <tr>
                                 <th>Classe</th>
                                 <th>Niveau</th>
-                                <th>PÃ©riode</th>
-                                <th>Ã‰lÃ¨ves</th>
+                                <th>Période</th>
+                                <th>Élèves</th>
                                 <th>Notes</th>
                                 <th>Moyenne</th>
-                                <th>Taux de rÃ©ussite</th>
+                                <th>Taux de réussite</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -453,13 +453,13 @@ include '../../../../includes/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Ã‰volution par matiÃ¨re -->
+    <!-- Évolution par matière -->
     <?php if (!empty($evolution_matieres)): ?>
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-book me-2"></i>
-                    Ã‰volution par matiÃ¨re
+                    Évolution par matière
                 </h5>
             </div>
             <div class="card-body">
@@ -467,12 +467,12 @@ include '../../../../includes/header.php';
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>MatiÃ¨re</th>
+                                <th>Matière</th>
                                 <th>Coefficient</th>
-                                <th>PÃ©riode</th>
+                                <th>Période</th>
                                 <th>Notes</th>
                                 <th>Moyenne</th>
-                                <th>Taux de rÃ©ussite</th>
+                                <th>Taux de réussite</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -493,13 +493,13 @@ include '../../../../includes/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- ProgrÃ¨s des Ã©lÃ¨ves -->
+    <!-- Progrès des élèves -->
     <?php if (!empty($progres_eleves)): ?>
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-trophy me-2"></i>
-                    Top 20 des Ã©lÃ¨ves avec la plus grande progression
+                    Top 20 des élèves avec la plus grande progression
                 </h5>
             </div>
             <div class="card-body">
@@ -507,14 +507,14 @@ include '../../../../includes/header.php';
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Ã‰lÃ¨ve</th>
+                                <th>Élève</th>
                                 <th>Classe</th>
-                                <th>PÃ©riodes</th>
-                                <th>Moyenne gÃ©nÃ©rale</th>
+                                <th>Périodes</th>
+                                <th>Moyenne générale</th>
                                 <th>Note min</th>
                                 <th>Note max</th>
                                 <th>Progression</th>
-                                <th>Taux de rÃ©ussite</th>
+                                <th>Taux de réussite</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -540,7 +540,7 @@ include '../../../../includes/header.php';
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Graphique d'Ã©volution des moyennes
+            // Graphique d'évolution des moyennes
             const ctx1 = document.getElementById('evolutionMoyennesChart').getContext('2d');
             new Chart(ctx1, {
                 type: 'line',
@@ -567,14 +567,14 @@ include '../../../../includes/header.php';
                 }
             });
 
-            // Graphique d'Ã©volution du taux de rÃ©ussite
+            // Graphique d'évolution du taux de réussite
             const ctx2 = document.getElementById('evolutionReussiteChart').getContext('2d');
             new Chart(ctx2, {
                 type: 'line',
                 data: {
                     labels: [<?php echo implode(',', array_map(function($periode) { return '"' . addslashes($periode['periode']) . '"'; }, $evolution_periodes)); ?>],
                     datasets: [{
-                        label: 'Taux de rÃ©ussite (%)',
+                        label: 'Taux de réussite (%)',
                         data: [<?php echo implode(',', array_map(function($periode) { return $periode['taux_reussite']; }, $evolution_periodes)); ?>],
                         borderColor: 'rgba(75, 192, 192, 1)',
                         backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -598,10 +598,10 @@ include '../../../../includes/header.php';
 
 <?php else: ?>
     <div class="alert alert-info">
-        <h5><i class="fas fa-info-circle me-2"></i>Aucune donnÃ©e d'Ã©volution disponible</h5>
+        <h5><i class="fas fa-info-circle me-2"></i>Aucune donnée d'évolution disponible</h5>
         <p class="mb-0">
-            Aucune donnÃ©e d'Ã©volution trouvÃ©e pour les critÃ¨res sÃ©lectionnÃ©s. 
-            Veuillez ajuster les filtres ou vÃ©rifier qu'il y a suffisamment de donnÃ©es d'Ã©valuation.
+            Aucune donnée d'évolution trouvée pour les critères sélectionnés. 
+            Veuillez ajuster les filtres ou vérifier qu'il y a suffisamment de données d'évaluation.
         </p>
     </div>
 <?php endif; ?>

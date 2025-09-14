@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'tracking', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'student-tracking/follow-up/index', 'read', '../../../../dashboard.php');
 
 $page_title = 'Suivi Scolaire';
 
@@ -58,7 +58,9 @@ try {
         "SELECT e.*, c.nom as classe_nom, c.niveau,
                 ss.trimestre, ss.moyenne_generale, ss.rang_classe, ss.effectif_classe,
                 ss.appreciation, ss.decision_conseil, ss.date_conseil,
-                (SELECT COUNT(*) FROM paiements p WHERE p.eleve_id = e.id AND p.type_paiement = 'mensualite' AND p.status = 'en_attente') as paiements_en_retard,
+                (SELECT COUNT(*) FROM paiements p 
+                 JOIN type_frais tf ON p.type_frais_id = tf.id 
+                 WHERE p.eleve_id = e.id AND tf.nom = 'mensualite' AND p.status = 'en_attente') as paiements_en_retard,
                 (SELECT COUNT(*) FROM sanctions s WHERE s.eleve_id = e.id AND s.status = 'active') as sanctions_actives
          FROM eleves e
          LEFT JOIN inscriptions i ON e.id = i.eleve_id

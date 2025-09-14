@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'bulletins', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'bulletins/generate', 'create', '../../../dashboard.php');
 
 $page_title = 'Génération de bulletins';
 

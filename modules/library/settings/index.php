@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'settings', 'edit', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'settings/index', 'edit', '../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -320,10 +321,12 @@ include '../../../includes/header.php';
                     <i class="fas fa-times me-1"></i>
                     Annuler
                 </a>
+                <?php if (hasPagePermissionFromDB('library', 'settings/save', 'update')): ?>
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-1"></i>
                     Enregistrer les paramètres
                 </button>
+                <?php endif; ?>
             </div>
         </div>
     </div>

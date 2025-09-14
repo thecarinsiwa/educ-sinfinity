@@ -1,7 +1,7 @@
 ﻿<?php
 /**
- * Module de gestion financiÃ¨re - Voir un type de frais
- * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
+ * Module de gestion financière - Voir un type de frais
+ * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
@@ -12,19 +12,19 @@ require_once 'functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/types/view', 'read', '../../../../dashboard.php');
 
-$page_title = 'DÃ©tails du type de frais';
+$page_title = 'Détails du type de frais';
 
-// RÃ©cupÃ©rer l'ID du type de frais
+// Récupérer l'ID du type de frais
 $id = (int)($_GET['id'] ?? 0);
 
 if (!$id) {
-    showMessage('error', 'Type de frais non spÃ©cifiÃ©.');
+    showMessage('error', 'Type de frais non spécifié.');
     redirectTo('index.php');
 }
 
-// RÃ©cupÃ©rer les informations du type de frais
+// Récupérer les informations du type de frais
 $type_frais = $database->query(
     "SELECT tf.*, as_annee.annee, as_annee.date_debut, as_annee.date_fin
      FROM type_frais tf
@@ -34,11 +34,11 @@ $type_frais = $database->query(
 )->fetch();
 
 if (!$type_frais) {
-    showMessage('error', 'Type de frais non trouvÃ©.');
+    showMessage('error', 'Type de frais non trouvé.');
     redirectTo('index.php');
 }
 
-// RÃ©cupÃ©rer les frais scolaires qui utilisent ce type
+// Récupérer les frais scolaires qui utilisent ce type
 $frais_utilisant_type = $database->query(
     "SELECT f.*, c.nom as classe_nom, c.niveau,
             d.code as devise_code, d.symbole as devise_symbole
@@ -63,7 +63,7 @@ include '../../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-eye me-2"></i>
-        DÃ©tails du type de frais
+        Détails du type de frais
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -75,7 +75,7 @@ include '../../../../includes/header.php';
         <div class="btn-group me-2">
             <span class="btn btn-outline-info">
                 <i class="fas fa-calendar me-1"></i>
-                AnnÃ©e: <?php echo htmlspecialchars($type_frais['annee'] ?? 'Non dÃ©finie'); ?>
+                Année: <?php echo htmlspecialchars($type_frais['annee'] ?? 'Non définie'); ?>
             </span>
         </div>
         <?php if (checkPagePermission('finance')): ?>
@@ -96,7 +96,7 @@ include '../../../../includes/header.php';
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    Informations gÃ©nÃ©rales
+                    Informations générales
                 </h5>
             </div>
             <div class="card-body">
@@ -126,22 +126,22 @@ include '../../../../includes/header.php';
                     <div class="col-md-6">
                         <table class="table table-borderless">
                             <tr>
-                                <td class="fw-bold" style="width: 120px;">CrÃ©Ã© le:</td>
+                                <td class="fw-bold" style="width: 120px;">Créé le:</td>
                                 <td><?php echo formatDate($type_frais['date_creation']); ?></td>
                             </tr>
                             <tr>
-                                <td class="fw-bold">ModifiÃ© le:</td>
+                                <td class="fw-bold">Modifié le:</td>
                                 <td>
                                     <?php if ($type_frais['updated_at']): ?>
                                         <?php echo formatDate($type_frais['updated_at']); ?>
                                     <?php else: ?>
-                                        <span class="text-muted">Jamais modifiÃ©</span>
+                                            <span class="text-muted">Jamais modifié</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
-                                <td class="fw-bold">AnnÃ©e scolaire:</td>
-                                <td><?php echo htmlspecialchars($type_frais['annee'] ?? 'Non dÃ©finie'); ?></td>
+                                <td class="fw-bold">Année scolaire:</td>
+                                <td><?php echo htmlspecialchars($type_frais['annee'] ?? 'Non définie'); ?></td>
                             </tr>
                         </table>
                     </div>
@@ -203,10 +203,10 @@ include '../../../../includes/header.php';
                             <thead>
                                 <tr>
                                     <th>Classe</th>
-                                    <th>LibellÃ©</th>
+                                    <th>Libellé</th>
                                     <th>Montant</th>
                                     <th>Obligatoire</th>
-                                    <th>Ã‰chÃ©ance</th>
+                                    <th>Échéance</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -227,7 +227,7 @@ include '../../../../includes/header.php';
                                             </strong>
                                             <?php if ($frais['devise_id'] && $frais['montant_devise_par_defaut']): ?>
                                                 <br><small class="text-muted">
-                                                    <?= formatCurrency($frais['montant_devise_par_defaut']) ?> (Ã©quivalent)
+                                                    <?= formatCurrency($frais['montant_devise_par_defaut']) ?> (équivalent)
                                                 </small>
                                             <?php endif; ?>
                                         </td>
@@ -242,7 +242,7 @@ include '../../../../includes/header.php';
                                             <?php if ($frais['date_echeance']): ?>
                                                 <?php echo formatDate($frais['date_echeance']); ?>
                                             <?php else: ?>
-                                                <span class="text-muted">Non dÃ©finie</span>
+                                                <span class="text-muted">Non définie</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -275,14 +275,14 @@ include '../../../../includes/header.php';
                         <?php if ($type_frais['actif']): ?>
                             <a href="toggle-status.php?id=<?php echo $type_frais['id']; ?>&action=desactiver" 
                                class="btn btn-warning"
-                               onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir dÃ©sactiver ce type de frais ?')">
+                               onclick="return confirm('Êtes-vous sûr de vouloir désactiver ce type de frais ?')">
                                 <i class="fas fa-pause me-1"></i>
-                                DÃ©sactiver
+                                Désactiver
                             </a>
                         <?php else: ?>
                             <a href="toggle-status.php?id=<?php echo $type_frais['id']; ?>&action=activer" 
                                class="btn btn-success"
-                               onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir activer ce type de frais ?')">
+                               onclick="return confirm('Êtes-vous sûr de vouloir activer ce type de frais ?')">
                                 <i class="fas fa-play me-1"></i>
                                 Activer
                             </a>
@@ -291,7 +291,7 @@ include '../../../../includes/header.php';
                         <?php if ($stats['total_configurations'] == 0): ?>
                             <a href="delete.php?id=<?php echo $type_frais['id']; ?>" 
                                class="btn btn-danger"
-                               onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce type de frais ? Cette action est irrÃ©versible.')">
+                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce type de frais ? Cette action est irréversible.')">
                                 <i class="fas fa-trash me-1"></i>
                                 Supprimer
                             </a>
@@ -314,15 +314,15 @@ include '../../../../includes/header.php';
                     <div class="alert alert-info">
                         <small>
                             <i class="fas fa-info-circle me-1"></i>
-                            Ce type de frais est utilisÃ© dans <strong><?php echo $stats['total_configurations']; ?></strong> configuration(s) 
-                            rÃ©partie(s) sur <strong><?php echo $stats['classes_utilisant']; ?></strong> classe(s).
+                            Ce type de frais est utilisé dans <strong><?php echo $stats['total_configurations']; ?></strong> configuration(s) 
+                            répartie(s) sur <strong><?php echo $stats['classes_utilisant']; ?></strong> classe(s).
                         </small>
                     </div>
                 <?php else: ?>
                     <div class="alert alert-warning">
                         <small>
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            Ce type de frais n'est pas encore utilisÃ© dans des configurations.
+                            Ce type de frais n'est pas encore utilisé dans des configurations.
                         </small>
                     </div>
                 <?php endif; ?>

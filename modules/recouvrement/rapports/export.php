@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'rapports', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'rapports/export', 'read', '../../dashboard.php');
 
 $type = $_GET['type'] ?? '';
 $format = $_GET['format'] ?? 'excel';

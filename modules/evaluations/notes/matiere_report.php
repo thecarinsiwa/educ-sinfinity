@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('evaluations', 'notes', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'notes/matiere_report', 'read', '../../../dashboard.php');
 
 // Récupérer les paramètres
 $matiere_id = (int)($_GET['matiere_id'] ?? 0);

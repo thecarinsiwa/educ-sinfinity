@@ -13,11 +13,7 @@ require_once '../../../includes/permissions-pages.php';
 requireLogin();
 
 // Vérifier l'accès à cette page
-requireCurrentPageAccess('read');
-if (!checkPagePermission('finance') && !checkPagePermission('finance_view')) {
-    showMessage('error', 'Accès refusé à cette fonctionnalité.');
-    redirectTo('caisses.php');
-}
+requirePagePermissionFromDB('finance', 'expenses/journal_caisse', 'read', '../../dashboard.php');
 
 $page_title = 'Journal de Caisse';
 

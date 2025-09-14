@@ -16,7 +16,7 @@ if (!isLoggedIn()) {
     redirectTo('auth/login.php');
 }
 
-requirePagePermissionFromDB('cartes_eleves', 'generate', 'create', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/generate', 'create', '../dashboard.php');
 
 $page_title = 'Génération de Cartes d\'Élèves';
 $success_message = '';

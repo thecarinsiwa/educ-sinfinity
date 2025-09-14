@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'sessions', 'read', '../../dashboard.php');
+requirePagePermission('admin', 'sessions/index', 'read', '../../dashboard.php');
 
 $page_title = 'Sessions Actives';
 

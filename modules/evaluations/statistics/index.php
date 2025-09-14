@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'statistics', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'statistics/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Statistiques des évaluations';
 
@@ -160,19 +161,27 @@ include '../../../includes/header.php';
                 Rapports détaillés
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('evaluations', 'statistics/class-ranking', 'read')): ?>
                 <li><a class="dropdown-item" href="class-ranking.php">
                     <i class="fas fa-trophy me-2"></i>Classement des classes
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('evaluations', 'statistics/student-performance', 'read')): ?>
                 <li><a class="dropdown-item" href="student-performance.php">
                     <i class="fas fa-user-graduate me-2"></i>Performance des élèves
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('evaluations', 'statistics/subject-analysis', 'read')): ?>
                 <li><a class="dropdown-item" href="subject-analysis.php">
                     <i class="fas fa-book me-2"></i>Analyse par matière
                 </a></li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
+                <?php if (hasPagePermissionFromDB('evaluations', 'statistics/evaluation-reports', 'read')): ?>
                 <li><a class="dropdown-item" href="evaluation-reports.php">
                     <i class="fas fa-file-chart-line me-2"></i>Rapports d'évaluations
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>

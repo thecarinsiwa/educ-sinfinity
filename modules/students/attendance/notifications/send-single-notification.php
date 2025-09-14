@@ -16,7 +16,7 @@ if (!isLoggedIn()) {
 }
 
 require_once '../../../../includes/permissions-pages.php';
-requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/notifications/send-single-notification', 'create', '../../../../dashboard.php');
 
 // Vérifier que c'est une requête POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

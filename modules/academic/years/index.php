@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'years', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'years/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Années Scolaires';
 
@@ -53,7 +54,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (hasPagePermissionFromDB('academic', 'years', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'years/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -177,11 +178,43 @@ include '../../../includes/header.php';
                                 <td><?php echo date('d/m/Y H:i', strtotime($annee['created_at'])); ?></td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <?php if (hasPagePermissionFromDB('academic', 'years', 'update')): ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'years/view', 'read')): ?>
+                                        <a href="view.php?id=<?php echo $annee['id']; ?>" 
+                                           class="btn btn-outline-info" 
+                                           title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'years/edit', 'update')): ?>
                                         <a href="edit.php?id=<?php echo $annee['id']; ?>" 
                                            class="btn btn-outline-primary" 
                                            title="Modifier">
                                             <i class="fas fa-edit"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if ($annee['status'] === 'fermee' && hasPagePermissionFromDB('academic', 'years/activate', 'update')): ?>
+                                        <a href="activate.php?id=<?php echo $annee['id']; ?>" 
+                                           class="btn btn-outline-success" 
+                                           title="Activer"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir activer l\'année scolaire <?php echo htmlspecialchars($annee['annee']); ?> ?')">
+                                            <i class="fas fa-play"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if ($annee['status'] === 'active' && hasPagePermissionFromDB('academic', 'years/close', 'update')): ?>
+                                        <a href="close.php?id=<?php echo $annee['id']; ?>" 
+                                           class="btn btn-outline-warning" 
+                                           title="Fermer"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir fermer l\'année scolaire <?php echo htmlspecialchars($annee['annee']); ?> ?')">
+                                            <i class="fas fa-stop"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'years/delete', 'delete')): ?>
+                                        <a href="delete.php?id=<?php echo $annee['id']; ?>" 
+                                           class="btn btn-outline-danger btn-delete" 
+                                           title="Supprimer"
+                                           data-name="<?php echo htmlspecialchars($annee['annee']); ?>"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer l\'année scolaire <?php echo htmlspecialchars($annee['annee']); ?> ?')">
+                                            <i class="fas fa-trash"></i>
                                         </a>
                                         <?php endif; ?>
                                     </div>
@@ -196,7 +229,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucune année scolaire trouvée</h5>
                 <p class="text-muted">
-                    <?php if (hasPagePermissionFromDB('academic', 'years', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'years/add', 'create')): ?>
                         <a href="add.php" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Créer la première année scolaire

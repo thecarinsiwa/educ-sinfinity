@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'schedule', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'schedule/resolve-conflict', 'edit', '../../../dashboard.php');
 
 $page_title = "Résolution de conflits d'emploi du temps";
 

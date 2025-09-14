@@ -139,23 +139,29 @@ include '../../includes/header.php';
                 <?php echo $current_year['annee'] ?? 'Aucune année active'; ?>
             </button>
         </div>
-                <?php if (checkPagePermission('students')): ?>
+                <?php if (hasPagePermissionFromDB('students', 'add', 'create') || hasPagePermissionFromDB('students', 'admissions/new-application', 'create') || hasPagePermissionFromDB('students', 'admissions/bulk-import', 'create')): ?>
             <div class="btn-group">
                         <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="fas fa-plus me-1"></i>
                             Nouveau
                         </button>
                         <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('students', 'add', 'create')): ?>
                     <li><a class="dropdown-item" href="add.php">
                         <i class="fas fa-user-plus me-2"></i>Ajouter un élève
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/new-application', 'create')): ?>
                             <li><a class="dropdown-item" href="admissions/new-application.php">
                                 <i class="fas fa-file-alt me-2"></i>Demande d'admission
                             </a></li>
+                    <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/bulk-import', 'create')): ?>
                     <li><a class="dropdown-item" href="admissions/bulk-import.php">
                         <i class="fas fa-file-import me-2"></i>Import en masse
                             </a></li>
+                    <?php endif; ?>
                         </ul>
                     </div>
                 <?php endif; ?>
@@ -366,7 +372,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun élève inscrit</p>
-                        <?php if (checkPagePermission('students')): ?>
+                        <?php if (hasPagePermissionFromDB('students', 'add', 'create')): ?>
                             <a href="add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Ajouter un élève
@@ -417,7 +423,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun élève récemment inscrit</p>
-                        <?php if (checkPagePermission('students')): ?>
+                        <?php if (hasPagePermissionFromDB('students', 'add', 'create')): ?>
                             <a href="add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Ajouter un élève
@@ -431,7 +437,7 @@ include '../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPagePermission('students')): ?>
+<?php if (hasPagePermissionFromDB('students', 'add', 'create') || hasPagePermissionFromDB('students', 'list', 'read') || hasPagePermissionFromDB('students', 'attendance', 'read') || hasPagePermissionFromDB('students', 'confirm-inscriptions', 'edit') || hasPagePermissionFromDB('students', 'reports', 'read')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -443,66 +449,56 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('students', 'add', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink(
-                                'add.php',
-                                'Ajouter un élève',
-                                'students',
-                                'add',
-                                'create',
-                                ['class' => 'btn btn-outline-primary', 'icon' => 'fas fa-user-plus me-2']
-                            ); ?>
+                            <a href="add.php" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Ajouter un élève
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'list', 'read')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink(
-                                'list.php',
-                                'Liste des élèves',
-                                'students',
-                                'list',
-                                'read',
-                                ['class' => 'btn btn-outline-success', 'icon' => 'fas fa-list me-2']
-                            ); ?>
+                            <a href="list.php" class="btn btn-outline-success">
+                                <i class="fas fa-list me-2"></i>
+                                Liste des élèves
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'attendance', 'read')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink(
-                                'attendance/',
-                                'Gérer les présences',
-                                'students',
-                                'attendance',
-                                'read',
-                                ['class' => 'btn btn-outline-warning', 'icon' => 'fas fa-calendar-check me-2']
-                            ); ?>
+                            <a href="attendance/" class="btn btn-outline-warning">
+                                <i class="fas fa-calendar-check me-2"></i>
+                                Gérer les présences
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'confirm-inscriptions', 'edit')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink(
-                                'confirm-inscriptions.php',
-                                'Confirmer inscriptions',
-                                'students',
-                                'confirm-inscriptions',
-                                'edit',
-                                ['class' => 'btn btn-outline-warning', 'icon' => 'fas fa-check-circle me-2']
-                            ); ?>
+                            <a href="confirm-inscriptions.php" class="btn btn-outline-warning">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Confirmer inscriptions
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'reports', 'read')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink(
-                                'reports.php',
-                                'Rapports',
-                                'students',
-                                'reports',
-                                'read',
-                                ['class' => 'btn btn-outline-info', 'icon' => 'fas fa-chart-bar me-2']
-                            ); ?>
+                            <a href="reports.php" class="btn btn-outline-info">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Rapports
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

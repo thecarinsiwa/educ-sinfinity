@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'transfers', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'transfers/view-transfer', 'read', '../../../dashboard.php');
 
 $page_title = "DÃ©tail du transfert";
 

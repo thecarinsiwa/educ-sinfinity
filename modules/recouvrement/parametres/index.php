@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'parametres', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'parametres/index', 'edit', '../../../dashboard.php');
 
 $errors = [];
 $success_message = '';

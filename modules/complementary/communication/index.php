@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('complementary', 'communication', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('complementary', 'communication/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Communication';
 

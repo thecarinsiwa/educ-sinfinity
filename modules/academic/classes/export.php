@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'classes', 'read', '../../../dashboard.php', 'export');
+requirePagePermissionFromDB('academic', 'classes/export', 'read', '../../../dashboard.php');
 
 // Obtenir le format d'export
 $format = sanitizeInput($_GET['format'] ?? 'excel');

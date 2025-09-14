@@ -12,8 +12,8 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
-
+requirePagePermissionFromDB('students', 'attendance/bulk-attendance', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/bulk-attendance', 'create', '../../../dashboard.php');
 $page_title = "Saisie en masse des absences";
 
 // RÃ©cupÃ©rer l'année scolaire active

@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'records', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'records/view', 'read', '../../../dashboard.php');
 
 $eleve_id = intval($_GET['id'] ?? 0);
 

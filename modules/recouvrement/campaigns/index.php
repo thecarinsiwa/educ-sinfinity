@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'campaigns', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'campaigns/index', 'read', '../../dashboard.php');
 
 $page_title = 'Campagnes de recouvrement';
 
@@ -133,18 +134,22 @@ include '../../../includes/header.php';
         Campagnes de recouvrement
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('recouvrement', 'campaigns/create', 'create')): ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
                 <i class="fas fa-plus me-1"></i>
                 Nouvelle campagne
             </button>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('recouvrement', 'reports/campaigns', 'read')): ?>
         <div class="btn-group">
             <a href="../reports/campaigns.php" class="btn btn-outline-info">
                 <i class="fas fa-chart-bar me-1"></i>
                 Rapports
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -318,15 +323,21 @@ include '../../../includes/header.php';
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
+                                    <?php if (hasPagePermissionFromDB('recouvrement', 'campaigns/details', 'read')): ?>
                                     <a href="details.php?id=<?php echo $campaign['id']; ?>" class="btn btn-outline-primary" title="Voir détails">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    <?php endif; ?>
+                                    <?php if (hasPagePermissionFromDB('recouvrement', 'campaigns/edit', 'update')): ?>
                                     <a href="edit.php?id=<?php echo $campaign['id']; ?>" class="btn btn-outline-warning" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <?php endif; ?>
+                                    <?php if (hasPagePermissionFromDB('recouvrement', 'campaigns/change-status', 'update')): ?>
                                     <button type="button" class="btn btn-outline-info" onclick="showStatusModal(<?php echo $campaign['id']; ?>, '<?php echo $campaign['status']; ?>')" title="Changer statut">
                                         <i class="fas fa-cog"></i>
                                     </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

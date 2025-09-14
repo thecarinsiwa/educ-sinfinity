@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'evaluations', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'evaluations/edit', 'edit', '../../../dashboard.php');
 
 // Récupérer l'ID de l'évaluation
 $evaluation_id = (int)($_GET['id'] ?? 0);

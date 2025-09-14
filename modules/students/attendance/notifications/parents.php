@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'attendance', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/notifications/parents', 'read', '../../../../dashboard.php');
 
 $page_title = "Notifications aux parents";
 

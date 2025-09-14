@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'tracking', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'student-tracking/evaluations/index', 'read', '../../../../dashboard.php');
 
 $page_title = 'Gestion des Ã‰valuations';
 

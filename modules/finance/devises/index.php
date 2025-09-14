@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'devises', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'devises/index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Devises';
 
@@ -118,9 +119,11 @@ include '../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Gestion des Devises</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('finance', 'devises/add', 'create')): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDeviseModal">
             <i class="fas fa-plus"></i> Nouvelle Devise
         </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -206,11 +209,13 @@ include '../../../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
+                                    <?php if (hasPagePermissionFromDB('finance', 'devises/edit', 'update')): ?>
                                     <button type="button" class="btn btn-sm btn-outline-primary" 
                                             onclick="editDevise(<?= htmlspecialchars(json_encode($devise)) ?>)">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <?php if (!$devise['devise_par_defaut']): ?>
+                                    <?php endif; ?>
+                                    <?php if (!$devise['devise_par_defaut'] && hasPagePermissionFromDB('finance', 'devises/delete', 'delete')): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger" 
                                                 onclick="deleteDevise(<?= $devise['id'] ?>, '<?= htmlspecialchars($devise['code']) ?>')">
                                             <i class="fas fa-trash"></i>

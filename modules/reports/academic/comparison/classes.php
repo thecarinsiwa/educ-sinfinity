@@ -11,22 +11,22 @@ require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('reports', 'academic', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('reports', 'academic/comparison/classes', 'read', '../../../../dashboard.php');
 
 $page_title = 'Comparaison des classes';
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year) {
-    showMessage('error', 'Aucune annÃ©e scolaire active.');
+    showMessage('error', 'Aucune année scolaire active.');
     redirectTo('../../../index.php');
 }
 
-// ParamÃ¨tres de filtrage
+// Paramètres de filtrage
 $periode_filter = sanitizeInput($_GET['periode'] ?? '');
 $niveau_filter = sanitizeInput($_GET['niveau'] ?? '');
 $classes_selectionnees = $_GET['classes'] ?? [];
 
-// RÃ©cupÃ©rer les classes disponibles
+// Récupérer les classes disponibles
 $classes = $database->query(
     "SELECT c.id, c.nom, c.niveau, c.section,
             COUNT(DISTINCT i.eleve_id) as nb_eleves
@@ -38,15 +38,15 @@ $classes = $database->query(
     [$current_year['id']]
 )->fetchAll();
 
-// RÃ©cupÃ©rer les pÃ©riodes disponibles
+// Récupérer les périodes disponibles
 $periodes = $database->query(
     "SELECT DISTINCT periode FROM evaluations 
      WHERE annee_scolaire_id = ? 
      ORDER BY 
         CASE periode 
             WHEN '1er trimestre' THEN 1 
-            WHEN '2Ã¨me trimestre' THEN 2 
-            WHEN '3Ã¨me trimestre' THEN 3 
+            WHEN '2ème trimestre' THEN 2 
+            WHEN '3ème trimestre' THEN 3 
         END",
     [$current_year['id']]
 )->fetchAll();
@@ -73,7 +73,7 @@ if (!empty($classes_selectionnees)) {
 
 $where_clause = implode(' AND ', $where_conditions);
 
-// RÃ©cupÃ©rer les donnÃ©es de comparaison
+// Récupérer les données de comparaison
 $comparaison_classes = $database->query(
     "SELECT c.id, c.nom as classe_nom, c.niveau, c.section,
             COUNT(DISTINCT e.id) as nb_eleves_evalues,
@@ -134,7 +134,7 @@ if (!empty($comparaison_classes)) {
     $stats_globales['total_eleves'] = $total_eleves;
 }
 
-// RÃ©cupÃ©rer les donnÃ©es par matiÃ¨re pour chaque classe
+// Récupérer les données par matière pour chaque classe
 $comparaison_matieres = [];
 if (!empty($classes_selectionnees)) {
     $placeholders = str_repeat('?,', count($classes_selectionnees) - 1) . '?';
@@ -186,14 +186,14 @@ include '../../../../includes/header.php';
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-filter me-2"></i>
-            ParamÃ¨tres de comparaison
+            Paramètres de comparaison
         </h5>
     </div>
     <div class="card-body">
         <form method="GET" action="">
             <div class="row">
                 <div class="col-md-3">
-                    <label for="periode" class="form-label">PÃ©riode</label>
+                    <label for="periode" class="form-label">Période</label>
                     <select class="form-select" id="periode" name="periode">
                         <option value="">Toutes les pÃ©riodes</option>
                         <?php foreach ($periodes as $p): ?>
@@ -211,12 +211,12 @@ include '../../../../includes/header.php';
                         <option value="maternelle" <?php echo $niveau_filter === 'maternelle' ? 'selected' : ''; ?>>Maternelle</option>
                         <option value="primaire" <?php echo $niveau_filter === 'primaire' ? 'selected' : ''; ?>>Primaire</option>
                         <option value="secondaire" <?php echo $niveau_filter === 'secondaire' ? 'selected' : ''; ?>>Secondaire</option>
-                        <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>SupÃ©rieur</option>
+                        <option value="superieur" <?php echo $niveau_filter === 'superieur' ? 'selected' : ''; ?>>Supérieur</option>
                     </select>
                 </div>
                 
                 <div class="col-md-6">
-                    <label class="form-label">Classes Ã  comparer</label>
+                    <label class="form-label">Classes à comparer</label>
                     <div class="row">
                         <?php 
                         $classes_par_colonne = array_chunk($classes, ceil(count($classes) / 2));
@@ -249,7 +249,7 @@ include '../../../../includes/header.php';
                 </button>
                 <a href="?" class="btn btn-outline-secondary">
                     <i class="fas fa-times me-1"></i>
-                    RÃ©initialiser
+                    Réinitialiser
                 </a>
             </div>
         </form>
@@ -271,7 +271,7 @@ include '../../../../includes/header.php';
             <div class="card text-center">
                 <div class="card-body">
                     <h3 class="text-success"><?php echo $stats_globales['taux_reussite_global']; ?>%</h3>
-                    <p class="mb-0">Taux de rÃ©ussite</p>
+                    <p class="mb-0">Taux de réussite</p>
                 </div>
             </div>
         </div>
@@ -279,7 +279,7 @@ include '../../../../includes/header.php';
             <div class="card text-center">
                 <div class="card-body">
                     <h3 class="text-info"><?php echo $stats_globales['total_eleves']; ?></h3>
-                    <p class="mb-0">Ã‰lÃ¨ves Ã©valuÃ©s</p>
+                    <p class="mb-0">Élèves évalués</p>
                 </div>
             </div>
         </div>
@@ -298,7 +298,7 @@ include '../../../../includes/header.php';
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-table me-2"></i>
-                Comparaison dÃ©taillÃ©e des classes
+                Comparaison détaillée des classes
             </h5>
         </div>
         <div class="card-body">
@@ -308,19 +308,19 @@ include '../../../../includes/header.php';
                         <tr>
                             <th>Classe</th>
                             <th>Niveau</th>
-                            <th>Ã‰lÃ¨ves</th>
+                            <th>Élèves</th>
                             <th>Notes</th>
                             <th>Moyenne</th>
                             <th>Min</th>
                             <th>Max</th>
-                            <th>Ã‰cart-type</th>
+                            <th>Écart-type</th>
                             <th>Excellent</th>
-                            <th>TrÃ¨s bien</th>
+                            <th>Très bien</th>
                             <th>Bien</th>
                             <th>Satisfaisant</th>
                             <th>Passable</th>
                             <th>Insuffisant</th>
-                            <th>Taux de rÃ©ussite</th>
+                            <th>Taux de réussite</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -378,7 +378,7 @@ include '../../../../includes/header.php';
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-pie me-2"></i>
-                        Comparaison des taux de rÃ©ussite
+                        Comparaison des taux de réussite
                     </h5>
                 </div>
                 <div class="card-body">
@@ -388,13 +388,13 @@ include '../../../../includes/header.php';
         </div>
     </div>
 
-    <!-- Comparaison par matiÃ¨re -->
+    <!-- Comparaison par matière -->
     <?php if (!empty($comparaison_matieres)): ?>
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-book me-2"></i>
-                    Comparaison par matiÃ¨re
+                    Comparaison par matière
                 </h5>
             </div>
             <div class="card-body">
@@ -403,10 +403,10 @@ include '../../../../includes/header.php';
                         <thead>
                             <tr>
                                 <th>Classe</th>
-                                <th>MatiÃ¨re</th>
+                                <th>Matière</th>
                                 <th>Notes</th>
                                 <th>Moyenne</th>
-                                <th>Taux de rÃ©ussite</th>
+                                <th>Taux de réussite</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -462,7 +462,7 @@ include '../../../../includes/header.php';
                 }
             });
 
-            // Graphique des taux de rÃ©ussite
+            // Graphique des taux de réussite
             const ctx2 = document.getElementById('reussiteChart').getContext('2d');
             new Chart(ctx2, {
                 type: 'doughnut',
@@ -494,9 +494,9 @@ include '../../../../includes/header.php';
 
 <?php else: ?>
     <div class="alert alert-info">
-        <h5><i class="fas fa-info-circle me-2"></i>Aucune donnÃ©e Ã  comparer</h5>
+        <h5><i class="fas fa-info-circle me-2"></i>Aucune donnée à comparer</h5>
         <p class="mb-0">
-            Veuillez sÃ©lectionner au moins une classe et appliquer les filtres pour voir les rÃ©sultats de comparaison.
+            Veuillez sélectionner au moins une classe et appliquer les filtres pour voir les résultats de comparaison.
         </p>
     </div>
 <?php endif; ?>

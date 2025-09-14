@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'classes', 'delete', '../../../dashboard.php', 'delete');
+requirePagePermissionFromDB('academic', 'classes/delete', 'delete', '../../../dashboard.php');
 
 // Récupérer l'ID de la classe
 $id = (int)($_GET['id'] ?? 0);

@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'schedule', 'create', '../../../dashboard.php', 'generate');
+requirePagePermissionFromDB('academic', 'schedule/generate', 'create', '../../../dashboard.php');
 
 $page_title = 'Génération d\'emploi du temps';
 

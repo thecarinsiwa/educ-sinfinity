@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'subjects', 'delete', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'subjects/delete', 'delete', '../../../dashboard.php');
 
 // Récupérer l'ID de la matière
 $matiere_id = (int)($_GET['id'] ?? 0);

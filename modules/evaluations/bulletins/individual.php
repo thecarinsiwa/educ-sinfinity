@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'bulletins', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'bulletins/individual', 'read', '../../../dashboard.php');
 
 $page_title = 'Bulletin individuel';
 

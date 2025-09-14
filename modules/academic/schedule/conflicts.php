@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'schedule', 'read', '../../../dashboard.php', 'conflicts');
+requirePagePermissionFromDB('academic', 'schedule/conflicts', 'read', '../../../dashboard.php');
 
 $page_title = 'Détection des conflits';
 

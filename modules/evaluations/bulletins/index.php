@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'bulletins', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'bulletins/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des Bulletins';
 
@@ -81,23 +82,29 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('evaluations')): ?>
+        <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-file-alt me-1"></i>
                     Générer bulletins
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create')): ?>
                     <li><a class="dropdown-item" href="generate.php">
                         <i class="fas fa-magic me-2"></i>Assistant de génération
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/batch-generate', 'create')): ?>
                     <li><a class="dropdown-item" href="batch-generate.php">
                         <i class="fas fa-layer-group me-2"></i>Génération en lot
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/templates', 'read')): ?>
                     <li><a class="dropdown-item" href="templates.php">
                         <i class="fas fa-file-code me-2"></i>Modèles de bulletins
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
@@ -228,24 +235,30 @@ include '../../../includes/header.php';
             </h5>
             <?php if (!empty($moyennes_classes)): ?>
                 <div class="btn-group">
+                    <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create')): ?>
                     <a href="generate.php?classe=<?php echo $classe_filter; ?>&periode=<?php echo $periode_filter; ?>" 
                        class="btn btn-success">
                         <i class="fas fa-file-alt me-1"></i>
                         Générer tous les bulletins
                     </a>
+                    <?php endif; ?>
                     <button type="button" class="btn btn-outline-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
+                        <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/preview', 'read')): ?>
                         <li><a class="dropdown-item" href="preview.php?classe=<?php echo $classe_filter; ?>&periode=<?php echo $periode_filter; ?>">
                             <i class="fas fa-eye me-2"></i>Aperçu
                         </a></li>
+                        <?php endif; ?>
+                        <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/export', 'read')): ?>
                         <li><a class="dropdown-item" href="export.php?classe=<?php echo $classe_filter; ?>&periode=<?php echo $periode_filter; ?>&format=pdf">
                             <i class="fas fa-file-pdf me-2"></i>Export PDF
                         </a></li>
                         <li><a class="dropdown-item" href="export.php?classe=<?php echo $classe_filter; ?>&periode=<?php echo $periode_filter; ?>&format=excel">
                             <i class="fas fa-file-excel me-2"></i>Export Excel
                         </a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
             <?php endif; ?>
@@ -327,22 +340,28 @@ include '../../../includes/header.php';
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
+                                            <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/individual', 'read')): ?>
                                             <a href="individual.php?eleve=<?php echo $eleve['id']; ?>&periode=<?php echo $periode_filter; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Bulletin individuel">
                                                 <i class="fas fa-file-alt"></i>
                                             </a>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/preview', 'read')): ?>
                                             <a href="preview.php?eleve=<?php echo $eleve['id']; ?>&periode=<?php echo $periode_filter; ?>" 
                                                class="btn btn-outline-info" 
                                                title="Aperçu"
                                                target="_blank">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/download', 'read')): ?>
                                             <a href="download.php?eleve=<?php echo $eleve['id']; ?>&periode=<?php echo $periode_filter; ?>&format=pdf" 
                                                class="btn btn-outline-success" 
                                                title="Télécharger PDF">
                                                 <i class="fas fa-download"></i>
                                             </a>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

@@ -20,7 +20,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'payments/get_frais_by_classe', 'read', '../../dashboard.php');
 
 // Vérifier les paramètres
 $classe_id = (int)($_GET['classe_id'] ?? 0);

@@ -12,7 +12,7 @@ require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-// requirePagePermissionFromDB('academic', 'subjects', 'read', '../../../dashboard.php', 'index'); 
+requirePagePermissionFromDB('academic', 'subjects/index', 'read', '../../../dashboard.php'); 
 
 
 $page_title = 'Gestion des Matières';
@@ -78,7 +78,7 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'subjects/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -306,14 +306,14 @@ include '../../../includes/header.php';
                                            title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'subjects/edit', 'edit')): ?>
                                         <a href="edit.php?id=<?php echo $matiere['id']; ?>" 
                                            class="btn btn-outline-primary" 
                                            title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <?php endif; ?>
-                                        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'delete')): ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'subjects/delete', 'delete')): ?>
                                         <a href="delete.php?id=<?php echo $matiere['id']; ?>" 
                                            class="btn btn-outline-danger btn-delete" 
                                            title="Supprimer"

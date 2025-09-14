@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'logs', 'read', '../../dashboard.php');
+requirePagePermission('admin', 'logs/index', 'read', '../../dashboard.php');
 
 $page_title = 'Historique des Actions Utilisateurs';
 

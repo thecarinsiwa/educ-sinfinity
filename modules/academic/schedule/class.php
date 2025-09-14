@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 requireLogin();
 
 // Vérifier l'accès à cette page
-requirePagePermissionFromDB('academic', 'schedule', 'read', '../../../dashboard.php', 'class');
+requirePagePermissionFromDB('academic', 'schedule/class', 'read', '../../../dashboard.php');
 
 $page_title = "Emploi du temps de la classe";
 

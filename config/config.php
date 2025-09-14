@@ -542,4 +542,12 @@ function checkPermission($required_permission) {
     // Vérifier si l'utilisateur a la permission spécifique
     return in_array($required_permission, $user_permissions);
 }
+
+// Inclure le gestionnaire de paramètres
+require_once __DIR__ . '/../includes/settings-manager.php';
+
+// Initialiser le gestionnaire de paramètres global
+if (isset($database) && class_exists('SettingsManager')) {
+    $settings_manager = new SettingsManager($database);
+}
 ?>

@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'subjects', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'subjects/edit', 'edit', '../../../dashboard.php');
 
 $page_title = 'Modifier une matière';
 

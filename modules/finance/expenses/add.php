@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'expenses', 'create', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'expenses/add', 'create', '../../dashboard.php');
 
 $page_title = 'Ajouter une dépense';
 

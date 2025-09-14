@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'subjects', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('academic', 'subjects/view', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de la matière
 $matiere_id = (int)($_GET['id'] ?? 0);
@@ -99,7 +99,7 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'subjects/edit', 'edit')): ?>
             <div class="btn-group">
                 <a href="edit.php?id=<?php echo $matiere_id; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -417,7 +417,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects/edit', 'edit')): ?>
                         <a href="edit.php?id=<?php echo $matiere_id; ?>" class="btn btn-primary btn-sm">
                             <i class="fas fa-edit me-1"></i>
                             Modifier cette matière
@@ -443,7 +443,7 @@ include '../../../includes/header.php';
                         Exporter en PDF
                     </a>
                     
-                    <?php if (hasPagePermissionFromDB('academic', 'subjects', 'update')): ?>
+                    <?php if (hasPagePermissionFromDB('academic', 'subjects/delete', 'delete')): ?>
                         <hr>
                         <a href="delete.php?id=<?php echo $matiere_id; ?>" 
                            class="btn btn-outline-danger btn-sm btn-delete"

@@ -11,7 +11,7 @@ require_once '../../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('reports', 'academic', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('reports', 'academic/analysis/detailed', 'read', '../../../../dashboard.php');
 
 $page_title = 'Analyse dÃ©taillÃ©e des performances';
 $current_year = getCurrentAcademicYear();

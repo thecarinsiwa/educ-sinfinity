@@ -8,11 +8,12 @@ require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
 require_once '../../../../includes/permissions-pages.php';
+require_once '../../../../includes/ui-permissions.php';
 
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/exports/applications', 'read', '../../../../dashboard.php');
 
 $page_title = 'Export des demandes d\'admission';
 
@@ -483,10 +484,12 @@ if ($format === 'pdf' && !empty($demandes)) {
                                 </td>
                                 <td class="no-print">
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('students', 'admissions/applications/view', 'read')): ?>
                                         <a href="../applications/view.php?id=<?php echo $demande['id']; ?>" class="btn btn-outline-primary" title="Voir les dÃ©tails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if ($demande['status'] === 'en_attente'): ?>
+                                        <?php endif; ?>
+                                        <?php if ($demande['status'] === 'en_attente' && hasPagePermissionFromDB('students', 'admissions/applications/process', 'update')): ?>
                                             <a href="../applications/process.php?id=<?php echo $demande['id']; ?>" class="btn btn-outline-success" title="Traiter">
                                                 <i class="fas fa-check"></i>
                                             </a>

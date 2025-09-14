@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('discipline', 'incidents', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('discipline', 'incidents/add', 'create', '../../../dashboard.php');
 
 $errors = [];
 $success = false;

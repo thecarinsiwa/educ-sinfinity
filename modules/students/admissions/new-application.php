@@ -12,10 +12,10 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/new-application', 'create', '../../../dashboard.php');
 
 // Traitement du formulaire
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {    
     try {
         // Validation des données
         $nom_eleve = trim($_POST['nom_eleve'] ?? '');

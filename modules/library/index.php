@@ -8,6 +8,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -142,26 +143,34 @@ include '../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('library')): ?>
+        <?php if (hasPagePermissionFromDB('library', 'books/add', 'create') || hasPagePermissionFromDB('library', 'loans/add', 'create') || hasPagePermissionFromDB('library', 'reservations/add', 'create') || hasPagePermissionFromDB('library', 'books/import', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('library', 'books/add', 'create')): ?>
                     <li><a class="dropdown-item" href="books/add.php">
                         <i class="fas fa-book me-2"></i>Ajouter un livre
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('library', 'loans/add', 'create')): ?>
                     <li><a class="dropdown-item" href="loans/add.php">
                         <i class="fas fa-hand-holding me-2"></i>Nouvel emprunt
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('library', 'reservations/add', 'create')): ?>
                     <li><a class="dropdown-item" href="reservations/add.php">
                         <i class="fas fa-bookmark me-2"></i>Nouvelle réservation
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('library', 'books/import', 'create')): ?>
                     <li><a class="dropdown-item" href="books/import.php">
                         <i class="fas fa-upload me-2"></i>Import en lot
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
@@ -171,18 +180,26 @@ include '../../includes/header.php';
                 Rapports
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('library', 'reports/inventory', 'read')): ?>
                 <li><a class="dropdown-item" href="reports/inventory.php">
                     <i class="fas fa-list me-2"></i>Inventaire
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('library', 'reports/loans', 'read')): ?>
                 <li><a class="dropdown-item" href="reports/loans.php">
                     <i class="fas fa-exchange-alt me-2"></i>Emprunts
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('library', 'reports/statistics', 'read')): ?>
                 <li><a class="dropdown-item" href="reports/statistics.php">
                     <i class="fas fa-chart-pie me-2"></i>Statistiques
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('library', 'reports/penalties', 'read')): ?>
                 <li><a class="dropdown-item" href="reports/penalties.php">
                     <i class="fas fa-exclamation-triangle me-2"></i>Pénalités
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
@@ -410,10 +427,12 @@ include '../../includes/header.php';
                         <?php endforeach; ?>
                     </div>
                     <div class="text-center">
+                        <?php if (hasPagePermissionFromDB('library', 'books/index', 'read')): ?>
                         <a href="books/" class="btn btn-outline-secondary">
                             <i class="fas fa-book me-1"></i>
                             Voir le catalogue complet
                         </a>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <p class="text-muted text-center">Aucun livre dans le catalogue</p>

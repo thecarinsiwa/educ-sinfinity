@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'transfers', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'transfers/certificates/index', 'read', '../../../../dashboard.php');
 
 $page_title = 'Gestion des Certificats de Transfert';
 

@@ -12,7 +12,7 @@ require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'create', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/bulk-add', 'create', '../../dashboard.php');
 
 $page_title = 'Ajout en lot de frais scolaires';
 

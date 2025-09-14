@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'frais', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'frais/index', 'read', '../../../dashboard.php');
 
 $errors = [];
 
@@ -146,18 +147,22 @@ include '../../../includes/header.php';
         <span class="badge bg-secondary ms-2"><?php echo number_format($total ?? 0); ?></span>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('recouvrement', 'frais/add', 'create')): ?>
         <div class="btn-group me-2">
             <a href="add.php" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
                 Nouveau Frais
             </a>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('recouvrement', 'frais/import', 'create')): ?>
         <div class="btn-group me-2">
             <a href="import.php" class="btn btn-info">
                 <i class="fas fa-file-import me-1"></i>
                 Importer
             </a>
         </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="../index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -493,33 +498,45 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('recouvrement', 'frais/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $frais_item['id']; ?>"
                                            class="btn btn-outline-primary" title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('recouvrement', 'frais/edit', 'update')): ?>
                                         <a href="edit.php?id=<?php echo $frais_item['id']; ?>"
                                            class="btn btn-outline-warning" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('recouvrement', 'frais/duplicate', 'create') || hasPagePermissionFromDB('recouvrement', 'paiements/index', 'read') || hasPagePermissionFromDB('recouvrement', 'frais/delete', 'delete')): ?>
                                         <div class="btn-group btn-group-sm">
                                             <button type="button" class="btn btn-outline-secondary dropdown-toggle"
                                                     data-bs-toggle="dropdown" title="Plus d'actions">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <ul class="dropdown-menu">
+                                                <?php if (hasPagePermissionFromDB('recouvrement', 'frais/duplicate', 'create')): ?>
                                                 <li><a class="dropdown-item" href="duplicate.php?id=<?php echo $frais_item['id']; ?>">
                                                     <i class="fas fa-copy me-2"></i>Dupliquer
                                                 </a></li>
+                                                <?php endif; ?>
+                                                <?php if (hasPagePermissionFromDB('recouvrement', 'paiements/index', 'read')): ?>
                                                 <li><a class="dropdown-item" href="../paiements/?frais_id=<?php echo $frais_item['id']; ?>">
                                                     <i class="fas fa-money-bill me-2"></i>Voir paiements
                                                 </a></li>
+                                                <?php endif; ?>
                                                 <li><hr class="dropdown-divider"></li>
+                                                <?php if (hasPagePermissionFromDB('recouvrement', 'frais/delete', 'delete')): ?>
                                                 <li><a class="dropdown-item text-danger" href="delete.php?id=<?php echo $frais_item['id']; ?>"
                                                        onclick="return confirm('Supprimer ce frais ? Cette action est irréversible.')">
                                                     <i class="fas fa-trash me-2"></i>Supprimer
                                                 </a></li>
+                                                <?php endif; ?>
                                             </ul>
                                         </div>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

@@ -11,7 +11,7 @@ require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'view', 'read', '../../dashboard.php');
+requirePagePermission('admin', 'users/view', 'read', '../../dashboard.php');
 
 $user_id = (int)($_GET['id'] ?? 0);
 

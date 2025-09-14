@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'annonces', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/annonces/add', 'create', '../../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

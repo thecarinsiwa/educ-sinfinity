@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification
 requireLogin();
 
-requirePagePermissionFromDB('students', 'attendance', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/get-absence-history', 'read', '../../../dashboard.php');
 
 header('Content-Type: application/json');
 

@@ -11,7 +11,7 @@ require_once '../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'class', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'class/index', 'read', '../../dashboard.php');
 
 // Récupérer l'ID de la classe
 $classe_id = (int)($_GET['id'] ?? 0);

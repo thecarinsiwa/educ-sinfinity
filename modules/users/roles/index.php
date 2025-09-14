@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermission('users', 'roles', 'read', '../../dashboard.php');
+requirePagePermission('admin', 'roles/index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des Rôles et Permissions';
 

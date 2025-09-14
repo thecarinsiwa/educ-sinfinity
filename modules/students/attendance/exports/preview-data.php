@@ -16,7 +16,7 @@ if (!isLoggedIn()) {
 }
 
 require_once '../../../../includes/permissions-pages.php';
-requirePagePermissionFromDB('students', 'attendance', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students','attendance/exports/preview-data', 'read', '../../../../dashboard.php');
 
 // Vérifier que c'est une requête POST avec action preview
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['preview_action'])) {

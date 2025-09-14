@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'books', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'books/categories', 'read', '../../dashboard.php');
 
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

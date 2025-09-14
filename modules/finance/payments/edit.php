@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'payments', 'edit', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'payments/edit', 'edit', '../../dashboard.php');
 
 // Récupérer l'ID du paiement
 $id = (int)($_GET['id'] ?? 0);

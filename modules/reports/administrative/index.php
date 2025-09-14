@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('reports', 'administrative', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('reports', 'administrative/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports Administratifs';
 

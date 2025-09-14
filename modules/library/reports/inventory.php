@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'reports', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'reports/inventory', 'read', '../../dashboard.php');
 
 // Paramètres de filtrage
 $category_filter = $_GET['category'] ?? '';

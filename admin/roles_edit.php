@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // car la structure des permissions utilise des noms de pages avec slashes
                     $page_key = $page_path;
                     if (!isset($permissions_organized[$module]['pages'][$page_key])) {
-                        $page_name = ucwords(str_replace(['/', '_', '-'], [' / ', ' ', ' '], $page_key));
+                        $page_name = translatePageName($page_key);
                         $permissions_organized[$module]['pages'][$page_key] = [
                             'name' => $page_name,
                             'permissions' => []
@@ -346,9 +346,9 @@ include '../includes/header.php';
                                                     <div class="col-lg-4 col-md-6 mb-3">
                                                         <div class="card border-light">
                                                             <div class="card-header bg-light">
-                                                                <h6 class="mb-0 text-truncate" title="<?php echo ucwords(str_replace(['/', '_', '-'], [' ', ' ', ' '], $page_key)); ?>">
+                                                                <h6 class="mb-0 text-truncate" title="<?php echo translatePageName($page_key); ?>">
                                                                     <i class="fas fa-file-alt me-1"></i>
-                                                                    <?php echo ucwords(str_replace(['/', '_', '-'], [' ', ' ', ' '], $page_key)); ?>
+                                                                    <?php echo translatePageName($page_key); ?>
                                                                 </h6>
                                                             </div>
                                                             <div class="card-body p-2">

@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'tracking', 'edit', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'student-tracking/decisions/take-decision', 'create', '../../../../dashboard.php');
 
 $page_title = 'Prendre une DÃ©cision';
 

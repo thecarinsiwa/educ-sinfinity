@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('complementary', 'inventory', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('complementary', 'inventory/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de l\'Inventaire';
 

@@ -20,7 +20,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'payments', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'payments/get_eleves_for_payment', 'read', '../../dashboard.php');
 
 // Obtenir l'année scolaire actuelle
 $current_year = null;

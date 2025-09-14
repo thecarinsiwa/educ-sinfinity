@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('discipline', 'reports', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('discipline', 'reports/index', 'read', '../../../dashboard.php');
 
 // Paramètres de filtrage
 $periode = $_GET['periode'] ?? 'mois_courant';

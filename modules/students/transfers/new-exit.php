@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'transfers', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'transfers/new-exit', 'create', '../../../dashboard.php');
 
 $page_title = "Nouvelle sortie d'Ã©lÃ¨ve";
 

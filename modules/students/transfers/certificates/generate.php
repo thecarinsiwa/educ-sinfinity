@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'transfers', 'create', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'transfers/certificates/generate', 'create', '../../../../dashboard.php');
 
 $page_title = "Génération de certificat";
 

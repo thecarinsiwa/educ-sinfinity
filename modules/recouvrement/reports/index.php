@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'reports', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'reports/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Rapports de recouvrement';
 
@@ -236,12 +237,14 @@ include '../../../includes/header.php';
         Rapports de recouvrement
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('recouvrement', 'reports/export', 'read')): ?>
         <div class="btn-group me-2">
             <a href="export.php" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i>
                 Exporter
             </a>
         </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="../index.php" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>

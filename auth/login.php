@@ -10,7 +10,8 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 
 // Rediriger si déjà connecté
 if (isLoggedIn()) {
-    redirectTo('dashboard.php');
+    require_once dirname(__DIR__) . '/includes/dashboard-router.php';
+    redirectToDashboard();
 }
 
 $error_message = '';
@@ -24,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error_message = 'Veuillez remplir tous les champs.';
     } else {
         if (authenticateUser($username, $password)) {
-            redirectTo('../dashboard.php');
+            require_once dirname(__DIR__) . '/includes/dashboard-router.php';
+            redirectToDashboard();
         } else {
             $error_message = 'Nom d\'utilisateur ou mot de passe incorrect.';
         }

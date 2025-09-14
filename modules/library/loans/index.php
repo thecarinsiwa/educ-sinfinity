@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'loans', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'loans/index', 'read', '../../dashboard.php');
 
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('library')) {
@@ -234,13 +235,15 @@ include '../../../includes/header.php';
                 Retour à la bibliothèque
             </a>
         </div>
-        <?php if (checkPagePermission('library')): ?>
+        <?php if (hasPagePermissionFromDB('library', 'loans/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
                     Nouvel emprunt
                 </a>
             </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('library', 'loans/returns', 'update')): ?>
             <div class="btn-group me-2">
                 <a href="returns.php" class="btn btn-success">
                     <i class="fas fa-undo me-1"></i>
@@ -381,7 +384,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">Aucun emprunt trouvé</h5>
                 <p class="text-muted">Aucun emprunt ne correspond aux critères sélectionnés.</p>
-                <?php if (checkPagePermission('library')): ?>
+                <?php if (hasPagePermissionFromDB('library', 'loans/add', 'create')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Créer le premier emprunt
@@ -496,16 +499,20 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('library', 'loans/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $emprunt['id']; ?>"
                                            class="btn btn-outline-info" title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPagePermission('library') && $emprunt['status'] === 'en_cours'): ?>
+                                        <?php endif; ?>
+                                        <?php if ($emprunt['status'] === 'en_cours' && hasPagePermissionFromDB('library', 'loans/return', 'update')): ?>
                                             <button type="button" class="btn btn-outline-success"
                                                     onclick="returnBook(<?php echo $emprunt['id']; ?>)"
                                                     title="Retourner le livre">
                                                 <i class="fas fa-undo"></i>
                                             </button>
+                                        <?php endif; ?>
+                                        <?php if ($emprunt['status'] === 'en_cours' && hasPagePermissionFromDB('library', 'loans/extend', 'update')): ?>
                                             <button type="button" class="btn btn-outline-warning"
                                                     onclick="extendLoan(<?php echo $emprunt['id']; ?>)"
                                                     title="Prolonger l'emprunt">

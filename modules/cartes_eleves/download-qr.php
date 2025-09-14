@@ -9,7 +9,7 @@ require_once '../../includes/functions.php';
 require_once '../includes/permissions-pages.php';
 requireLogin();
 
-requirePagePermissionFromDB('cartes_eleves', 'download', 'read', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/download-qr', 'read', '../dashboard.php');
 
 $carte_id = $_GET['id'] ?? 0;
 

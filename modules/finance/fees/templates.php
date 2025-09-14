@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/templates', 'read', '../../dashboard.php');
 
 $page_title = 'Modèles de Frais Scolaires';
 

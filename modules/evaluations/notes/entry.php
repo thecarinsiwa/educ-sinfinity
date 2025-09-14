@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'notes', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'notes/entry', 'create', '../../../dashboard.php');
 
 $page_title = 'Saisie de notes';
 

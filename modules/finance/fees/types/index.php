@@ -1,34 +1,35 @@
 ﻿<?php
 /**
- * Module de gestion financiÃ¨re - Types de frais scolaires
- * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
+ * Module de gestion financière - Types de frais scolaires
+ * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
 require_once '../../../../includes/permissions-pages.php';
+require_once '../../../../includes/ui-permissions.php';
 require_once 'functions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'fees', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('finance', 'fees/types/index', 'read', '../../../../dashboard.php');
 
 $page_title = 'Types de Frais Scolaires';
 
-// Obtenir l'annÃ©e scolaire actuelle
+// Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
 if (!$current_year || !isset($current_year['id'])) {
-    showMessage('error', 'Aucune annÃ©e scolaire active ou ID manquant.');
+    showMessage('error', 'Aucune année scolaire active ou ID manquant.');
     redirectTo('../../index.php');
 }
 
-// ParamÃ¨tres de recherche et filtrage
+// Paramètres de recherche et filtrage
 $search = sanitizeInput($_GET['search'] ?? '');
 $status_filter = sanitizeInput($_GET['status'] ?? '');
 
-// Construction de la requÃªte
+// Construction de la requête
 $sql = "SELECT tf.*, 
                COUNT(f.id) as nombre_frais_utilises,
                as_annee.annee, as_annee.date_debut, as_annee.date_fin
@@ -53,7 +54,7 @@ if (!empty($status_filter)) {
         $sql .= " AND tf.actif = 0";
     }
 }
-
+    
 $sql .= " GROUP BY tf.id ORDER BY tf.nom";
 
 $types_frais = $database->query($sql, $params)->fetchAll();
@@ -84,10 +85,10 @@ include '../../../../includes/header.php';
         <div class="btn-group me-2">
             <span class="btn btn-outline-info">
                 <i class="fas fa-calendar me-1"></i>
-                AnnÃ©e: <?php echo htmlspecialchars($current_year['annee'] ?? 'Non dÃ©finie'); ?>
+                Année: <?php echo htmlspecialchars($current_year['annee'] ?? 'Non définie'); ?>
             </span>
         </div>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'fees/types/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -151,7 +152,7 @@ include '../../../../includes/header.php';
                 <div class="d-flex justify-content-between">
                     <div>
                         <h4><?php echo $stats['utilises']; ?></h4>
-                        <p class="mb-0">UtilisÃ©s</p>
+                        <p class="mb-0">Utilisés</p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-link fa-2x"></i>
@@ -220,10 +221,10 @@ include '../../../../includes/header.php';
                         <tr>
                             <th>Nom</th>
                             <th>Description</th>
-                            <th>PrioritÃ©</th>
+                                <th>Priorité</th>
                             <th>Statut</th>
-                            <th>UtilisÃ©</th>
-                            <th>Date crÃ©ation</th>
+                            <th>Utilisé</th>
+                            <th>Date création</th>
                             <th class="no-sort">Actions</th>
                         </tr>
                     </thead>
@@ -239,11 +240,11 @@ include '../../../../includes/header.php';
                                 <td>
                                     <?php
                                     $priority_colors = [
-                                        1 => 'danger',    // PrioritÃ© maximale
-                                        2 => 'warning',   // Haute prioritÃ©
-                                        3 => 'info',      // PrioritÃ© moyenne
-                                        4 => 'primary',   // PrioritÃ© normale
-                                        5 => 'secondary', // PrioritÃ© faible
+                                        1 => 'danger',    // Priorité maximale
+                                        2 => 'warning',   // Haute priorité
+                                        3 => 'info',      // Priorité moyenne
+                                        4 => 'primary',   // Priorité normale
+                                        5 => 'secondary', // Priorité faible
                                     ];
                                     $color = $priority_colors[$type['priorite']] ?? 'light';
                                     ?>
@@ -258,7 +259,7 @@ include '../../../../includes/header.php';
                                             case 3: echo 'Moyenne'; break;
                                             case 4: echo 'Normale'; break;
                                             case 5: echo 'Faible'; break;
-                                            default: echo 'TrÃ¨s faible'; break;
+                                            default: echo 'Très faible'; break;
                                         }
                                         ?>
                                     </small>
@@ -276,7 +277,7 @@ include '../../../../includes/header.php';
                                             <?php echo $type['nombre_frais_utilises']; ?> frais
                                         </span>
                                     <?php else: ?>
-                                        <span class="text-muted">Non utilisÃ©</span>
+                                        <span class="text-muted">Non utilisé</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -287,40 +288,44 @@ include '../../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/types/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $type['id']; ?>" 
                                            class="btn btn-outline-info" 
-                                           title="Voir dÃ©tails">
+                                           title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPagePermission('finance')): ?>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/types/edit', 'update')): ?>
                                             <a href="edit.php?id=<?php echo $type['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'fees/types/toggle-status', 'update')): ?>
                                             <?php if ($type['actif']): ?>
                                                 <a href="toggle-status.php?id=<?php echo $type['id']; ?>&action=desactiver" 
                                                    class="btn btn-outline-warning" 
-                                                   title="DÃ©sactiver"
-                                                   onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir dÃ©sactiver ce type de frais ?')">
+                                                   title="Désactiver"
+                                                   onclick="return confirm('Êtes-vous sûr de vouloir désactiver ce type de frais ?')">
                                                     <i class="fas fa-pause"></i>
                                                 </a>
                                             <?php else: ?>
                                                 <a href="toggle-status.php?id=<?php echo $type['id']; ?>&action=activer" 
                                                    class="btn btn-outline-success" 
                                                    title="Activer"
-                                                   onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir activer ce type de frais ?')">
+                                                   onclick="return confirm('Êtes-vous sûr de vouloir activer ce type de frais ?')">
                                                     <i class="fas fa-play"></i>
                                                 </a>
                                             <?php endif; ?>
-                                            <?php if ($type['nombre_frais_utilises'] == 0): ?>
-                                                <a href="delete.php?id=<?php echo $type['id']; ?>" 
-                                                   class="btn btn-outline-danger" 
-                                                   title="Supprimer"
-                                                   onclick="return confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce type de frais ? Cette action est irrÃ©versible.')">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <?php if ($type['nombre_frais_utilises'] == 0 && hasPagePermissionFromDB('finance', 'fees/types/delete', 'delete')): ?>
+                                            <a href="delete.php?id=<?php echo $type['id']; ?>" 
+                                               class="btn btn-outline-danger" 
+                                               title="Supprimer"
+                                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce type de frais ? Cette action est irréversible.')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -332,18 +337,18 @@ include '../../../../includes/header.php';
         <?php else: ?>
             <div class="text-center py-5">
                 <i class="fas fa-tags fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucun type de frais trouvÃ©</h5>
+                <h5 class="text-muted">Aucun type de frais trouvé</h5>
                 <p class="text-muted">
                     <?php if (!empty($search) || !empty($status_filter)): ?>
-                        Aucun type de frais ne correspond aux critÃ¨res de recherche.
+                        Aucun type de frais ne correspond aux critères de recherche.
                     <?php else: ?>
-                        Aucun type de frais n'a encore Ã©tÃ© configurÃ© pour cette annÃ©e scolaire.
+                        Aucun type de frais n'a encore été configuré pour cette année scolaire.
                     <?php endif; ?>
                 </p>
                 <?php if (checkPagePermission('finance')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
-                        CrÃ©er le premier type de frais
+                        Créer le premier type de frais
                     </a>
                 <?php endif; ?>
             </div>

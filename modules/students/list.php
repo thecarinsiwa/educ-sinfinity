@@ -8,6 +8,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -191,23 +192,29 @@ include '../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (checkPagePermission('students')): ?>
+        <?php if (hasPagePermissionFromDB('students', 'add', 'create') || hasPagePermissionFromDB('students', 'admissions/bulk-import', 'create') || hasPagePermissionFromDB('students', 'admissions/direct-enrollment', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('students', 'add', 'create')): ?>
                     <li><a class="dropdown-item" href="add.php">
                         <i class="fas fa-user-plus me-2"></i>Ajouter un élève
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/bulk-import', 'create')): ?>
                     <li><a class="dropdown-item" href="admissions/bulk-import.php">
                         <i class="fas fa-file-import me-2"></i>Import en masse
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/direct-enrollment', 'create')): ?>
                     <li><a class="dropdown-item" href="admissions/direct-enrollment.php">
                         <i class="fas fa-user-check me-2"></i>Inscription directe
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>

@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('library', 'books', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('library', 'books/index', 'read', '../../dashboard.php');
 
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('library')) {
@@ -187,19 +188,23 @@ include '../../../includes/header.php';
                 Retour à la bibliothèque
             </a>
         </div>
-        <?php if (checkPagePermission('library')): ?>
+        <?php if (hasPagePermissionFromDB('library', 'books/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
                     Ajouter un livre
                 </a>
             </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('library', 'books/categories', 'read')): ?>
             <div class="btn-group me-2">
                 <a href="categories.php" class="btn btn-outline-secondary">
                     <i class="fas fa-tags me-1"></i>
                     Gérer les catégories
                 </a>
             </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('library', 'books/bulk-actions', 'update')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkActionModal">
                     <i class="fas fa-tasks me-1"></i>
@@ -400,7 +405,7 @@ include '../../../includes/header.php';
                         <tbody>
                             <?php foreach ($livres as $livre): ?>
                                 <tr>
-                                    <?php if (checkPagePermission('library')): ?>
+                                    <?php if (hasPagePermissionFromDB('library', 'books/bulk-actions', 'update')): ?>
                                         <td>
                                             <input type="checkbox" name="livre_ids[]"
                                                    value="<?php echo $livre['id']; ?>"
@@ -492,15 +497,19 @@ include '../../../includes/header.php';
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
+                                            <?php if (hasPagePermissionFromDB('library', 'books/view', 'read')): ?>
                                             <a href="view.php?id=<?php echo $livre['id']; ?>"
                                                class="btn btn-outline-info" title="Voir les détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <?php if (checkPagePermission('library')): ?>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('library', 'books/edit', 'update')): ?>
                                                 <a href="edit.php?id=<?php echo $livre['id']; ?>"
                                                    class="btn btn-outline-primary" title="Modifier">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                            <?php endif; ?>
+                                            <?php if (hasPagePermissionFromDB('library', 'books/change-status', 'update')): ?>
                                                 <button type="button" class="btn btn-outline-success"
                                                         onclick="changeStatus(<?php echo $livre['id']; ?>)"
                                                         title="Changer le statut">

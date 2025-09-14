@@ -9,7 +9,7 @@ require_once '../../includes/functions.php';
 require_once '../includes/permissions-pages.php';
 requireLogin();
 
-requirePagePermissionFromDB('cartes_eleves', 'print-all', 'read', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/print-all', 'read', '../dashboard.php');
 
 // Récupérer l'année scolaire courante
 $current_year = $database->query("SELECT * FROM annees_scolaires WHERE status = 'active'")->fetch();

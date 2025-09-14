@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'cartes', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'cartes/index', 'read', '../../dashboard.php');
 
 $errors = [];
 
@@ -170,12 +171,14 @@ include '../../../includes/header.php';
         <span class="badge bg-secondary ms-2"><?php echo number_format($total ?? 0); ?></span>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('recouvrement', 'cartes/generate', 'create')): ?>
         <div class="btn-group me-2">
             <a href="generate.php" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
                 Générer Cartes
             </a>
         </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <a href="print.php" class="btn btn-info">
                 <i class="fas fa-print me-1"></i>
@@ -476,40 +479,50 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('recouvrement', 'cartes/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $carte['id']; ?>"
                                            class="btn btn-outline-primary" title="Voir la carte">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('recouvrement', 'cartes/print', 'read')): ?>
                                         <a href="print.php?id=<?php echo $carte['id']; ?>"
                                            class="btn btn-outline-info" title="Imprimer">
                                             <i class="fas fa-print"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('recouvrement', 'cartes/update', 'update') || hasPagePermissionFromDB('recouvrement', 'cartes/delete', 'delete')): ?>
                                         <div class="btn-group btn-group-sm">
                                             <button type="button" class="btn btn-outline-secondary dropdown-toggle"
                                                     data-bs-toggle="dropdown" title="Plus d'actions">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <?php if ($carte['status'] !== 'active'): ?>
+                                                <?php if ($carte['status'] !== 'active' && hasPagePermissionFromDB('recouvrement', 'cartes/activate', 'update')): ?>
                                                     <li><a class="dropdown-item" href="?action=activate&id=<?php echo $carte['id']; ?>">
                                                         <i class="fas fa-check me-2"></i>Activer
                                                     </a></li>
                                                 <?php endif; ?>
-                                                <?php if ($carte['status'] === 'active'): ?>
+                                                <?php if ($carte['status'] === 'active' && hasPagePermissionFromDB('recouvrement', 'cartes/deactivate', 'update')): ?>
                                                     <li><a class="dropdown-item" href="?action=deactivate&id=<?php echo $carte['id']; ?>">
                                                         <i class="fas fa-pause me-2"></i>Désactiver
                                                     </a></li>
                                                 <?php endif; ?>
+                                                <?php if (hasPagePermissionFromDB('recouvrement', 'cartes/mark-lost', 'update')): ?>
                                                 <li><a class="dropdown-item" href="?action=mark_lost&id=<?php echo $carte['id']; ?>">
                                                     <i class="fas fa-exclamation-triangle me-2"></i>Marquer perdue
                                                 </a></li>
+                                                <?php endif; ?>
                                                 <li><hr class="dropdown-divider"></li>
+                                                <?php if (hasPagePermissionFromDB('recouvrement', 'cartes/delete', 'delete')): ?>
                                                 <li><a class="dropdown-item text-danger" href="?action=delete&id=<?php echo $carte['id']; ?>"
                                                        onclick="return confirm('Supprimer cette carte ?')">
                                                     <i class="fas fa-trash me-2"></i>Supprimer
                                                 </a></li>
+                                                <?php endif; ?>
                                             </ul>
                                         </div>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

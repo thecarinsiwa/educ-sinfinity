@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('finance', 'expenses', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('finance', 'expenses/index', 'read', '../../dashboard.php');
 
 $page_title = 'Gestion des dépenses';
 
@@ -199,7 +200,7 @@ include '../../../includes/header.php';
         Gestion des dépenses
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'expenses/add', 'create')): ?>
             <div class="btn-group me-2">
                 <a href="add.php" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
@@ -213,18 +214,26 @@ include '../../../includes/header.php';
                 Caisses
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('finance', 'expenses/caisses', 'read')): ?>
                 <li><a class="dropdown-item" href="caisses.php">
                     <i class="fas fa-cash-register me-2"></i>Gestion des caisses
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('finance', 'expenses/historique_caisses', 'read')): ?>
                 <li><a class="dropdown-item" href="historique_caisses.php">
                     <i class="fas fa-history me-2"></i>Historique des caisses
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('finance', 'expenses/integration_paiements', 'read')): ?>
                 <li><a class="dropdown-item" href="integration_paiements.php">
                     <i class="fas fa-sync me-2"></i>Intégration paiements
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('finance', 'expenses/maintenance_caisses', 'read')): ?>
                 <li><a class="dropdown-item" href="maintenance_caisses.php">
                     <i class="fas fa-tools me-2"></i>Maintenance
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
         <div class="btn-group">

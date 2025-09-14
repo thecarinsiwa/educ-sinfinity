@@ -13,7 +13,7 @@ require_once '../../../includes/permissions-pages.php';
 requireLogin();
 
 // Vérifier les permissions
-requirePagePermissionFromDB('students', 'attendance', 'edit', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/log-action', 'edit', '../../../dashboard.php');
 
 // Vérifier que c'est une requête POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -10,7 +10,7 @@ require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
 
 requireLogin();
-requirePagePermissionFromDB('academic', 'schedule', 'create', '../../../dashboard.php', 'add-schedule');
+requirePagePermissionFromDB('academic', 'schedule/add-schedule', 'create', '../../../dashboard.php');
 
 $class_id = isset($_GET['class_id']) ? intval($_GET['class_id']) : 0;
 if ($class_id <= 0) {

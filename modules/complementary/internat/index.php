@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('complementary', 'internat', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('complementary', 'internat/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion de l\'Internat';
 

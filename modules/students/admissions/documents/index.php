@@ -8,11 +8,12 @@ require_once '../../../../config/config.php';
 require_once '../../../../config/database.php';
 require_once '../../../../includes/functions.php';
 require_once '../../../../includes/permissions-pages.php';
+require_once '../../../../includes/ui-permissions.php';
 
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'read', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/documents/index', 'read', '../../../../dashboard.php');
 
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && checkPagePermission('students')) {
@@ -170,11 +171,11 @@ include '../../../../includes/header.php';
                 Retour aux Admissions
             </a>
         </div>
-        <?php if (checkPagePermission('students')): ?>
+        <?php if (hasPagePermissionFromDB('students', 'admissions/documents/bulk-update', 'update')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bulkDocumentModal">
                     <i class="fas fa-tasks me-1"></i>
-                    Mise Ã  jour en lot
+                    Mise Ã  jour en lot
                 </button>
             </div>
         <?php endif; ?>
@@ -187,7 +188,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
-                <h6 class="card-title"><?php echo number_format($stats['total']); ?></h6>
+                <h6 class="card-title"><?php echo number_format($stats['total'] ?? 0); ?></h6>
                 <p class="card-text small text-muted">Total dossiers</p>
             </div>
         </div>
@@ -196,7 +197,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-certificate fa-2x text-success mb-2"></i>
-                <h6 class="card-title"><?php echo number_format($stats['cert_naissance_ok']); ?></h6>
+                <h6 class="card-title"><?php echo number_format($stats['cert_naissance_ok'] ?? 0); ?></h6>
                 <p class="card-text small text-muted">Cert. naissance</p>
             </div>
         </div>
@@ -205,7 +206,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-graduation-cap fa-2x text-info mb-2"></i>
-                <h6 class="card-title"><?php echo number_format($stats['bulletin_ok']); ?></h6>
+                <h6 class="card-title"><?php echo number_format($stats['bulletin_ok'] ?? 0); ?></h6>
                 <p class="card-text small text-muted">Bulletins</p>
             </div>
         </div>
@@ -214,8 +215,8 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-heartbeat fa-2x text-warning mb-2"></i>
-                <h6 class="card-title"><?php echo number_format($stats['cert_medical_ok']); ?></h6>
-                <p class="card-text small text-muted">Cert. mÃ©dical</p>
+                <h6 class="card-title"><?php echo number_format($stats['cert_medical_ok'] ?? 0); ?></h6>
+                <p class="card-text small text-muted">Cert. médical</p>
             </div>
         </div>
     </div>
@@ -223,7 +224,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-camera fa-2x text-secondary mb-2"></i>
-                <h6 class="card-title"><?php echo number_format($stats['photo_ok']); ?></h6>
+                <h6 class="card-title"><?php echo number_format($stats['photo_ok'] ?? 0); ?></h6>
                 <p class="card-text small text-muted">Photos</p>
             </div>
         </div>
@@ -232,7 +233,7 @@ include '../../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                <h6 class="card-title"><?php echo number_format($stats['dossiers_complets']); ?></h6>
+                <h6 class="card-title"><?php echo number_format($stats['dossiers_complets'] ?? 0); ?></h6>
                 <p class="card-text small text-muted">Complets</p>
             </div>
         </div>
@@ -250,7 +251,7 @@ include '../../../../includes/header.php';
                     <option value="en_attente" <?php echo $status_filter === 'en_attente' ? 'selected' : ''; ?>>En attente</option>
                     <option value="en_cours_traitement" <?php echo $status_filter === 'en_cours_traitement' ? 'selected' : ''; ?>>En cours</option>
                     <option value="acceptee" <?php echo $status_filter === 'acceptee' ? 'selected' : ''; ?>>AcceptÃ©e</option>
-                </select>
+                </select>   
             </div>
             <div class="col-md-3">
                 <label for="document" class="form-label">Document</label>
@@ -258,7 +259,7 @@ include '../../../../includes/header.php';
                     <option value="">Tous les documents</option>
                     <option value="certificat_naissance" <?php echo $document_filter === 'certificat_naissance' ? 'selected' : ''; ?>>Certificat de naissance</option>
                     <option value="bulletin_precedent" <?php echo $document_filter === 'bulletin_precedent' ? 'selected' : ''; ?>>Bulletin prÃ©cÃ©dent</option>
-                    <option value="certificat_medical" <?php echo $document_filter === 'certificat_medical' ? 'selected' : ''; ?>>Certificat mÃ©dical</option>
+                    <option value="certificat_medical" <?php echo $document_filter === 'certificat_medical' ? 'selected' : ''; ?>>Certificat médical</option>
                     <option value="photo_identite" <?php echo $document_filter === 'photo_identite' ? 'selected' : ''; ?>>Photo d'identitÃ©</option>
                 </select>
             </div>
@@ -266,7 +267,7 @@ include '../../../../includes/header.php';
                 <label for="search" class="form-label">Recherche</label>
                 <input type="text" class="form-control" id="search" name="search" 
                        value="<?php echo htmlspecialchars($search); ?>" 
-                       placeholder="Nom, prÃ©nom ou numÃ©ro...">
+                       placeholder="Nom, prénom ou numéro...">
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
@@ -291,8 +292,8 @@ include '../../../../includes/header.php';
         <?php if (empty($candidatures)): ?>
             <div class="text-center py-4">
                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Aucune candidature trouvÃ©e</h5>
-                <p class="text-muted">Aucune candidature ne correspond aux critÃ¨res sÃ©lectionnÃ©s.</p>
+                <h5 class="text-muted">Aucune candidature trouvée</h5>
+                <p class="text-muted">Aucune candidature ne correspond aux critères sélectionnés.</p>
             </div>
         <?php else: ?>
             <form method="POST" id="bulkForm">
@@ -311,7 +312,7 @@ include '../../../../includes/header.php';
                                 <th>Statut</th>
                                 <th>Cert. Naissance</th>
                                 <th>Bulletin</th>
-                                <th>Cert. MÃ©dical</th>
+                                <th>Cert. Médical</th>
                                 <th>Photo</th>
                                 <th>Autres</th>
                                 <th>Statut Global</th>
@@ -346,8 +347,8 @@ include '../../../../includes/header.php';
                                         ];
                                         $status_names = [
                                             'en_attente' => 'En attente',
-                                            'acceptee' => 'AcceptÃ©e',
-                                            'refusee' => 'RefusÃ©e',
+                                            'acceptee' => 'Acceptée',
+                                            'refusee' => 'Refusée',
                                             'en_cours_traitement' => 'En cours',
                                             'inscrit' => 'Inscrit'
                                         ];
@@ -410,7 +411,7 @@ include '../../../../includes/header.php';
                                         $global_classes = [
                                             'Complet' => 'success',
                                             'Incomplet' => 'warning',
-                                            'RejetÃ©' => 'danger'
+                                            'Rejeté' => 'danger'
                                         ];
                                         $global_class = $global_classes[$candidature['statut_documents']] ?? 'secondary';
                                         ?>
@@ -422,13 +423,13 @@ include '../../../../includes/header.php';
                                     <td>
                                         <div class="btn-group btn-group-sm">
                                             <a href="../applications/view.php?id=<?php echo $candidature['id']; ?>"
-                                               class="btn btn-outline-info" title="Voir les dÃ©tails">
+                                               class="btn btn-outline-info" title="Voir les détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <?php if (checkPagePermission('students')): ?>
                                                 <button type="button" class="btn btn-outline-primary"
                                                         onclick="openDocumentModal(<?php echo $candidature['id']; ?>)"
-                                                        title="GÃ©rer les documents">
+                                                        title="Gérer les documents">
                                                     <i class="fas fa-folder-open"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -468,11 +469,11 @@ include '../../../../includes/header.php';
                                     Type de document *
                                 </label>
                                 <select class="form-select" id="document_type" name="document_type" required>
-                                    <option value="">-- SÃ©lectionner --</option>
+                                    <option value="">-- Sélectionner --</option>
                                     <option value="certificat_naissance">Certificat de naissance</option>
-                                    <option value="bulletin_precedent">Bulletin prÃ©cÃ©dent</option>
-                                    <option value="certificat_medical">Certificat mÃ©dical</option>
-                                    <option value="photo_identite">Photo d'identitÃ©</option>
+                                    <option value="bulletin_precedent">Bulletin précédent</option>
+                                    <option value="certificat_medical">Certificat médical</option>
+                                    <option value="photo_identite">Photo d'identité</option>
                                     <option value="autres_documents">Autres documents</option>
                                 </select>
                             </div>
@@ -484,11 +485,11 @@ include '../../../../includes/header.php';
                                     Nouveau statut *
                                 </label>
                                 <select class="form-select" id="status" name="status" required>
-                                    <option value="">-- SÃ©lectionner --</option>
+                                    <option value="">-- Sélectionner --</option>
                                     <option value="non_fourni">Non fourni</option>
                                     <option value="fourni">Fourni</option>
-                                    <option value="verifie">VÃ©rifiÃ©</option>
-                                    <option value="rejete">RejetÃ©</option>
+                                    <option value="verifie">Vérifié</option>
+                                    <option value="rejete">Rejeté</option>
                                 </select>
                             </div>
                         </div>
@@ -508,9 +509,9 @@ include '../../../../includes/header.php';
                         <strong>Statuts des documents :</strong>
                         <ul class="mb-0 mt-2">
                             <li><strong>Non fourni :</strong> Document manquant</li>
-                            <li><strong>Fourni :</strong> Document reÃ§u, en attente de vÃ©rification</li>
-                            <li><strong>VÃ©rifiÃ© :</strong> Document conforme et validÃ©</li>
-                            <li><strong>RejetÃ© :</strong> Document non conforme ou illisible</li>
+                            <li><strong>Fourni :</strong> Document reçu, en attente de vérification</li>
+                            <li><strong>Vérifié :</strong> Document conforme et validé</li>
+                            <li><strong>Rejeté :</strong> Document non conforme ou illisible</li>
                         </ul>
                     </div>
                 </div>
@@ -522,7 +523,7 @@ include '../../../../includes/header.php';
                     </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i>
-                        Mettre Ã  jour
+                        Mettre à jour
                     </button>
                 </div>
             </form>
@@ -530,21 +531,21 @@ include '../../../../includes/header.php';
     </div>
 </div>
 
-<!-- Modal de mise Ã  jour en lot -->
+<!-- Modal de mise à jour en lot -->
 <div class="modal fade" id="bulkDocumentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-tasks me-2"></i>
-                    Mise Ã  jour en lot
+                    Mise à jour en lot
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    SÃ©lectionnez d'abord les candidatures dans la liste, puis choisissez le document et le statut Ã  appliquer.
+                    Sélectionnez d'abord les candidatures dans la liste, puis choisissez le document et le statut à appliquer.
                 </div>
 
                 <div class="row">
@@ -555,11 +556,11 @@ include '../../../../includes/header.php';
                                 Type de document *
                             </label>
                             <select class="form-select" id="bulk_document_type" name="bulk_document_type" required>
-                                <option value="">-- SÃ©lectionner --</option>
+                                <option value="">-- Sélectionner --</option>
                                 <option value="certificat_naissance">Certificat de naissance</option>
-                                <option value="bulletin_precedent">Bulletin prÃ©cÃ©dent</option>
-                                <option value="certificat_medical">Certificat mÃ©dical</option>
-                                <option value="photo_identite">Photo d'identitÃ©</option>
+                                <option value="bulletin_precedent">Bulletin précédent</option>
+                                <option value="certificat_medical">Certificat médical</option>
+                                    <option value="photo_identite">Photo d'identité</option>
                                 <option value="autres_documents">Autres documents</option>
                             </select>
                         </div>
@@ -568,21 +569,21 @@ include '../../../../includes/header.php';
                         <div class="mb-3">
                             <label for="bulk_status" class="form-label">
                                 <i class="fas fa-flag me-1"></i>
-                                Statut Ã  appliquer *
+                                Statut à appliquer *
                             </label>
                             <select class="form-select" id="bulk_status" name="bulk_status" required>
-                                <option value="">-- SÃ©lectionner --</option>
+                                <option value="">-- Sélectionner --</option>
                                 <option value="non_fourni">Non fourni</option>
                                 <option value="fourni">Fourni</option>
-                                <option value="verifie">VÃ©rifiÃ©</option>
-                                <option value="rejete">RejetÃ©</option>
+                                <option value="verifie">Vérifié</option>
+                                <option value="rejete">Rejeté</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
                 <div id="selectedDocumentsCount" class="text-muted">
-                    Aucune candidature sÃ©lectionnÃ©e
+                    Aucune candidature sélectionnée
                 </div>
             </div>
             <div class="modal-footer">
@@ -623,8 +624,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const countElement = document.getElementById('selectedDocumentsCount');
         if (countElement) {
             countElement.textContent = selectedCount > 0
-                ? `${selectedCount} candidature(s) sÃ©lectionnÃ©e(s)`
-                : 'Aucune candidature sÃ©lectionnÃ©e';
+                ? `${selectedCount} candidature(s) sélectionnée(s)`
+                : 'Aucune candidature sélectionnée';
         }
     }
 
@@ -658,19 +659,19 @@ function submitBulkDocuments() {
     const status = document.getElementById('bulk_status').value;
 
     if (selectedCheckboxes.length === 0) {
-        alert('Veuillez sÃ©lectionner au moins une candidature.');
+        alert('Veuillez sélectionner au moins une candidature.');
         return;
     }
 
     if (!documentType || !status) {
-        alert('Veuillez sÃ©lectionner le type de document et le statut.');
+        alert('Veuillez sélectionner le type de document et le statut.');
         return;
     }
 
     const documentNames = {
         'certificat_naissance': 'Certificat de naissance',
-        'bulletin_precedent': 'Bulletin prÃ©cÃ©dent',
-        'certificat_medical': 'Certificat mÃ©dical',
+        'bulletin_precedent': 'Bulletin précédent',
+        'certificat_medical': 'Certificat médical',
         'photo_identite': 'Photo d\'identitÃ©',
         'autres_documents': 'Autres documents'
     };
@@ -678,14 +679,14 @@ function submitBulkDocuments() {
     const statusNames = {
         'non_fourni': 'Non fourni',
         'fourni': 'Fourni',
-        'verifie': 'VÃ©rifiÃ©',
+        'verifie': 'Vérifié',
         'rejete': 'RejetÃ©'
     };
 
     const documentName = documentNames[documentType] || documentType;
     const statusName = statusNames[status] || status;
 
-    if (confirm(`ÃŠtes-vous sÃ»r de vouloir marquer "${documentName}" comme "${statusName}" pour ${selectedCheckboxes.length} candidature(s) ?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir marquer "${documentName}" comme "${statusName}" pour ${selectedCheckboxes.length} candidature(s) ?`)) {
         // CrÃ©er un formulaire dynamique
         const form = document.createElement('form');
         form.method = 'POST';
@@ -712,7 +713,7 @@ function submitBulkDocuments() {
         statusInput.value = status;
         form.appendChild(statusInput);
 
-        // Candidatures sÃ©lectionnÃ©es
+        // Candidatures sélectionnées
         selectedCheckboxes.forEach(checkbox => {
             const input = document.createElement('input');
             input.type = 'hidden';

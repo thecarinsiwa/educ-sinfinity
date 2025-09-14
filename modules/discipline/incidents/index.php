@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('discipline', 'incidents', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('discipline', 'incidents/index', 'read', '../../../dashboard.php');
 
 $errors = [];
 
@@ -284,12 +285,14 @@ include '../../../includes/header.php';
         <span class="badge bg-secondary ms-2"><?php echo number_format($total); ?></span>
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('discipline', 'incidents/add', 'create')): ?>
         <div class="btn-group me-2">
             <a href="add.php" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 Signaler un incident
             </a>
         </div>
+        <?php endif; ?>
         <div class="btn-group me-2">
             <button type="button" class="btn btn-outline-success" onclick="exportData()">
                 <i class="fas fa-file-excel me-1"></i>
@@ -527,7 +530,7 @@ include '../../../includes/header.php';
                         Aucun incident n'a été signalé pour le moment.
                     <?php endif; ?>
                 </p>
-                <?php if (!$search && !$status_filter && !$gravite_filter && !$classe_filter && !$date_debut && !$date_fin): ?>
+                <?php if (!$search && !$status_filter && !$gravite_filter && !$classe_filter && !$date_debut && !$date_fin && hasPagePermissionFromDB('discipline', 'incidents/add', 'create')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Signaler le premier incident
@@ -632,14 +635,18 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
+                                        <?php if (hasPagePermissionFromDB('discipline', 'incidents/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $incident['id']; ?>" 
                                            class="btn btn-outline-primary" title="Voir détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('discipline', 'sanctions/add', 'create')): ?>
                                         <a href="../sanctions/add.php?incident_id=<?php echo $incident['id']; ?>&eleve_id=<?php echo $incident['eleve_id']; ?>" 
                                            class="btn btn-outline-danger" title="Prononcer une sanction">
                                             <i class="fas fa-gavel"></i>
                                         </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

@@ -12,7 +12,7 @@ require_once '../../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions', 'create', '../../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/applications/add', 'create', '../../../../dashboard.php');
 
 $page_title = 'Nouvelle Candidature';
 

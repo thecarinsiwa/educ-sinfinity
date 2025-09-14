@@ -8,10 +8,11 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('discipline', 'index', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('discipline', 'discipline/index', 'read', '../../dashboard.php');
 
 // Statistiques générales
 try {
@@ -136,18 +137,22 @@ include '../../includes/header.php';
         Module Discipline
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('discipline', 'incidents/add', 'create')): ?>
         <div class="btn-group me-2">
             <a href="incidents/add.php" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 Signaler un incident
             </a>
         </div>
+        <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('discipline', 'recompenses/add', 'create')): ?>
         <div class="btn-group me-2">
             <a href="recompenses/add.php" class="btn btn-success">
                 <i class="fas fa-award me-1"></i>
                 Ajouter une récompense
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -286,10 +291,12 @@ include '../../includes/header.php';
                                             </span>
                                         </td>
                                         <td>
+                                            <?php if (hasPagePermissionFromDB('discipline', 'incidents/view', 'read')): ?>
                                             <a href="incidents/view.php?id=<?php echo $incident['id']; ?>" 
                                                class="btn btn-sm btn-outline-primary" title="Voir détails">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -399,30 +406,38 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('discipline', 'incidents/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="incidents/" class="btn btn-outline-warning w-100">
                             <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
                             <br>Incident
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('discipline', 'sanctions/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="sanctions/" class="btn btn-outline-danger w-100">
                             <i class="fas fa-gavel fa-2x mb-2"></i>
                             <br>Sanction
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('discipline', 'recompenses/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="recompenses/" class="btn btn-outline-success w-100">
                             <i class="fas fa-award fa-2x mb-2"></i>
                             <br>Récompense
                         </a>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('discipline', 'reports/index', 'read')): ?>
                     <div class="col-md-3 mb-3">
                         <a href="reports/" class="btn btn-outline-info w-100">
                             <i class="fas fa-chart-bar fa-2x mb-2"></i>
                             <br>Rapports disciplinaires
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

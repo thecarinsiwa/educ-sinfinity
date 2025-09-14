@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'evaluations', 'read', '../../../dashboard.php', 'index');
+requirePagePermissionFromDB('academic', 'evaluations/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Gestion des évaluations';
 
@@ -166,12 +167,14 @@ include '../../../includes/header.php';
         Gestion des évaluations
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if (hasPagePermissionFromDB('academic', 'evaluations/add', 'create')): ?>
         <div class="btn-group me-2">
             <a href="add.php" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
                 Nouvelle évaluation
             </a>
         </div>
+        <?php endif; ?>
         <div class="btn-group">
             <a href="../index.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
@@ -394,19 +397,27 @@ include '../../../includes/header.php';
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
+                                        <?php if (hasPagePermissionFromDB('academic', 'evaluations/view', 'read')): ?>
                                         <a href="view.php?id=<?php echo $evaluation['id']; ?>" class="btn btn-sm btn-info" title="Voir">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'evaluations/edit', 'update')): ?>
                                         <a href="edit.php?id=<?php echo $evaluation['id']; ?>" class="btn btn-sm btn-warning" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'notes/add', 'create')): ?>
                                         <a href="../notes/add.php?evaluation_id=<?php echo $evaluation['id']; ?>" class="btn btn-sm btn-success" title="Ajouter des notes">
                                             <i class="fas fa-plus"></i>
                                         </a>
+                                        <?php endif; ?>
+                                        <?php if (hasPagePermissionFromDB('academic', 'evaluations/delete', 'delete')): ?>
                                         <button type="button" class="btn btn-sm btn-danger" title="Supprimer" 
                                                 onclick="confirmDelete(<?php echo $evaluation['id']; ?>, '<?php echo addslashes($evaluation['nom']); ?>')">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

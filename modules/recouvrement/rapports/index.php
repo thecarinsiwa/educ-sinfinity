@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'rapports', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'rapports/index', 'read', '../../dashboard.php');
 
 $errors = [];
 $success_message = '';
@@ -92,27 +93,37 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
+        <?php if (hasPagePermissionFromDB('recouvrement', 'rapports/export', 'read')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-download me-1"></i>
                 Exporter
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('recouvrement', 'rapports/export-paiements', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=paiements&format=excel">
                     <i class="fas fa-file-excel me-2"></i>Paiements (Excel)
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('recouvrement', 'rapports/export-solvabilite', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=solvabilite&format=excel">
                     <i class="fas fa-file-excel me-2"></i>Solvabilité (Excel)
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('recouvrement', 'rapports/export-presences', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=presences&format=excel">
                     <i class="fas fa-file-excel me-2"></i>Présences (Excel)
                 </a></li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
+                <?php if (hasPagePermissionFromDB('recouvrement', 'rapports/export-global', 'read')): ?>
                 <li><a class="dropdown-item" href="export.php?type=global&format=pdf">
                     <i class="fas fa-file-pdf me-2"></i>Rapport Global (PDF)
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

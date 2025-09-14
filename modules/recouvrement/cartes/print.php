@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('recouvrement', 'cartes', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('recouvrement', 'cartes/print', 'read', '../../dashboard.php');
 
 // Récupérer l'ID de la carte
 $carte_id = (int)($_GET['id'] ?? 0);

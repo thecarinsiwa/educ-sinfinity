@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('admissions', 'applications', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/applications/view', 'read', '../../../dashboard.php');
 
 // Récupérer l'ID de la demande
 $demande_id = intval($_GET['id'] ?? 0);

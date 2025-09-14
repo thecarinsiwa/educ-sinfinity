@@ -12,7 +12,7 @@ require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('academic', 'schedule', 'read', '../../../dashboard.php', 'index');
+requirePagePermissionFromDB('academic', 'schedule/index', 'read', '../../../dashboard.php');
 
 $page_title = 'Emplois du temps';
 
@@ -105,15 +105,15 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (hasPagePermissionFromDB('academic', 'schedule', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('academic', 'schedule/add', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
-                    <li><?php echo generatePermissionLink('add.php', 'dropdown-item', 'Créer un cours', 'fas fa-calendar-plus me-2', 'academic', 'schedule', 'create'); ?></li>
-                    <li><?php echo generatePermissionLink('generate.php', 'dropdown-item', 'Générer emploi du temps', 'fas fa-magic me-2', 'academic', 'schedule', 'create'); ?></li>
+                    <li><?php echo generatePermissionLink('add.php', 'dropdown-item', 'Créer un cours', 'fas fa-calendar-plus me-2', 'academic', 'schedule/add', 'create'); ?></li>
+                    <li><?php echo generatePermissionLink('generate.php', 'dropdown-item', 'Générer emploi du temps', 'fas fa-magic me-2', 'academic', 'schedule/generate', 'create'); ?></li>
                 </ul>
             </div>
         <?php endif; ?>
@@ -268,12 +268,20 @@ include '../../../includes/header.php';
                             <?php echo htmlspecialchars($classe_data['classe']['classe_nom']); ?>
                         </h6>
                         <div class="btn-group btn-group-sm">
+                            <?php if (hasPagePermissionFromDB('academic', 'schedule/view', 'read')): ?>
                             <a href="class.php?id=<?php echo $classe_data['classe']['classe_id']; ?>" 
                                class="btn btn-outline-primary">
                                 <i class="fas fa-eye me-1"></i>
                                 Voir détail
                             </a>
-                            <?php echo generatePermissionLink('edit-class.php?id=' . $classe_data['classe']['classe_id'], 'btn btn-outline-warning', 'Modifier', 'fas fa-edit me-1', 'academic', 'schedule', 'update'); ?>
+                            <?php endif; ?>
+                            <?php if (hasPagePermissionFromDB('academic', 'schedule/edit', 'update')): ?>
+                            <a href="edit-class.php?id=<?php echo $classe_data['classe']['classe_id']; ?>" 
+                               class="btn btn-outline-warning">
+                                <i class="fas fa-edit me-1"></i>
+                                Modifier
+                            </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -351,10 +359,10 @@ include '../../../includes/header.php';
                         Aucun emploi du temps n'a encore été configuré.
                     <?php endif; ?>
                 </p>
-                <?php if (hasPagePermissionFromDB('academic', 'schedule', 'create')): ?>
+                <?php if (hasPagePermissionFromDB('academic', 'schedule/add', 'create')): ?>
                     <div class="mt-3">
-                        <?php echo generatePermissionLink('add.php', 'btn btn-primary me-2', 'Créer un cours', 'fas fa-plus me-1', 'academic', 'schedule', 'create'); ?>
-                        <?php echo generatePermissionLink('generate.php', 'btn btn-outline-primary', 'Générer automatiquement', 'fas fa-magic me-1', 'academic', 'schedule', 'create'); ?>
+                        <?php echo generatePermissionLink('add.php', 'btn btn-primary me-2', 'Créer un cours', 'fas fa-plus me-1', 'academic', 'schedule/add', 'create'); ?>
+                        <?php echo generatePermissionLink('generate.php', 'btn btn-outline-primary', 'Générer automatiquement', 'fas fa-magic me-1', 'academic', 'schedule/generate', 'create'); ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -377,22 +385,22 @@ include '../../../includes/header.php';
                 <div class="row">
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('add.php', 'btn btn-outline-primary', 'Nouveau cours', 'fas fa-plus me-2', 'academic', 'schedule', 'create'); ?>
+                            <?php echo generatePermissionLink('add.php', 'btn btn-outline-primary', 'Nouveau cours', 'fas fa-plus me-2', 'academic', 'schedule/add', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('generate.php', 'btn btn-outline-success', 'Génération automatique', 'fas fa-magic me-2', 'academic', 'schedule', 'create'); ?>
+                            <?php echo generatePermissionLink('generate.php', 'btn btn-outline-success', 'Génération automatique', 'fas fa-magic me-2', 'academic', 'schedule/generate', 'create'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('conflicts.php', 'btn btn-outline-warning', 'Vérifier conflits', 'fas fa-exclamation-triangle me-2', 'academic', 'schedule', 'read'); ?>
+                            <?php echo generatePermissionLink('conflicts.php', 'btn btn-outline-warning', 'Vérifier conflits', 'fas fa-exclamation-triangle me-2', 'academic', 'schedule/conflicts', 'read'); ?>
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('export.php?format=pdf', 'btn btn-outline-secondary', 'Exporter tout', 'fas fa-download me-2', 'academic', 'schedule', 'read'); ?>
+                            <?php echo generatePermissionLink('export.php?format=pdf', 'btn btn-outline-secondary', 'Exporter tout', 'fas fa-download me-2', 'academic', 'schedule/export', 'read'); ?>
                         </div>
                     </div>
                 </div>

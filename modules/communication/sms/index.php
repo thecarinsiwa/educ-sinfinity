@@ -8,10 +8,11 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'sms', 'read', '../../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/sms/index', 'read', '../../../dashboard.php');
 
 // Paramètres de filtrage
 $status_filter = $_GET['status'] ?? '';
@@ -105,12 +106,14 @@ include '../../../includes/header.php';
                 Retour à la communication
             </a>
         </div>
+        <?php if (hasPagePermissionFromDB('communication', 'communication/sms/send', 'create')): ?>
         <div class="btn-group me-2">
             <a href="send.php" class="btn btn-primary">
                 <i class="fas fa-paper-plane me-1"></i>
                 Envoyer un SMS
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -379,6 +382,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
+                    <?php if (hasPagePermissionFromDB('communication', 'communication/sms/send', 'create')): ?>
                     <a href="send.php" class="btn btn-primary">
                         <i class="fas fa-paper-plane me-2"></i>
                         Envoyer un SMS
@@ -391,10 +395,13 @@ include '../../../includes/header.php';
                         <i class="fas fa-bell me-2"></i>
                         SMS de rappel
                     </a>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('communication', 'communication/templates/index', 'read')): ?>
                     <a href="../templates/?type=sms" class="btn btn-outline-secondary">
                         <i class="fas fa-file-alt me-2"></i>
                         Templates SMS
                     </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

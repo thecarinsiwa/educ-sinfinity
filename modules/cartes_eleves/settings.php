@@ -10,7 +10,7 @@ require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/permissions-pages.php';
 requireLogin();
 
-requirePagePermissionFromDB('cartes_eleves', 'settings', 'edit', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/settings', 'edit', '../dashboard.php');
 
 $page_title = "Paramètres des Cartes d'Élèves";
 $current_module = 'cartes_eleves';

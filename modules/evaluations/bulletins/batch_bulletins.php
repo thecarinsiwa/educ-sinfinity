@@ -11,7 +11,7 @@ require_once '../../../includes/permissions-pages.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'bulletins', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'bulletins/batch_bulletins', 'create', '../../../dashboard.php');
 
 // Récupérer les paramètres
 $classe_id = (int)($_GET['classe_id'] ?? 0);

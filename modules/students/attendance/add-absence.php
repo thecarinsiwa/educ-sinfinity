@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // VÃ©rifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'attendance', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'attendance/add-absence', 'create', '../../../dashboard.php');
 
 $page_title = 'Signaler une Absence ou un Retard';
 

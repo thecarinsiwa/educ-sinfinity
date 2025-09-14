@@ -248,6 +248,7 @@ function authenticateUser($username, $password) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['user_role'] = $role ? $role['nom'] : 'user';
         $_SESSION['user_role_id'] = $user['role_id'];
+        $_SESSION['user_nature'] = $user['nature'] ?? 'staff';
         $_SESSION['user_full_name'] = $user['nom'] . ' ' . $user['prenom'];
         $_SESSION['last_activity'] = time();
 

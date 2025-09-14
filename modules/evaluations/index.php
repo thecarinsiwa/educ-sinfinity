@@ -8,10 +8,11 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/permissions-pages.php';
+require_once '../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('evaluations', 'index', 'read', '../../dashboard.php');
+requirePagePermissionFromDB('evaluations', 'evaluations/index', 'read', '../../dashboard.php');
 
 $page_title = 'Évaluations et Notes';
 
@@ -132,26 +133,34 @@ include '../../includes/header.php';
                 <?php echo $current_year['annee'] ?? 'Aucune année active'; ?>
             </button>
         </div>
-        <?php if (checkPagePermission('evaluations')): ?>
+        <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/add', 'create') || hasPagePermissionFromDB('evaluations', 'notes/batch-entry', 'create') || hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create') || hasPagePermissionFromDB('evaluations', 'periods/manage', 'read')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
+                    <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/add', 'create')): ?>
                     <li><a class="dropdown-item" href="evaluations/add.php">
                         <i class="fas fa-clipboard-list me-2"></i>Nouvelle évaluation
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('evaluations', 'notes/batch-entry', 'create')): ?>
                     <li><a class="dropdown-item" href="notes/batch-entry.php">
                         <i class="fas fa-edit me-2"></i>Saisie de notes
                     </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/generate', 'create')): ?>
                     <li><a class="dropdown-item" href="bulletins/generate.php">
                         <i class="fas fa-file-alt me-2"></i>Générer bulletins
                     </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
+                    <?php if (hasPagePermissionFromDB('evaluations', 'periods/manage', 'read')): ?>
                     <li><a class="dropdown-item" href="periods/manage.php">
                         <i class="fas fa-calendar-check me-2"></i>Gérer périodes
                     </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
@@ -234,6 +243,7 @@ include '../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('evaluations', 'evaluations/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="evaluations/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -250,7 +260,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('evaluations', 'notes/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="notes/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -267,7 +279,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('evaluations', 'bulletins/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="bulletins/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -284,7 +298,9 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                     
+                    <?php if (hasPagePermissionFromDB('evaluations', 'statistics/index', 'read')): ?>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <a href="statistics/" class="text-decoration-none">
                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -301,6 +317,7 @@ include '../../includes/header.php';
                             </div>
                         </a>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

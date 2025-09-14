@@ -54,7 +54,7 @@ try {
 
 // Vérifier l'authentification et les permissions
 requireLogin();
-requirePagePermissionFromDB('communication', 'messages', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('communication', 'communication/messages/compose', 'create', '../../../dashboard.php');
 
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

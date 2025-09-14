@@ -14,7 +14,7 @@ if (!isLoggedIn()) {
     redirectTo('auth/login.php');
 }
 
-requirePagePermissionFromDB('cartes_eleves', 'download', 'read', '../dashboard.php');
+requirePagePermissionFromDB('cartes_eleves', 'cartes_eleves/download', 'read', '../dashboard.php');
 
 // Récupérer l'ID de la carte
 $carte_id = intval($_GET['id'] ?? 0);
