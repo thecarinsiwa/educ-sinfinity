@@ -66,9 +66,10 @@ $per_page = 50;
 $offset = ($page - 1) * $per_page;
 
 $actions = $database->query(
-    "SELECT ual.*, u.username, u.nom, u.prenom, u.role
+    "SELECT ual.*, u.username, u.nom, u.prenom, r.nom as role
      FROM user_actions_log ual
      JOIN users u ON ual.user_id = u.id
+     LEFT JOIN roles r ON u.role_id = r.id
      WHERE $where_clause
      ORDER BY ual.created_at DESC
      LIMIT $per_page OFFSET $offset",
@@ -437,39 +438,7 @@ include '../../../includes/header.php';
 
 <?php
 // Fonctions helper
-function getActionIcon($action) {
-    $icons = [
-        'create_user' => 'user-plus',
-        'update_user' => 'user-edit',
-        'delete_user' => 'user-times',
-        'login' => 'sign-in-alt',
-        'logout' => 'sign-out-alt',
-        'change_password' => 'key',
-        'update_profile' => 'user-cog',
-        'view_user_profile' => 'eye',
-        'create_absence' => 'user-times',
-        'justify_absence' => 'check',
-        'update_absence' => 'edit'
-    ];
-    return $icons[$action] ?? 'info-circle';
-}
-
-function getActionLabel($action) {
-    $labels = [
-        'create_user' => 'Utilisateur créé',
-        'update_user' => 'Utilisateur modifié',
-        'delete_user' => 'Utilisateur supprimé',
-        'login' => 'Connexion',
-        'logout' => 'Déconnexion',
-        'change_password' => 'Mot de passe changé',
-        'update_profile' => 'Profil mis à jour',
-        'view_user_profile' => 'Profil consulté',
-        'create_absence' => 'Absence créée',
-        'justify_absence' => 'Absence justifiée',
-        'update_absence' => 'Absence modifiée'
-    ];
-    return $labels[$action] ?? ucfirst(str_replace('_', ' ', $action));
-}
+// Fonctions getActionIcon et getActionLabel maintenant dans includes/functions.php
 
 function getActionColor($action) {
     $colors = [

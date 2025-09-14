@@ -108,10 +108,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Récupérer les sessions actives
 $sessions = $database->query(
-    "SELECT s.*, u.username, u.nom, u.prenom, u.role,
+    "SELECT s.*, u.username, u.nom, u.prenom, r.nom as role,
             TIMESTAMPDIFF(MINUTE, s.last_activity, NOW()) as minutes_inactive
      FROM user_sessions s
      JOIN users u ON s.user_id = u.id
+     LEFT JOIN roles r ON u.role_id = r.id
      ORDER BY s.last_activity DESC"
 )->fetchAll();
 

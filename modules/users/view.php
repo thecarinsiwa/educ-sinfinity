@@ -50,29 +50,44 @@ $stmt = $database->query(
 $stats['total_actions'] = $stmt->fetch()['total'];
 
 // Sessions actives
-$stmt = $database->query(
-    "SELECT COUNT(*) as total FROM user_sessions WHERE user_id = ? AND last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)",
-    [$user_id]
-);
-$stats['active_sessions'] = $stmt->fetch()['total'];
+try {
+    $stmt = $database->query(
+        "SELECT COUNT(*) as total FROM user_sessions WHERE user_id = ? AND last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)",
+        [$user_id]
+    );
+    $stats['active_sessions'] = $stmt->fetch()['total'];
+} catch (Exception $e) {
+    $stats['active_sessions'] = 0;
+    error_log("Table user_sessions non trouvée: " . $e->getMessage());
+}
 
 // Dernières actions
-$recent_actions = $database->query(
-    "SELECT * FROM user_actions_log 
-     WHERE user_id = ? 
-     ORDER BY created_at DESC 
-     LIMIT 10",
-    [$user_id]
-)->fetchAll();
+try {
+    $recent_actions = $database->query(
+        "SELECT * FROM user_actions_log 
+         WHERE user_id = ? 
+         ORDER BY created_at DESC 
+         LIMIT 10",
+        [$user_id]
+    )->fetchAll();
+} catch (Exception $e) {
+    $recent_actions = [];
+    error_log("Table user_actions_log non trouvée: " . $e->getMessage());
+}
 
 // Sessions récentes
-$recent_sessions = $database->query(
-    "SELECT * FROM user_sessions 
-     WHERE user_id = ? 
-     ORDER BY last_activity DESC 
-     LIMIT 5",
-    [$user_id]
-)->fetchAll();
+try {
+    $recent_sessions = $database->query(
+        "SELECT * FROM user_sessions 
+         WHERE user_id = ? 
+         ORDER BY last_activity DESC 
+         LIMIT 5",
+        [$user_id]
+    )->fetchAll();
+} catch (Exception $e) {
+    $recent_sessions = [];
+    error_log("Table user_sessions non trouvée: " . $e->getMessage());
+}
 
 // Enregistrer la consultation du profil
 logUserAction(
@@ -426,39 +441,7 @@ include '../../includes/header.php';
 
 <?php
 // Fonctions helper
-function getActionIcon($action) {
-    $icons = [
-        'create_user' => 'user-plus',
-        'update_user' => 'user-edit',
-        'delete_user' => 'user-times',
-        'login' => 'sign-in-alt',
-        'logout' => 'sign-out-alt',
-        'change_password' => 'key',
-        'update_profile' => 'user-cog',
-        'view_user_profile' => 'eye'
-    ];
-    return $icons[$action] ?? 'info-circle';
-}
 
-function getActionLabel($action) {
-    $labels = [
-        'create_user' => 'Utilisateur créé',
-        'update_user' => 'Utilisateur modifié',
-        'delete_user' => 'Utilisateur supprimé',
-        'login' => 'Connexion',
-        'logout' => 'Déconnexion',
-        'change_password' => 'Mot de passe changé',
-        'update_profile' => 'Profil mis à jour',
-        'view_user_profile' => 'Profil consulté'
-    ];
-    return $labels[$action] ?? 'Action inconnue';
-}
-
-function calculateAge($birthdate) {
-    $birth = new DateTime($birthdate);
-    $today = new DateTime();
-    return $birth->diff($today)->y;
-}
 
 include '../../includes/footer.php';
 ?>

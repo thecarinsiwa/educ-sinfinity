@@ -48,17 +48,33 @@ $page = (int)($_GET['page'] ?? 1);
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
-$users = $database->query(
-    "SELECT u.*, r.nom as role_nom, r.description as role_description,
-            (SELECT COUNT(*) FROM user_actions_log WHERE user_id = u.id) as nb_actions,
-            (SELECT COUNT(*) FROM user_sessions WHERE user_id = u.id AND last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)) as sessions_actives
-     FROM users u
-     LEFT JOIN roles r ON u.role_id = r.id
-     WHERE $where_clause
-     ORDER BY u.created_at DESC
-     LIMIT $per_page OFFSET $offset",
-    $params
-)->fetchAll();
+try {
+    $users = $database->query(
+        "SELECT u.*, r.nom as role_nom, r.description as role_description,
+                (SELECT COUNT(*) FROM user_actions_log WHERE user_id = u.id) as nb_actions,
+                (SELECT COUNT(*) FROM user_sessions WHERE user_id = u.id AND last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)) as sessions_actives
+         FROM users u
+         LEFT JOIN roles r ON u.role_id = r.id
+         WHERE $where_clause
+         ORDER BY u.created_at DESC
+         LIMIT $per_page OFFSET $offset",
+        $params
+    )->fetchAll();
+} catch (Exception $e) {
+    // Fallback sans les tables user_sessions et user_actions_log
+    $users = $database->query(
+        "SELECT u.*, r.nom as role_nom, r.description as role_description,
+                0 as nb_actions,
+                0 as sessions_actives
+         FROM users u
+         LEFT JOIN roles r ON u.role_id = r.id
+         WHERE $where_clause
+         ORDER BY u.created_at DESC
+         LIMIT $per_page OFFSET $offset",
+        $params
+    )->fetchAll();
+    error_log("Tables user_sessions/user_actions_log non trouvées: " . $e->getMessage());
+}
 
 // Compter le total pour la pagination
 $total_stmt = $database->query(

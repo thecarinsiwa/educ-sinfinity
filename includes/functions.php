@@ -1265,4 +1265,88 @@ function syncModulePermissions($module, $module_pages) {
 function sanitizeInput($data) {
     return htmlspecialchars(strip_tags(trim($data)));
 }
+
+/**
+ * Obtenir l'icône FontAwesome pour une action
+ */
+if (!function_exists('getActionIcon')) {
+function getActionIcon($action) {
+    $icons = [
+        'create_user' => 'user-plus',
+        'update_user' => 'user-edit',
+        'delete_user' => 'user-times',
+        'login' => 'sign-in-alt',
+        'logout' => 'sign-out-alt',
+        'change_password' => 'key',
+        'update_profile' => 'user-cog',
+        'view_user_profile' => 'eye',
+        'create_student' => 'user-plus',
+        'update_student' => 'user-edit',
+        'delete_student' => 'user-times',
+        'view_student' => 'eye',
+        'create_class' => 'school',
+        'update_class' => 'edit',
+        'delete_class' => 'trash',
+        'view_class' => 'eye',
+        'create_subject' => 'book',
+        'update_subject' => 'edit',
+        'delete_subject' => 'trash',
+        'view_subject' => 'eye',
+        'create_payment' => 'credit-card',
+        'update_payment' => 'edit',
+        'delete_payment' => 'trash',
+        'view_payment' => 'eye',
+        'create_fee' => 'money-bill',
+        'update_fee' => 'edit',
+        'delete_fee' => 'trash',
+        'view_fee' => 'eye',
+        'create_absence' => 'user-times',
+        'justify_absence' => 'check',
+        'update_absence' => 'edit'
+    ];
+    return $icons[$action] ?? 'info-circle';
+}
+}
+
+/**
+ * Obtenir le libellé lisible pour une action
+ */
+if (!function_exists('getActionLabel')) {
+function getActionLabel($action) {
+    $labels = [
+        'create_user' => 'Utilisateur créé',
+        'update_user' => 'Utilisateur modifié',
+        'delete_user' => 'Utilisateur supprimé',
+        'login' => 'Connexion',
+        'logout' => 'Déconnexion',
+        'change_password' => 'Mot de passe changé',
+        'update_profile' => 'Profil mis à jour',
+        'view_user_profile' => 'Profil consulté',
+        'create_student' => 'Élève créé',
+        'update_student' => 'Élève modifié',
+        'delete_student' => 'Élève supprimé',
+        'view_student' => 'Élève consulté',
+        'create_class' => 'Classe créée',
+        'update_class' => 'Classe modifiée',
+        'delete_class' => 'Classe supprimée',
+        'view_class' => 'Classe consultée',
+        'create_subject' => 'Matière créée',
+        'update_subject' => 'Matière modifiée',
+        'delete_subject' => 'Matière supprimée',
+        'view_subject' => 'Matière consultée',
+        'create_payment' => 'Paiement créé',
+        'update_payment' => 'Paiement modifié',
+        'delete_payment' => 'Paiement supprimé',
+        'view_payment' => 'Paiement consulté',
+        'create_fee' => 'Frais créé',
+        'update_fee' => 'Frais modifié',
+        'delete_fee' => 'Frais supprimé',
+        'view_fee' => 'Frais consulté',
+        'create_absence' => 'Absence créée',
+        'justify_absence' => 'Absence justifiée',
+        'update_absence' => 'Absence modifiée'
+    ];
+    return $labels[$action] ?? 'Action inconnue';
+}
+}
 ?>

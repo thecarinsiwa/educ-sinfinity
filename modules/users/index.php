@@ -55,19 +55,31 @@ $recent_users = $database->query(
 )->fetchAll();
 
 // Sessions actives
-$active_sessions = $database->query(
-    "SELECT COUNT(DISTINCT user_id) as total FROM user_sessions 
-     WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)"
-)->fetch()['total'];
+try {
+    $active_sessions = $database->query(
+        "SELECT COUNT(DISTINCT user_id) as total FROM user_sessions 
+         WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)"
+    )->fetch()['total'];
+} catch (Exception $e) {
+    // Si la table user_sessions n'existe pas encore, utiliser une valeur par défaut
+    $active_sessions = 0;
+    error_log("Table user_sessions non trouvée: " . $e->getMessage());
+}
 
 // Actions récentes
-$recent_actions = $database->query(
-    "SELECT ual.*, u.username, u.nom, u.prenom
-     FROM user_actions_log ual
-     JOIN users u ON ual.user_id = u.id
-     ORDER BY ual.created_at DESC
-     LIMIT 10"
-)->fetchAll();
+try {
+    $recent_actions = $database->query(
+        "SELECT ual.*, u.username, u.nom, u.prenom
+         FROM user_actions_log ual
+         JOIN users u ON ual.user_id = u.id
+         ORDER BY ual.created_at DESC
+         LIMIT 10"
+    )->fetchAll();
+} catch (Exception $e) {
+    // Si la table user_actions_log n'existe pas encore, utiliser un tableau vide
+    $recent_actions = [];
+    error_log("Table user_actions_log non trouvée: " . $e->getMessage());
+}
 
 include '../../includes/header.php';
 ?>
@@ -589,32 +601,7 @@ include '../../includes/header.php';
 </style>
 
 <?php
-// Fonctions helper pour l'affichage
-function getActionIcon($action) {
-    $icons = [
-        'create_user' => 'user-plus',
-        'update_user' => 'user-edit',
-        'delete_user' => 'user-times',
-        'login' => 'sign-in-alt',
-        'logout' => 'sign-out-alt',
-        'change_password' => 'key',
-        'update_profile' => 'user-cog'
-    ];
-    return $icons[$action] ?? 'info-circle';
-}
-
-function getActionLabel($action) {
-    $labels = [
-        'create_user' => 'Utilisateur créé',
-        'update_user' => 'Utilisateur modifié',
-        'delete_user' => 'Utilisateur supprimé',
-        'login' => 'Connexion',
-        'logout' => 'Déconnexion',
-        'change_password' => 'Mot de passe changé',
-        'update_profile' => 'Profil mis à jour'
-    ];
-    return $labels[$action] ?? 'Action inconnue';
-}
+// Fonctions helper pour l'affichage (maintenant dans includes/functions.php)
 
 include '../../includes/footer.php';
 ?>

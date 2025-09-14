@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $adresse = sanitizeInput($_POST['adresse'] ?? '');
         $date_naissance = sanitizeInput($_POST['date_naissance'] ?? '');
         $genre = sanitizeInput($_POST['genre'] ?? '');
+        $nature = sanitizeInput($_POST['nature'] ?? '');
         
         // Validation
         if (!$username) {
@@ -54,6 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (!$role_id) {
             throw new Exception('Le rôle est requis');
+        }
+        
+        if (!$nature) {
+            throw new Exception('La nature du compte est requise');
         }
         
         // Vérifier que le rôle existe et est actif
@@ -100,9 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $password_hash = hashPassword($password);
             
             $database->query(
-                "INSERT INTO users (username, password, nom, prenom, email, telephone, role_id, status, adresse, date_naissance, genre, created_at) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-                [$username, $password_hash, $nom, $prenom, $email, $telephone, $role_id, $status, $adresse, $date_naissance, $genre]
+                "INSERT INTO users (username, password, nom, prenom, email, telephone, role_id, status, adresse, date_naissance, genre, nature, created_at) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+                [$username, $password_hash, $nom, $prenom, $email, $telephone, $role_id, $status, $adresse, $date_naissance, $genre, $nature]
             );
             
             $user_id = $database->lastInsertId();
@@ -262,6 +267,18 @@ include '../../includes/header.php';
                                 <option value="M" <?php echo ($_POST['genre'] ?? '') === 'M' ? 'selected' : ''; ?>>Masculin</option>
                                 <option value="F" <?php echo ($_POST['genre'] ?? '') === 'F' ? 'selected' : ''; ?>>Féminin</option>
                             </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nature" class="form-label">Nature du compte <span class="text-danger">*</span></label>
+                            <select class="form-select" id="nature" name="nature" required>
+                                <option value="">Sélectionner la nature</option>
+                                <option value="admin" <?php echo ($_POST['nature'] ?? '') === 'admin' ? 'selected' : ''; ?>>Administrateur</option>
+                                <option value="teacher" <?php echo ($_POST['nature'] ?? '') === 'teacher' ? 'selected' : ''; ?>>Enseignant</option>
+                                <option value="student" <?php echo ($_POST['nature'] ?? '') === 'student' ? 'selected' : ''; ?>>Élève</option>
+                                <option value="parent" <?php echo ($_POST['nature'] ?? '') === 'parent' ? 'selected' : ''; ?>>Parent</option>
+                                <option value="staff" <?php echo ($_POST['nature'] ?? '') === 'staff' ? 'selected' : ''; ?>>Personnel</option>
+                            </select>
+                            <div class="form-text">Définit le type d'utilisateur dans le système</div>
                         </div>
                         <div class="col-12 mb-3">
                             <label for="adresse" class="form-label">Adresse</label>

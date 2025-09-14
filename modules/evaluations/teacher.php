@@ -22,9 +22,10 @@ if (!$teacher_id) {
 
 // Récupérer les informations de l'enseignant
 $teacher = $database->query(
-    "SELECT p.*, u.username, u.email, u.role 
+    "SELECT p.*, u.username, u.email, r.nom as role 
      FROM personnel p 
      LEFT JOIN users u ON p.user_id = u.id 
+     LEFT JOIN roles r ON u.role_id = r.id
      WHERE p.id = ? AND p.fonction IN ('enseignant', 'directeur', 'sous_directeur')",
     [$teacher_id]
 )->fetch();
