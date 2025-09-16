@@ -8,6 +8,7 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -79,7 +80,7 @@ include '../../../includes/header.php';
                 <i class="fas fa-receipt me-1"></i>
                 Voir le reçu
             </a>
-            <?php if (checkPagePermission('finance')): ?>
+            <?php if (hasPagePermissionFromDB('finance', 'payments/edit', 'update')): ?>
                 <a href="edit.php?id=<?php echo $paiement['id']; ?>" class="btn btn-outline-primary">
                     <i class="fas fa-edit me-1"></i>
                     Modifier
@@ -324,7 +325,7 @@ include '../../../includes/header.php';
                         <i class="fas fa-print me-2"></i>
                         Imprimer le reçu
                     </a>
-                    <?php if (checkPagePermission('finance')): ?>
+                    <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                         <a href="edit.php?id=<?php echo $paiement['id']; ?>" class="btn btn-outline-warning">
                             <i class="fas fa-edit me-2"></i>
                             Modifier

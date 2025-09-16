@@ -8,6 +8,7 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -161,7 +162,7 @@ include '../../../includes/header.php';
                 Retour aux caisses
             </a>
         </div>
-        <?php if ($session['statut'] === 'ouverte' && checkPagePermission('finance')): ?>
+        <?php if ($session['statut'] === 'ouverte' && hasPagePermissionFromDB('finance', 'index', 'read')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMouvementModal">
                 <i class="fas fa-plus me-1"></i>
@@ -391,7 +392,7 @@ include '../../../includes/header.php';
                                 <small><?php echo htmlspecialchars($mouvement['user_name']); ?></small>
                             </td>
                             <td>
-                                <?php if ($session['statut'] === 'ouverte' && checkPagePermission('finance')): ?>
+                                <?php if ($session['statut'] === 'ouverte' && hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                                 <button type="button" class="btn btn-sm btn-outline-danger" 
                                         onclick="deleteMouvement(<?php echo $mouvement['id']; ?>, '<?php echo htmlspecialchars($mouvement['libelle']); ?>')">
                                     <i class="fas fa-trash"></i>
@@ -408,7 +409,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Modal Ajout Mouvement -->
-<?php if ($session['statut'] === 'ouverte' && checkPagePermission('finance')): ?>
+<?php if ($session['statut'] === 'ouverte' && hasPagePermissionFromDB('finance', 'index', 'read')): ?>
 <div class="modal fade" id="addMouvementModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

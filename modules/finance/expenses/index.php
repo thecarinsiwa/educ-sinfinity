@@ -356,7 +356,7 @@ include '../../../includes/header.php';
 <?php endif; ?>
 
 <!-- Actions rapides -->
-<?php if (checkPagePermission('finance') && $stats_caisses['sessions_ouvertes'] > 0): ?>
+<?php if (hasPagePermissionFromDB('finance', 'index', 'read') && $stats_caisses['sessions_ouvertes'] > 0): ?>
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-warning">
@@ -575,7 +575,7 @@ include '../../../includes/header.php';
                                            title="Voir">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if (checkPagePermission('finance')): ?>
+                                        <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                                             <a href="edit.php?id=<?php echo $depense['id']; ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">
@@ -620,7 +620,7 @@ include '../../../includes/header.php';
                         Aucune dépense n'a encore été enregistrée.
                     <?php endif; ?>
                 </p>
-                <?php if (checkPagePermission('finance')): ?>
+                <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Enregistrer la première dépense

@@ -8,6 +8,7 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 require_once 'types/functions.php';
 
 // Vérifier l'authentification et les permissions
@@ -66,7 +67,7 @@ include '../../../includes/header.php';
                 Retour à la liste
             </a>
         </div>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
             <div class="btn-group">
                 <a href="edit.php?id=<?php echo $frais['id']; ?>" class="btn btn-outline-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -321,7 +322,7 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <?php if (checkPagePermission('finance')): ?>
+                    <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                         <a href="edit.php?id=<?php echo $frais['id']; ?>" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-2"></i>
                             Modifier ce frais

@@ -1,0 +1,37 @@
+CLASSES DISPONIBLES DANS LE SYSTÈME
+=====================================
+
+Classes de l'année scolaire 2023-2024 (ID: 1):
+- 1ère Primaire A
+- 1ère Primaire B  
+- 2ème Primaire A
+- 3ème Primaire A
+- 4ème Primaire A
+- 5ème Primaire A
+- 6ème Primaire A
+
+Classes de l'année scolaire 2025-2026 (ID: 2):
+- 2ème Primaire A
+- 2ème Primaire B
+- 3ème Primaire A
+
+INSTRUCTIONS D'UTILISATION:
+===========================
+
+1. Utilisez EXACTEMENT les noms de classes listés ci-dessus
+2. Respectez la casse et les accents
+3. N'ajoutez pas d'espaces supplémentaires
+4. Les classes sont associées à des années scolaires spécifiques
+
+EXEMPLES CORRECTS:
+- "6ème Primaire A" ✅
+- "5ème Primaire A" ✅
+- "1ère Primaire B" ✅
+
+EXEMPLES INCORRECTS:
+- "6ème Primaire" ❌ (manque la section)
+- "6eme Primaire A" ❌ (manque l'accent)
+- "6ème primaire A" ❌ (mauvaise casse)
+- "6ème Primaire A " ❌ (espace en trop)
+
+NOTE: Cette liste peut être mise à jour selon les classes créées dans le système.

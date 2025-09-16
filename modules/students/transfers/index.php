@@ -242,17 +242,29 @@ include '../../../includes/header.php';
                 Retour
             </a>
         </div>
-        <?php if (hasPagePermission('students', 'transfers', 'create')): ?>
+        <?php if (hasPagePermissionFromDB('students', 'transfers/new-transfer', 'create') || hasPagePermissionFromDB('students', 'transfers/new-exit', 'create') || hasPagePermissionFromDB('students', 'transfers/bulk-process', 'create')): ?>
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-plus me-1"></i>
                     Nouveau
                 </button>
                 <ul class="dropdown-menu">
-                    <li><?php echo generatePermissionLink('new-transfer.php', 'dropdown-item', 'Demande de transfert', 'fas fa-exchange-alt me-2', 'students', 'transfers', 'create'); ?></li>
-                    <li><?php echo generatePermissionLink('new-exit.php', 'dropdown-item', 'Sortie définitive', 'fas fa-sign-out-alt me-2', 'students', 'transfers', 'create'); ?></li>
+                    <?php if (hasPagePermissionFromDB('students', 'transfers/new-transfer', 'create')): ?>
+                    <li><a class="dropdown-item" href="new-transfer.php">
+                        <i class="fas fa-exchange-alt me-2"></i>Demande de transfert
+                    </a></li>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'transfers/new-exit', 'create')): ?>
+                    <li><a class="dropdown-item" href="new-exit.php">
+                        <i class="fas fa-sign-out-alt me-2"></i>Sortie définitive
+                    </a></li>
+                    <?php endif; ?>
                     <li><hr class="dropdown-divider"></li>
-                    <li><?php echo generatePermissionLink('bulk-process.php', 'dropdown-item', 'Traitement en masse', 'fas fa-tasks me-2', 'students', 'transfers', 'create'); ?></li>
+                    <?php if (hasPagePermissionFromDB('students', 'transfers/bulk-process', 'create')): ?>
+                    <li><a class="dropdown-item" href="bulk-process.php">
+                        <i class="fas fa-tasks me-2"></i>Traitement en masse
+                    </a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         <?php endif; ?>
@@ -540,14 +552,18 @@ include '../../../includes/header.php';
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
+                                                <?php if (hasPagePermissionFromDB('students', 'transfers/view', 'read')): ?>
                                                 <a href="view.php?id=<?php echo $demande['id']; ?>" 
                                                    class="btn btn-outline-info" title="Voir">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <?php if ($demande['status'] === 'en_attente'): ?>
-                                                    <?php echo generatePermissionLink('process.php?id=' . $demande['id'], 'btn btn-outline-primary', 'Traiter', 'fas fa-cog', 'students', 'transfers', 'update'); ?>
                                                 <?php endif; ?>
-                                                <?php if ($demande['status'] === 'approuve'): ?>
+                                                <?php if ($demande['status'] === 'en_attente' && hasPagePermissionFromDB('students', 'transfers/process', 'update')): ?>
+                                                    <a href="process.php?id=<?php echo $demande['id']; ?>" class="btn btn-outline-primary" title="Traiter">
+                                                        <i class="fas fa-cog"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                                <?php if ($demande['status'] === 'approuve' && hasPagePermissionFromDB('students', 'transfers/certificate', 'read')): ?>
                                                     <a href="certificate.php?id=<?php echo $demande['id']; ?>" 
                                                        class="btn btn-outline-success" title="Certificat">
                                                         <i class="fas fa-certificate"></i>
@@ -571,7 +587,7 @@ include '../../../includes/header.php';
                                 Aucune demande de transfert ou sortie n'a été enregistrée.
                             <?php endif; ?>
                         </p>
-                        <?php if (checkPagePermission('students')): ?>
+                        <?php if (hasPagePermissionFromDB('students', 'transfers/new-transfer', 'create')): ?>
                             <a href="new-transfer.php" class="btn btn-primary me-2">
                                 <i class="fas fa-plus me-1"></i>
                                 Nouvelle demande
@@ -682,7 +698,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (hasPagePermission('students', 'transfers', 'read')): ?>
+<?php if (hasPagePermissionFromDB('students', 'transfers/new-transfer', 'create') || hasPagePermissionFromDB('students', 'transfers/new-exit', 'create') || hasPagePermissionFromDB('students', 'transfers/certificates', 'create')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
@@ -694,16 +710,26 @@ include '../../../includes/header.php';
             </div>
             <div class="card-body">
                 <div class="row">
+                    <?php if (hasPagePermissionFromDB('students', 'transfers/new-transfer', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('new-transfer.php', 'btn btn-outline-info', 'Nouveau transfert', 'fas fa-exchange-alt me-2', 'students', 'transfers', 'create'); ?>
+                            <a href="new-transfer.php" class="btn btn-outline-info">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                Nouveau transfert
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    <?php if (hasPagePermissionFromDB('students', 'transfers/new-exit', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('new-exit.php', 'btn btn-outline-secondary', 'Sortie définitive', 'fas fa-sign-out-alt me-2', 'students', 'transfers', 'create'); ?>
+                            <a href="new-exit.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Sortie définitive
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
                             <a href="?status=en_attente" class="btn btn-outline-warning">
@@ -712,11 +738,16 @@ include '../../../includes/header.php';
                             </a>
                         </div>
                     </div>
+                    <?php if (hasPagePermissionFromDB('students', 'transfers/certificates', 'create')): ?>
                     <div class="col-md-3 mb-2">
                         <div class="d-grid">
-                            <?php echo generatePermissionLink('certificates/generate.php', 'btn btn-outline-success', 'Générer certificats', 'fas fa-certificate me-2', 'students', 'transfers', 'create'); ?>
+                            <a href="certificates/generate.php" class="btn btn-outline-success">
+                                <i class="fas fa-certificate me-2"></i>
+                                Générer certificats
+                            </a>
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

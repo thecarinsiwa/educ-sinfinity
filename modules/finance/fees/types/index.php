@@ -345,7 +345,7 @@ include '../../../../includes/header.php';
                         Aucun type de frais n'a encore été configuré pour cette année scolaire.
                     <?php endif; ?>
                 </p>
-                <?php if (checkPagePermission('finance')): ?>
+                <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                     <a href="add.php" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         Créer le premier type de frais

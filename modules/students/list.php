@@ -204,7 +204,7 @@ include '../../includes/header.php';
                         <i class="fas fa-user-plus me-2"></i>Ajouter un élève
                     </a></li>
                     <?php endif; ?>
-                    <?php if (hasPagePermissionFromDB('students', 'admissions/bulk-import', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/bulk-import', 'import')): ?>
                     <li><a class="dropdown-item" href="admissions/bulk-import.php">
                         <i class="fas fa-file-import me-2"></i>Import en masse
                     </a></li>
@@ -218,30 +218,42 @@ include '../../includes/header.php';
                 </ul>
             </div>
         <?php endif; ?>
+        <?php if (hasPagePermissionFromDB('students', 'reports', 'read') || hasPagePermissionFromDB('students', 'search', 'read') || hasPagePermissionFromDB('students', 'transfers', 'read') || hasPagePermissionFromDB('students', 'enrollment', 'create') || hasPagePermissionFromDB('students', 'enrollment-history', 'read')): ?>
         <div class="btn-group">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="fas fa-tools me-1"></i>
                 Outils
             </button>
             <ul class="dropdown-menu">
+                <?php if (hasPagePermissionFromDB('students', 'reports', 'read')): ?>
                 <li><a class="dropdown-item" href="reports.php">
                     <i class="fas fa-chart-bar me-2"></i>Rapports
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('students', 'search', 'read')): ?>
                 <li><a class="dropdown-item" href="search.php">
                     <i class="fas fa-search me-2"></i>Recherche avancée
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('students', 'students/transfers', 'read')): ?>
                 <li><a class="dropdown-item" href="transfers/">
                     <i class="fas fa-exchange-alt me-2"></i>Transferts
                 </a></li>
+                <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
+                <?php if (hasPagePermissionFromDB('students', 'enrollment', 'create')): ?>
                 <li><a class="dropdown-item" href="enrollment.php">
                     <i class="fas fa-user-plus me-2"></i>Inscriptions Nouvelle Année
                 </a></li>
+                <?php endif; ?>
+                <?php if (hasPagePermissionFromDB('students', 'enrollment-history', 'read')): ?>
                 <li><a class="dropdown-item" href="enrollment-history.php">
                     <i class="fas fa-history me-2"></i>Historique des Inscriptions
                 </a></li>
+                <?php endif; ?>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 

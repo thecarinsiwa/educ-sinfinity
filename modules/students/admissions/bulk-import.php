@@ -12,7 +12,7 @@ require_once '../../../includes/permissions-pages.php';
 // Vérifier l'authentification et les permissions
 requireLogin();
 
-requirePagePermissionFromDB('students', 'admissions/bulk-import', 'create', '../../../dashboard.php');
+requirePagePermissionFromDB('students', 'admissions/bulk-import', 'import', '../../../dashboard.php');
 
 // Traitement du formulaire d'import
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

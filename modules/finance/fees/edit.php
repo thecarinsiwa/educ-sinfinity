@@ -8,6 +8,7 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 require_once 'types/functions.php';
 
 // Fonction utilitaire pour échapper correctement les caractères spéciaux

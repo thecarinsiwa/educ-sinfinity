@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-if (!checkPagePermission('finance')) {
+if (!hasPagePermissionFromDB('finance', 'index', 'read')) {
     http_response_code(403);
     echo json_encode(['error' => 'Accès refusé']);
     exit;

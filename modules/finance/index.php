@@ -457,7 +457,7 @@ include '../../includes/header.php';
                     <div class="text-center py-4">
                         <i class="fas fa-money-bill fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Aucun paiement récent</p>
-                        <?php if (checkPagePermission('finance')): ?>
+                        <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                             <a href="payments/add.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 Enregistrer un paiement
@@ -471,7 +471,7 @@ include '../../includes/header.php';
 </div>
 
 <!-- Actions rapides -->
-<?php if (checkPagePermission('finance')): ?>
+<?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">

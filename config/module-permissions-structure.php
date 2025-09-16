@@ -370,6 +370,7 @@ define('MODULE_PERMISSIONS_STRUCTURE', [
             'records/view' => ['read'],
             'records/edit' => ['edit'],
             'records/documents' => ['read', 'create'],
+            'students/transfers' => ['read'],
             'student-tracking/index' => ['read'],
             'student-tracking/follow-up/index' => ['read'],
             'student-tracking/evaluations/index' => ['read'],
@@ -397,6 +398,10 @@ define('MODULE_PERMISSIONS_STRUCTURE', [
         'pages' => [
             'index' => ['read'],
             'devises/index' => ['read', 'admin'],
+            'devises/add' => ['create'],
+            'devises/edit' => ['edit'],
+            'devises/delete' => ['delete'],
+            'devises/view' => ['read'],
             'fees/index' => ['read'],
             'fees/add' => ['create'],
             'fees/edit' => ['edit'],

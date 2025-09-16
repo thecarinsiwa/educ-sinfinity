@@ -1,22 +1,26 @@
 ﻿<?php
 /**
- * Module de gestion financiÃ¨re - Rapport des dÃ©biteurs
- * Application de gestion scolaire - RÃ©publique DÃ©mocratique du Congo
+ * Module de gestion financière - Rapport des débiteurs
+ * Application de gestion scolaire - République Démocratique du Congo
  */
 
 require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier  l'authentification et les permissions  
 requireLogin();
 requirePagePermissionFromDB('finance', 'reports/debtors', 'read', '../../dashboard.php');
 
-$page_title = 'Rapport des DÃ©biteurs';
+$page_title = 'Rapport des Débiteurs';
 
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
+
+// Obtenir la devise par défaut du système
+$currency_symbol = getSetting('currency_symbol', 'FC');
 
 // Paramètres de filtrage
 $niveau_filter = sanitizeInput($_GET['niveau'] ?? '');
@@ -73,6 +77,7 @@ try {
             LEFT JOIN paiements p ON e.id = p.eleve_id 
                 AND p.type_frais_id = tf.id
                 AND p.annee_scolaire_id = fs.annee_scolaire_id
+                AND p.status = 'valide'
             WHERE i.annee_scolaire_id = ? 
                 AND fs.annee_scolaire_id = ?
             GROUP BY e.id
@@ -137,6 +142,7 @@ try {
             LEFT JOIN paiements p ON e.id = p.eleve_id 
                 AND p.type_frais_id = tf.id
                 AND p.annee_scolaire_id = fs.annee_scolaire_id
+                AND p.status = 'valide'
             WHERE i.annee_scolaire_id = ? 
                 AND fs.annee_scolaire_id = ?
             GROUP BY e.id
@@ -210,6 +216,7 @@ try {
             LEFT JOIN paiements p ON e.id = p.eleve_id 
                 AND p.type_frais_id = tf.id
                 AND p.annee_scolaire_id = fs.annee_scolaire_id
+                AND p.status = 'valide'
             WHERE i.annee_scolaire_id = ? 
                 AND fs.annee_scolaire_id = ?
             GROUP BY e.id
@@ -234,7 +241,7 @@ include '../../../includes/header.php';
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-exclamation-triangle me-2"></i>
-            Rapport des Débiteurs
+                Rapport des Débiteurs
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
@@ -297,7 +304,7 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?php echo $total_debiteurs > 0 ? formatMoney($total_dette / $total_debiteurs) : '0 FC'; ?></h4>
+                        <h4><?php echo $total_debiteurs > 0 ? formatMoney($total_dette / $total_debiteurs) : '0 ' . $currency_symbol; ?></h4>
                         <p class="mb-0">Dette moyenne</p>
                     </div>
                     <div class="align-self-center">
@@ -426,7 +433,7 @@ include '../../../includes/header.php';
             <div class="text-center py-4">
                 <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
                 <h5 class="text-success">Aucun débiteur trouvé</h5>
-                <p class="text-muted">Tous les Ã©lÃ¨ves sont Ã  jour dans leurs paiements.</p>
+                <p class="text-muted">Tous les élèves sont à jour dans leurs paiements.</p>
             </div>
         <?php else: ?>
             <div class="table-responsive">

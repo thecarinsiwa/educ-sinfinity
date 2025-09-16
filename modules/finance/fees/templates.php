@@ -8,6 +8,7 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Vérifier l'authentification et les permissions
 requireLogin();
@@ -54,7 +55,7 @@ $action = sanitizeInput($_GET['action'] ?? '');
 $template_id = (int)($_GET['id'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!checkPagePermission('finance')) {
+    if (!hasPagePermissionFromDB('finance', 'index', 'read')) {
         showMessage('error', 'Permissions insuffisantes pour cette action.');
         redirectTo('templates.php');
     }
@@ -230,7 +231,7 @@ include '../../../includes/header.php';
                 Retour aux frais
             </a>
         </div>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
             <div class="btn-group">
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
                     <i class="fas fa-plus me-1"></i>
@@ -392,7 +393,7 @@ include '../../../includes/header.php';
                                             onclick="previewTemplate(<?php echo htmlspecialchars(json_encode($modele)); ?>)">
                                         <i class="fas fa-eye"></i> Aperçu
                                     </button>
-                                    <?php if (checkPagePermission('finance')): ?>
+                                    <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                                         <button type="button" class="btn btn-outline-primary btn-sm"
                                                 data-bs-toggle="modal" data-bs-target="#applyModal"
                                                 onclick="applyTemplate(<?php echo $modele['id']; ?>, '<?php echo $modele['niveau']; ?>')">
@@ -417,7 +418,7 @@ include '../../../includes/header.php';
                 <p class="text-muted">
                     Créez votre premier modèle de frais pour faciliter la configuration des classes.
                 </p>
-                <?php if (checkPagePermission('finance')): ?>
+                <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
                         <i class="fas fa-plus me-1"></i>
                         Créer un modèle
@@ -429,7 +430,7 @@ include '../../../includes/header.php';
 </div>
 
 <!-- Modal de création de modèle -->
-<?php if (checkPagePermission('finance')): ?>
+<?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
 <div class="modal fade" id="createTemplateModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

@@ -19,6 +19,9 @@ $page_title = 'Campagnes de recouvrement';
 // Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
+// Obtenir la devise par défaut du système
+$currency_symbol = getSetting('currency_symbol', 'FC');
+
 // Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = sanitizeInput($_POST['action'] ?? '');
@@ -190,15 +193,15 @@ include '../../../includes/header.php';
     <div class="col-md-2">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-danger"><?php echo number_format($campaign_stats['total_budget']); ?></h4>
-                <p class="card-text">Budget total (FC)</p>
+                <h4 class="text-danger"><?php echo number_format($campaign_stats['total_budget'] ?? 0); ?></h4>
+                <p class="card-text">Budget total (<?php echo $currency_symbol; ?>)</p>
             </div>
         </div>
     </div>
     <div class="col-md-2">
         <div class="card text-center">
             <div class="card-body">
-                <h4 class="text-secondary"><?php echo round($campaign_stats['avg_duration_days']); ?></h4>
+                <h4 class="text-secondary"><?php echo round($campaign_stats['avg_duration_days'] ?? 0); ?></h4>
                 <p class="card-text">Durée moyenne (jours)</p>
             </div>
         </div>
@@ -233,7 +236,7 @@ include '../../../includes/header.php';
                             <td><strong><?php echo htmlspecialchars($perf['nom']); ?></strong></td>
                             <td><span class="badge bg-primary"><?php echo $perf['total_cibles']; ?></span></td>
                             <td><span class="badge bg-success"><?php echo $perf['payes']; ?></span></td>
-                            <td><strong><?php echo number_format($perf['montant_recouvre']); ?> FC</strong></td>
+                            <td><strong><?php echo number_format($perf['montant_recouvre'] ?? 0); ?> <?php echo $currency_symbol; ?></strong></td>
                             <td>
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar bg-success" role="progressbar" 
@@ -305,11 +308,11 @@ include '../../../includes/header.php';
                                 <?php echo date('d/m/Y', strtotime($campaign['date_debut'])); ?> - 
                                 <?php echo date('d/m/Y', strtotime($campaign['date_fin'])); ?>
                             </td>
-                            <td><strong><?php echo number_format($campaign['budget']); ?> FC</strong></td>
+                            <td><strong><?php echo number_format($campaign['budget'] ?? 0); ?> <?php echo $currency_symbol; ?></strong></td>
                             <td><span class="badge bg-primary"><?php echo $campaign['nombre_cibles']; ?></span></td>
                             <td><span class="badge bg-info"><?php echo $campaign['contactes']; ?></span></td>
                             <td><span class="badge bg-success"><?php echo $campaign['payes']; ?></span></td>
-                            <td><strong><?php echo number_format($campaign['total_recouvre']); ?> FC</strong></td>
+                            <td><strong><?php echo number_format($campaign['total_recouvre'] ?? 0); ?> <?php echo $currency_symbol; ?></strong></td>
                             <td>
                                 <?php 
                                 $status_labels = [
@@ -403,19 +406,19 @@ include '../../../includes/header.php';
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="montant_min" class="form-label">Montant minimum (FC)</label>
+                                <label for="montant_min" class="form-label">Montant minimum (<?php echo $currency_symbol; ?>)</label>
                                 <input type="number" class="form-control" id="montant_min" name="montant_min" min="0">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="montant_max" class="form-label">Montant maximum (FC)</label>
+                                <label for="montant_max" class="form-label">Montant maximum (<?php echo $currency_symbol; ?>)</label>
                                 <input type="number" class="form-control" id="montant_max" name="montant_max" min="0">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="budget" class="form-label">Budget campagne (FC)</label>
+                                <label for="budget" class="form-label">Budget campagne (<?php echo $currency_symbol; ?>)</label>
                                 <input type="number" class="form-control" id="budget" name="budget" min="0">
                             </div>
                         </div>

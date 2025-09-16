@@ -16,7 +16,7 @@ requirePagePermissionFromDB('recouvrement', 'notifications/index', 'read', '../.
 
 $page_title = 'Notifications de recouvrement';
 
-// Obtenir l'annÃ©e scolaire actuelle
+// Obtenir l'année scolaire actuelle
 $current_year = getCurrentAcademicYear();
 
 // Traitement des actions
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $database->commit();
-            showMessage('success', 'Notification programmÃ©e avec succÃ¨s.');
+            showMessage('success', 'Notification programmée avec succès.');
             redirectTo('index.php');
             
         } catch (Exception $e) {
@@ -66,13 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notification_id = (int)($_POST['notification_id'] ?? 0);
         
         try {
-            // Simuler l'envoi immÃ©diat
+            // Simuler l'envoi immédiat
             $database->query(
                 "UPDATE notifications_destinataires SET status = 'sent', sent_at = NOW() WHERE notification_id = ?",
                 [$notification_id]
             );
             
-            showMessage('success', 'Notification envoyÃ©e immÃ©diatement.');
+            showMessage('success', 'Notification envoyée immédiatement.');
             redirectTo('index.php');
             
         } catch (Exception $e) {
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// RÃ©cupÃ©rer les notifications
+// Récupérer les notifications
 $notifications = $database->query(
     "SELECT 
         nr.*,
@@ -114,13 +114,13 @@ $notification_stats = $database->query(
     [$current_year['id']]
 )->fetch();
 
-// RÃ©cupÃ©rer les campagnes pour le formulaire
+// Récupérer les campagnes pour le formulaire
 $campaigns = $database->query(
     "SELECT id, nom FROM campagnes_recouvrement WHERE annee_scolaire_id = ? AND status = 'active'",
     [$current_year['id']]
 )->fetchAll();
 
-// RÃ©cupÃ©rer les dÃ©biteurs pour le formulaire
+// Récupérer les débiteurs pour le formulaire
 $debitors = $database->query(
     "SELECT 
         e.id,
@@ -134,10 +134,11 @@ $debitors = $database->query(
      JOIN inscriptions i ON e.id = i.eleve_id
      JOIN classes c ON i.classe_id = c.id
      JOIN frais_scolaires fs ON i.classe_id = fs.classe_id
-        JOIN type_frais tf ON fs.type_frais_id = tf.id
+     JOIN type_frais tf ON fs.type_frais_id = tf.id
      LEFT JOIN paiements p ON e.id = p.eleve_id 
-         AND tf.nom COLLATE utf8mb4_unicode_ci = p.type_paiement COLLATE utf8mb4_unicode_ci
+         AND p.type_frais_id = fs.type_frais_id
          AND p.annee_scolaire_id = fs.annee_scolaire_id
+        AND p.status = 'valide'
      WHERE i.annee_scolaire_id = ? AND fs.annee_scolaire_id = ?
      GROUP BY e.id, e.nom, e.prenom, e.telephone, e.email, c.nom
      HAVING dette_totale > 0
@@ -211,7 +212,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-success"><?php echo $notification_stats['total_envoyees']; ?></h4>
-                <p class="card-text">EnvoyÃ©es</p>
+                <p class="card-text">Envoyées</p>
             </div>
         </div>
     </div>
@@ -219,7 +220,7 @@ include '../../../includes/header.php';
         <div class="card text-center">
             <div class="card-body">
                 <h4 class="text-danger"><?php echo $notification_stats['total_echouees']; ?></h4>
-                <p class="card-text">Ã‰chouÃ©es</p>
+                <p class="card-text">Échouées</p>
             </div>
         </div>
     </div>
@@ -243,7 +244,7 @@ include '../../../includes/header.php';
                         <th>Campagne</th>
                         <th>Destinataires</th>
                         <th>Statut</th>
-                        <th>Date crÃ©ation</th>
+                        <th>Date création</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -265,12 +266,12 @@ include '../../../includes/header.php';
                                 <small class="text-muted"><?php echo substr(htmlspecialchars($notification['message']), 0, 50) . '...'; ?></small>
                             </td>
                             <td>
-                                <?php echo htmlspecialchars($notification['campagne_nom'] ?? 'GÃ©nÃ©ral'); ?>
+                                <?php echo htmlspecialchars($notification['campagne_nom'] ?? 'Général'); ?>
                             </td>
                             <td>
                                 <span class="badge bg-primary"><?php echo $notification['total_destinataires']; ?></span><br>
                                 <small class="text-muted">
-                                    <?php echo $notification['envoyees']; ?> envoyÃ©es, 
+                                    <?php echo $notification['envoyees']; ?> envoyées, 
                                     <?php echo $notification['en_attente']; ?> en attente
                                 </small>
                             </td>
@@ -293,7 +294,7 @@ include '../../../includes/header.php';
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="details.php?id=<?php echo $notification['id']; ?>" class="btn btn-outline-primary" title="Voir dÃ©tails">
+                                    <a href="details.php?id=<?php echo $notification['id']; ?>" class="btn btn-outline-primary" title="Voir détails">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <?php if ($notification['en_attente'] > 0): ?>
@@ -303,7 +304,7 @@ include '../../../includes/header.php';
                                         </button>
                                     <?php endif; ?>
                                     <button type="button" class="btn btn-outline-info" 
-                                            onclick="showNotificationModal(<?php echo $notification['id']; ?>)" title="RÃ©pÃ©ter">
+                                            onclick="showNotificationModal(<?php echo $notification['id']; ?>)" title="Répéter">
                                         <i class="fas fa-redo"></i>
                                     </button>
                                 </div>
@@ -329,7 +330,7 @@ include '../../../includes/header.php';
             <div class="card-body">
                 <div class="mb-3">
                     <strong>Rappel paiement :</strong>
-                    <p class="text-muted small">Bonjour {nom_parent}, votre enfant {nom_eleve} a une dette de {montant} FC. Merci de rÃ©gulariser.</p>
+                    <p class="text-muted small">Bonjour {nom_parent}, votre enfant {nom_eleve} a une dette de {montant} FC. Merci de régulariser.</p>
                 </div>
                 <div class="mb-3">
                     <strong>Rappel urgent :</strong>
@@ -337,7 +338,7 @@ include '../../../includes/header.php';
                 </div>
                 <div class="mb-3">
                     <strong>Confirmation paiement :</strong>
-                    <p class="text-muted small">Merci pour votre paiement de {montant} FC. ReÃ§u confirmÃ© pour {nom_eleve}.</p>
+                    <p class="text-muted small">Merci pour votre paiement de {montant} FC. Reçu confirmé pour {nom_eleve}.</p>
                 </div>
             </div>
         </div>
@@ -358,11 +359,11 @@ include '../../../includes/header.php';
                 </div>
                 <div class="mb-3">
                     <strong>Lettre de mise en demeure :</strong>
-                    <p class="text-muted small">Suite Ã  nos relances, nous vous mettons en demeure de rÃ©gulariser la dette de {montant} FC.</p>
+                    <p class="text-muted small">Suite à nos relances, nous vous mettons en demeure de régulariser la dette de {montant} FC.</p>
                 </div>
                 <div class="mb-3">
                     <strong>Accord de paiement :</strong>
-                    <p class="text-muted small">Nous acceptons votre proposition de paiement Ã©chelonnÃ© pour {nom_eleve}.</p>
+                    <p class="text-muted small">Nous acceptons votre proposition de paiement échelonné pour {nom_eleve}.</p>
                 </div>
             </div>
         </div>
@@ -383,11 +384,11 @@ include '../../../includes/header.php';
                 </div>
                 <div class="mb-3">
                     <strong>Mise en demeure :</strong>
-                    <p class="text-muted small">Lettre de mise en demeure avec dÃ©lai de 15 jours.</p>
+                        <p class="text-muted small">Lettre de mise en demeure avec délai de 15 jours.</p>
                 </div>
                 <div class="mb-3">
                     <strong>Accord de paiement :</strong>
-                    <p class="text-muted small">Convention de paiement Ã©chelonnÃ© signÃ©e.</p>
+                    <p class="text-muted small">Convention de paiement échelonné signée.</p>
                 </div>
             </div>
         </div>
@@ -410,7 +411,7 @@ include '../../../includes/header.php';
                             <div class="mb-3">
                                 <label for="type_notification" class="form-label">Type de notification *</label>
                                 <select class="form-select" id="type_notification" name="type_notification" required>
-                                    <option value="">SÃ©lectionner</option>
+                                    <option value="">Sélectionner</option>
                                     <option value="sms">SMS</option>
                                     <option value="email">Email</option>
                                     <option value="lettre">Lettre</option>
@@ -452,13 +453,13 @@ include '../../../includes/header.php';
                             <div class="col-md-6">
                                 <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="selectAllDebitors()">
                                     <i class="fas fa-check-double me-1"></i>
-                                    SÃ©lectionner tous les dÃ©biteurs
+                                    Sélectionner tous les débiteurs
                                 </button>
                             </div>
                             <div class="col-md-6">
                                 <button type="button" class="btn btn-outline-secondary btn-sm mb-2" onclick="clearSelection()">
                                     <i class="fas fa-times me-1"></i>
-                                    Effacer la sÃ©lection
+                                    Effacer la sélection
                                 </button>
                             </div>
                         </div>
@@ -504,7 +505,7 @@ function clearSelection() {
 }
 
 function sendImmediate(notificationId) {
-    if (confirm('Envoyer cette notification immÃ©diatement ?')) {
+    if (confirm('Envoyer cette notification immédiatement ?')) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.innerHTML = `
@@ -517,9 +518,9 @@ function sendImmediate(notificationId) {
 }
 
 function showNotificationModal(notificationId) {
-    // RÃ©cupÃ©rer les dÃ©tails de la notification et prÃ©-remplir le formulaire
-    // Cette fonction peut Ãªtre Ã©tendue pour rÃ©cupÃ©rer les donnÃ©es via AJAX
-    document.getElementById('sendNotificationModal').querySelector('.modal-title').textContent = 'RÃ©pÃ©ter notification';
+    // Récupérer les détails de la notification et pré-remplir le formulaire
+    // Cette fonction peut être étendue pour récupérer les données via AJAX
+    document.getElementById('sendNotificationModal').querySelector('.modal-title').textContent = 'Répéter notification';
     new bootstrap.Modal(document.getElementById('sendNotificationModal')).show();
 }
 
@@ -528,7 +529,7 @@ document.querySelector('form').addEventListener('submit', function(e) {
     const destinataires = document.querySelectorAll('input[name="destinataires[]"]:checked');
     if (destinataires.length === 0) {
         e.preventDefault();
-        alert('Veuillez sÃ©lectionner au moins un destinataire.');
+        alert('Veuillez sélectionner au moins un destinataire.');
     }
 });
 </script>

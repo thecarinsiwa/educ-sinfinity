@@ -209,7 +209,7 @@ include '../../../includes/header.php';
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if (hasPagePermissionFromDB('finance', 'devises/edit', 'update')): ?>
+                                    <?php if (hasPagePermissionFromDB('finance', 'devises/edit', 'edit')): ?>
                                     <button type="button" class="btn btn-sm btn-outline-primary" 
                                             onclick="editDevise(<?= htmlspecialchars(json_encode($devise)) ?>)">
                                         <i class="fas fa-edit"></i>

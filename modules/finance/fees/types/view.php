@@ -78,7 +78,7 @@ include '../../../../includes/header.php';
                 Année: <?php echo htmlspecialchars($type_frais['annee'] ?? 'Non définie'); ?>
             </span>
         </div>
-        <?php if (checkPagePermission('finance')): ?>
+        <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
             <div class="btn-group me-2">
                 <a href="edit.php?id=<?php echo $type_frais['id']; ?>" class="btn btn-primary">
                     <i class="fas fa-edit me-1"></i>
@@ -265,7 +265,7 @@ include '../../../../includes/header.php';
                 </h5>
             </div>
             <div class="card-body">
-                <?php if (checkPagePermission('finance')): ?>
+                <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                     <div class="d-grid gap-2">
                         <a href="edit.php?id=<?php echo $type_frais['id']; ?>" class="btn btn-primary">
                             <i class="fas fa-edit me-1"></i>

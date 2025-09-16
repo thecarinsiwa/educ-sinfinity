@@ -1,0 +1,4 @@
+Nom,Prenom,Date_naissance,Sexe,Classe,Telephone_parent,Nom_pere,Nom_mere,Profession_pere,Profession_mere,Adresse,Email,Personne_contact,Telephone_contact,Relation_contact,Lieu_naissance
+KABONGO,Jean,2010-05-15,M,"6ème Primaire A","+243 123 456 789","KABONGO Pierre","KABONGO Marie",Enseignant,Commerçante,"Commune de Limete",jean.kabongo@email.com,"KABONGO Pierre","+243 123 456 789",Père,Kinshasa
+MUKENDI,Marie,2009-08-22,F,"5ème Primaire A","+243 987 654 321","MUKENDI Joseph","MUKENDI Anne",Ingénieur,Infirmière,"Commune de Gombe",marie.mukendi@email.com,"MUKENDI Joseph","+243 987 654 321",Père,Kinshasa
+TSHILONGO,Paul,2011-03-10,M,"4ème Primaire A","+243 555 123 456","TSHILONGO David","TSHILONGO Grace",Chauffeur,Secrétaire,"Commune de Matete",paul.tshilongo@email.com,"TSHILONGO David","+243 555 123 456",Père,Kinshasa

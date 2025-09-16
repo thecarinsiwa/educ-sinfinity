@@ -489,7 +489,7 @@ include '../../../includes/header.php';
                         } ?>
                     <?php endif; ?>
                 </p>
-                <?php if (checkPagePermission('finance')): ?>
+                <?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
                     <div class="mt-3">
                         <a href="add.php" class="btn btn-primary me-2">
                             <i class="fas fa-plus me-1"></i>
@@ -559,7 +559,7 @@ include '../../../includes/header.php';
 <?php endif; ?>
 
 <!-- Actions rapides -->
-<?php if (checkPagePermission('finance')): ?>
+<?php if (hasPagePermissionFromDB('finance', 'index', 'read')): ?>
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">

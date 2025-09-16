@@ -83,6 +83,9 @@ $salaire_net = $total_gains - $total_deductions;
 // Informations de l'établissement
 $etablissement = $database->query("SELECT * FROM etablissements LIMIT 1")->fetch();
 
+// Récupérer la devise par défaut
+$devise_par_defaut = getDefaultCurrency();
+
 include '../../includes/header.php';
 ?>
 
@@ -205,7 +208,7 @@ include '../../includes/header.php';
                         </tr>
                         <tr>
                             <td><strong>Taux horaire:</strong></td>
-                            <td><?php echo formatMoney($salaire_base / $heures_travaillees); ?></td>
+                            <td><?php echo formatCurrency($salaire_base / $heures_travaillees, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                     </table>
                 </div>
@@ -220,33 +223,33 @@ include '../../includes/header.php';
                     <table class="table table-borderless table-sm">
                         <tr>
                             <td>Salaire de base</td>
-                            <td class="text-end"><?php echo formatMoney($salaire_base); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($salaire_base, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php if ($prime_anciennete > 0): ?>
                         <tr>
                             <td>Prime d'ancienneté</td>
-                            <td class="text-end"><?php echo formatMoney($prime_anciennete); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($prime_anciennete, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php endif; ?>
                         <?php if ($prime_fonction > 0): ?>
                         <tr>
                             <td>Prime de fonction</td>
-                            <td class="text-end"><?php echo formatMoney($prime_fonction); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($prime_fonction, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php endif; ?>
                         <tr>
                             <td>Indemnité de transport</td>
-                            <td class="text-end"><?php echo formatMoney($indemnite_transport); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($indemnite_transport, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php if ($indemnite_logement > 0): ?>
                         <tr>
                             <td>Indemnité de logement</td>
-                            <td class="text-end"><?php echo formatMoney($indemnite_logement); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($indemnite_logement, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php endif; ?>
                         <tr class="border-top">
                             <td><strong>TOTAL GAINS</strong></td>
-                            <td class="text-end"><strong><?php echo formatMoney($total_gains); ?></strong></td>
+                            <td class="text-end"><strong><?php echo formatCurrency($total_gains, $devise_par_defaut['id'] ?? null); ?></strong></td>
                         </tr>
                     </table>
                 </div>
@@ -257,23 +260,23 @@ include '../../includes/header.php';
                     <table class="table table-borderless table-sm">
                         <tr>
                             <td>Cotisation CNSS (3.5%)</td>
-                            <td class="text-end"><?php echo formatMoney($cotisation_cnss); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($cotisation_cnss, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php if ($impot_professionnel > 0): ?>
                         <tr>
                             <td>Impôt professionnel</td>
-                            <td class="text-end"><?php echo formatMoney($impot_professionnel); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($impot_professionnel, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php endif; ?>
                         <?php if ($avance_salaire > 0): ?>
                         <tr>
                             <td>Avance sur salaire</td>
-                            <td class="text-end"><?php echo formatMoney($avance_salaire); ?></td>
+                            <td class="text-end"><?php echo formatCurrency($avance_salaire, $devise_par_defaut['id'] ?? null); ?></td>
                         </tr>
                         <?php endif; ?>
                         <tr class="border-top">
                             <td><strong>TOTAL DÉDUCTIONS</strong></td>
-                            <td class="text-end"><strong><?php echo formatMoney($total_deductions); ?></strong></td>
+                            <td class="text-end"><strong><?php echo formatCurrency($total_deductions, $devise_par_defaut['id'] ?? null); ?></strong></td>
                         </tr>
                     </table>
                 </div>
@@ -284,7 +287,7 @@ include '../../includes/header.php';
         <div class="row mt-4">
             <div class="col-12">
                 <div class="bg-primary text-white p-4 text-center rounded">
-                    <h3 class="mb-0">SALAIRE NET À PAYER: <?php echo formatMoney($salaire_net); ?></h3>
+                    <h3 class="mb-0">SALAIRE NET À PAYER: <?php echo formatCurrency($salaire_net, $devise_par_defaut['id'] ?? null); ?></h3>
                 </div>
             </div>
         </div>

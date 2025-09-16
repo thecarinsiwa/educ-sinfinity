@@ -157,7 +157,7 @@ include '../../includes/header.php';
                             </a></li>
                     <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
-                    <?php if (hasPagePermissionFromDB('students', 'admissions/bulk-import', 'create')): ?>
+                    <?php if (hasPagePermissionFromDB('students', 'admissions/bulk-import', 'import')): ?>
                     <li><a class="dropdown-item" href="admissions/bulk-import.php">
                         <i class="fas fa-file-import me-2"></i>Import en masse
                             </a></li>

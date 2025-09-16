@@ -8,6 +8,7 @@ require_once '../../../config/config.php';
 require_once '../../../config/database.php';
 require_once '../../../includes/functions.php';
 require_once '../../../includes/permissions-pages.php';
+require_once '../../../includes/ui-permissions.php';
 
 // Fonction pour récupérer l'ID du type de frais à partir du nom
 function getTypeFraisId($type_nom, $annee_scolaire_id) {
