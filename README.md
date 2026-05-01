@@ -119,7 +119,7 @@ chmod 755 assets/
 - Utilisateur par défaut: `admin`
 - Mot de passe par défaut: `admin123`
 
-## Structure du Projet
+## Structure de ce Projet
 
 ```
 educ-sinfinity/
